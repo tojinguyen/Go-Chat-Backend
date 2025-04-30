@@ -1,38 +1,122 @@
 package jwt
 
 import (
-	"os"
-	"strconv"
+	"gochat-backend/internal/config"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
+	errorConstants "gochat-backend/internal/error"
+
+	"github.com/golang-jwt/jwt"
 )
 
+type CustomJwtClaims struct {
+	GenerateTokenInput
+	jwt.StandardClaims
+}
 
-func GenerateAccessToken(email string) (string, error) {
-	jwtKey := []byte(os.Getenv("JWT_SECRET_KEY"))
+type GenerateTokenInput struct {
+	UserId int
+	Email  string
+	Role   string
+}
 
-	if jwtKey == nil {
-		return "", nil
+type JwtService interface {
+	GenerateAccessToken(input *GenerateTokenInput) (string, error)
+	GenerateRefreshToken(input *GenerateTokenInput) (string, error)
+	ValidateAccessToken(tokenString string) (*CustomJwtClaims, error)
+	ValidateRefreshToken(tokenString string) (*CustomJwtClaims, error)
+}
+
+type jwtService struct {
+	cfg *config.Environment
+}
+
+func NewJwtService(cfg *config.Environment) JwtService {
+	return &jwtService{
+		cfg: cfg,
 	}
+}
 
-	timeExp := os.Getenv("JWT_EXPIRATION")
-
-	if timeExp == "" {
-		timeExp = "24" // Default expiration time in hours
-	}
-
-	expHours, err := strconv.Atoi(timeExp)
-	if err != nil {
-		return "", err
-	}
-	
-	claims := jwt.MapClaims{
-		"email": email,
-		"exp":   time.Now().Add(time.Hour * time.Duration(expHours)).Unix(), 
+func (s *jwtService) GenerateAccessToken(input *GenerateTokenInput) (string, error) {
+	claims := &CustomJwtClaims{
+		*input,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Duration(s.cfg.AccessTokenExpireMinutes) * time.Minute).Unix(),
+		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(s.cfg.AccessTokenSecretKey))
 
-	return token.SignedString(jwtKey)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func (s *jwtService) GenerateRefreshToken(input *GenerateTokenInput) (string, error) {
+	claims := &CustomJwtClaims{
+		*input,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().UTC().Add(time.Duration(s.cfg.RefreshTokenExpireMinutes) * time.Minute).Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(s.cfg.RefreshTokenSecretKey))
+
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+func (s *jwtService) ValidateAccessToken(tokenString string) (*CustomJwtClaims, error) {
+	claims := &CustomJwtClaims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.cfg.AccessTokenSecretKey), nil
+	})
+
+	if err != nil {
+		v, _ := err.(*jwt.ValidationError)
+
+		if v.Errors == jwt.ValidationErrorExpired {
+			return nil, errorConstants.ErrTokenExpired
+		}
+
+		return nil, errorConstants.ErrTokenInvalid
+	}
+
+	if !token.Valid {
+		return nil, errorConstants.ErrTokenInvalid
+	}
+
+	return claims, nil
+}
+
+func (s *jwtService) ValidateRefreshToken(tokenString string) (*CustomJwtClaims, error) {
+	claims := &CustomJwtClaims{}
+
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.cfg.RefreshTokenSecretKey), nil
+	})
+
+	if err != nil {
+		v, _ := err.(*jwt.ValidationError)
+
+		if v.Errors == jwt.ValidationErrorExpired {
+			return nil, errorConstants.ErrTokenExpired
+		}
+
+		return nil, errorConstants.ErrTokenInvalid
+	}
+
+	if !token.Valid {
+		return nil, errorConstants.ErrTokenInvalid
+	}
+
+	return claims, nil
 }
