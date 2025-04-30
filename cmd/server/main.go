@@ -46,6 +46,7 @@ func main() {
 	cfg := loadEnvironment()
 
 	gin.SetMode(cfg.RunMode)
+
 	loggerStartServer.Infof("System is running with %s mode", cfg.RunMode)
 
 	app := &App{
@@ -64,7 +65,7 @@ func main() {
 		Handler: router,
 	}
 
-	setupSwagger(app)
+	setupSwagger()
 
 	done := make(chan bool)
 
@@ -75,7 +76,7 @@ func main() {
 		}
 		loggerStartServer.Info("Stopped serving on Services")
 	}()
-	loggerStartServer.Infof("Start HTTP Server Successfully")
+	loggerStartServer.Infof("Start HTTP Server Successfully on PORT: %d", app.config.Port)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		loggerStartServer.Fatalf("Start HTTP Server Failed. Error: %s", err.Error())
 	}
@@ -96,7 +97,7 @@ func GracefulShutDown(config *config.Environment, quit chan bool, server *http.S
 	return nil
 }
 
-func setupSwagger(app *App) {
+func setupSwagger() {
 	docs.SwaggerInfo.Title = "GoChat Backend API"
 	docs.SwaggerInfo.Description = "A Real-time Chat Application Backend."
 	docs.SwaggerInfo.Version = "1.0"
@@ -104,7 +105,6 @@ func setupSwagger(app *App) {
 	docs.SwaggerInfo.BasePath = "/api/v1"
 	docs.SwaggerInfo.Schemes = []string{"http", "https"}
 
-	log.Println("Starting server on port:", app.config.Port)
 	log.Println("=====================================================")
 	log.Println("🚀 Server started successfully!")
 	log.Println("📝 API Documentation: https://localhost:8080/api/v1/swagger/index.html")
@@ -157,6 +157,8 @@ func loadEnvironment() *config.Environment {
 		logrus.Fatalf("Failed to load environment variables: %v", err)
 	}
 
+	fmt.Println("======================================================")
+
 	v := reflect.ValueOf(cfg).Elem()
 	for i := 0; i < v.NumField(); i++ {
 		varName := v.Type().Field(i).Name
@@ -172,6 +174,8 @@ func loadEnvironment() *config.Environment {
 			fmt.Printf("EnvKeyAndValue %s: '%v'\n", varName, varValue)
 		}
 	}
+
+	fmt.Println("======================================================")
 
 	return cfg
 }
