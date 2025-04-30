@@ -15,7 +15,7 @@ type Environment struct {
 	RunMode string `env:"RUN_MODE,required=true"`
 	Port    int    `env:"PORT,default=8080"`
 
-	CorsAllowOrigin string `env:"CORS_ALLOW_ORIGIN,default=*"`
+	CorsAllowOrigins string `env:"CORS_ALLOW_ORIGIN,default=*"`
 
 	MysqlHost        string `env:"MYSQL_HOST,required=true"`
 	MysqlPort        int    `env:"MYSQL_PORT,required=true"`
@@ -30,6 +30,9 @@ type Environment struct {
 
 	RefreshTokenSecretKey     string `env:"REFRESH_TOKEN_SECRET_KEY,required=true"`
 	RefreshTokenExpireMinutes int    `env:"REFRESH_TOKEN_EXPIRE_MINUTES,default=60"`
+
+	FrontendUri  string `env:"FRONTEND_URI,required=true"`
+	FrontendPort int    `env:"FRONTEND_PORT,required=true"`
 }
 
 func Load() (*Environment, error) {
