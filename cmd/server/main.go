@@ -1,15 +1,20 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
+	"gochat-backend/docs"
 	"gochat-backend/internal/config"
+	"gochat-backend/internal/middleware"
 	"log"
+	"net/http"
 	"os"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/acme/autocert"
 )
 
 // @title           GoChat Backend API
@@ -37,7 +42,6 @@ var listEnvSecret = []string{
 }
 
 func main() {
-
 	cfg := loadEnvironment()
 	v := reflect.ValueOf(cfg).Elem()
 	for i := 0; i < v.NumField(); i++ {
@@ -55,27 +59,57 @@ func main() {
 		}
 	}
 
+	docs.SwaggerInfo.Title = "GoChat Backend API"
+	docs.SwaggerInfo.Description = "A Real-time Chat Application Backend."
+	docs.SwaggerInfo.Version = "1.0"
+	docs.SwaggerInfo.Host = "localhost:8080"
+	docs.SwaggerInfo.BasePath = "/api/v1"
+	docs.SwaggerInfo.Schemes = []string{"https"}
+
 	port := os.Getenv("PORT")
 
 	if port == "" {
-		port = "8080" // Default port if not specified
+		port = "8080"
 	}
 
 	r := gin.Default()
+
+	if cfg.RunMode != "debug" {
+		r.Use(middleware.RedirectToHTTPS())
+	}
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
 	})
 
+	certManager := autocert.Manager{
+		Prompt:     autocert.AcceptTOS,
+		Cache:      autocert.DirCache("certs"),
+		HostPolicy: autocert.HostWhitelist("localhost"),
+	}
+
+	server := &http.Server{
+		Addr:    ":443",
+		Handler: r,
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+
+	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+
 	log.Println("Starting server on port:", port)
 
-	if err := r.Run(":" + port); err != nil {
+	if err := server.ListenAndServeTLS("", ""); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
 
 func loadEnvironment() *config.Environment {
-	_ = godotenv.Load()
+	err := godotenv.Load()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load .env file: %v", err))
+	}
 
 	cfg, err := config.Load()
 
