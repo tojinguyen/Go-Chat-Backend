@@ -9,31 +9,31 @@ import (
 )
 
 func InitAuthRouter(
-	r gin.IRouter,
+	router gin.IRouter,
 	middleware middleware.Middleware,
 	authUseCase auth.AuthUseCase,
 ) {
-	r.POST("/login", func(c *gin.Context) {
+	router.POST("/login", func(c *gin.Context) {
 		handler.Login(c, authUseCase)
 	})
 
-	r.GET("/refresh-token", func(c *gin.Context) {
+	router.GET("/refresh-token", func(c *gin.Context) {
 		handler.RefreshToken(c, authUseCase)
 	})
 
-	r.PUT("/change-password", middleware.Authentication, func(c *gin.Context) {
+	router.PUT("/change-password", middleware.Authentication, func(c *gin.Context) {
 		handler.ChangePassword(c, authUseCase)
 	})
 
-	r.PUT("/reset-password", func(context *gin.Context) {
+	router.PUT("/reset-password", func(context *gin.Context) {
 		handler.ResetPassword(context, authUseCase)
 	})
 
-	r.GET("/reset-password", func(context *gin.Context) {
+	router.GET("/reset-password", func(context *gin.Context) {
 		handler.CheckTokenResetPassword(context, authUseCase)
 	})
 
-	r.POST("/reset-password", func(context *gin.Context) {
+	router.POST("/reset-password", func(context *gin.Context) {
 		handler.RequestResetPassword(context, authUseCase)
 	})
 }
