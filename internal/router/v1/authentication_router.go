@@ -21,7 +21,7 @@ func InitAuthRouter(
 		handler.RefreshToken(c, authUseCase)
 	})
 
-	r.PUT("/change-password", func(c *gin.Context) {
+	r.PUT("/change-password", middleware.Authentication, func(c *gin.Context) {
 		handler.ChangePassword(c, authUseCase)
 	})
 
