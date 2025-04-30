@@ -13,6 +13,14 @@ func InitAuthRouter(
 	middleware middleware.Middleware,
 	authUseCase auth.AuthUseCase,
 ) {
+	router.POST("/register", func(c *gin.Context) {
+		handler.Register(c, authUseCase)
+	})
+
+	router.POST("/verify-registration-code", func(c *gin.Context) {
+		handler.VerifyRegistrationCode(c, authUseCase)
+	})
+
 	router.POST("/login", func(c *gin.Context) {
 		handler.Login(c, authUseCase)
 	})
