@@ -8,7 +8,7 @@ import (
 	"gochat-backend/internal/config"
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/router"
-	"gochat-backend/internal/usecase/auth"
+	"gochat-backend/internal/usecase"
 	"log"
 	"os"
 	"os/signal"
@@ -54,11 +54,11 @@ func main() {
 		logger: logger,
 	}
 
-	authUseCase := auth.NewAuthUseCase()
+	useCaseContainer := usecase.NewUseCaseContainer()
 
 	middleware := middleware.NewMiddleware()
 
-	router := router.InitRouter(app.config, middleware, authUseCase)
+	router := router.InitRouter(app.config, middleware, useCaseContainer)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", app.config.Port),

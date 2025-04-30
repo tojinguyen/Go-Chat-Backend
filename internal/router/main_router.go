@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"gochat-backend/internal/config"
 	"gochat-backend/internal/middleware"
-	"gochat-backend/internal/usecase/auth"
+	"gochat-backend/internal/usecase"
 	"gochat-backend/internal/validations"
 	"net/http"
 	"net/http/httputil"
@@ -30,7 +30,7 @@ const (
 func InitRouter(
 	config *config.Environment,
 	middleWare middleware.Middleware,
-	authUseCase auth.AuthUseCase,
+	useCaseContainer *usecase.UseCaseContainer,
 ) *gin.Engine {
 	router := gin.New()
 	router.Use(cors.New(cors.Config{
@@ -78,7 +78,7 @@ func InitRouter(
 	v1Router.InitV1Router(
 		apiRouter.Group("/v1", middleWare.RestLogger),
 		middleWare,
-		authUseCase,
+		useCaseContainer,
 	)
 
 	router.NoRoute(func(c *gin.Context) {

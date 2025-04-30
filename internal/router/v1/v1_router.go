@@ -2,7 +2,7 @@ package v1
 
 import (
 	"gochat-backend/internal/middleware"
-	"gochat-backend/internal/usecase/auth"
+	"gochat-backend/internal/usecase"
 
 	"github.com/gin-gonic/gin"
 )
@@ -10,10 +10,10 @@ import (
 func InitV1Router(
 	r *gin.RouterGroup,
 	middleware middleware.Middleware,
-	authUseCase auth.AuthUseCase,
+	useCaseContainer *usecase.UseCaseContainer,
 ) {
 	r.Use()
 	{
-		InitAuthRouter(r.Group("/auth"), middleware, authUseCase)
+		InitAuthRouter(r.Group("/auth"), middleware, useCaseContainer.Auth)
 	}
 }
