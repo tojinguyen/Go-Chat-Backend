@@ -7,6 +7,7 @@ import (
 	"gochat-backend/docs"
 	"gochat-backend/internal/config"
 	"gochat-backend/internal/middleware"
+	"gochat-backend/internal/repository"
 	"gochat-backend/internal/router"
 	"gochat-backend/internal/usecase"
 	"gochat-backend/pkg/jwt"
@@ -52,24 +53,31 @@ func main() {
 	loggerStartServer.Infof("System is running with %s mode", cfg.RunMode)
 
 	// Initialize Database Connection
-	db, err := mysql.ConnectMysql(cfg)
+	db, err := InitDatabase(cfg)
 
 	if err != nil {
-		loggerStartServer.Fatalf("Failed to connect to MySQL: %v", err)
+		loggerStartServer.Fatalf("Failed to connect to database: %v", err)
 	}
-
-	database := mysql.NewDatabase(db)
 
 	app := &App{
 		config:   cfg,
 		logger:   logger,
-		database: database,
+		database: db,
 	}
 
 	// Initialize Services
 	jwtService := jwt.NewJwtService(app.config)
 
-	useCaseContainer := usecase.NewUseCaseContainer()
+	// Initialize Repositories
+	accountRepo := repository.NewUserRepo(db)
+
+	deps := &usecase.SharedDependencies{
+		Config:      cfg,
+		JwtService:  jwtService,
+		AccountRepo: accountRepo,
+	}
+
+	useCaseContainer := usecase.NewUseCaseContainer(deps)
 
 	middleware := middleware.NewMiddleware(
 		jwtService,
@@ -97,12 +105,21 @@ func main() {
 	}()
 	loggerStartServer.Infof("Start HTTP Server Successfully on PORT: %d", app.config.Port)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		defer database.Close()
+		defer db.Close()
 		loggerStartServer.Fatalf("Start HTTP Server Failed. Error: %s", err.Error())
 	}
 	<-done
-	defer database.Close()
+	defer db.Close()
 	loggerStartServer.Infof("Stopped backend application.")
+}
+
+func InitDatabase(cfg *config.Environment) (*mysql.Database, error) {
+	db, err := mysql.ConnectMysql(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to MySQL: %v", err)
+	}
+	database := mysql.NewDatabase(db)
+	return database, nil
 }
 
 func GracefulShutDown(config *config.Environment, quit chan bool, server *http.Server) error {
