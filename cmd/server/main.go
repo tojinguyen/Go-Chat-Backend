@@ -19,14 +19,17 @@ import (
 
 	"net/http"
 
+	"gochat-backend/internal/infra/mysql"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
 
 type App struct {
-	config *config.Environment
-	logger *logrus.Entry
+	config   *config.Environment
+	logger   *logrus.Entry
+	database *mysql.Database
 }
 
 var listEnvSecret = []string{
@@ -42,17 +45,25 @@ func main() {
 	logger := initLog()
 	loggerStartServer := initStartServerLog()
 
-	logger.Info("Starting GoChat Backend API...")
-
 	cfg := loadEnvironment()
 
 	gin.SetMode(cfg.RunMode)
 
 	loggerStartServer.Infof("System is running with %s mode", cfg.RunMode)
 
+	// Initialize Database Connection
+	db, err := mysql.ConnectMysql(cfg)
+
+	if err != nil {
+		loggerStartServer.Fatalf("Failed to connect to MySQL: %v", err)
+	}
+
+	database := mysql.NewDatabase(db)
+
 	app := &App{
-		config: cfg,
-		logger: logger,
+		config:   cfg,
+		logger:   logger,
+		database: database,
 	}
 
 	// Initialize Services
@@ -86,9 +97,11 @@ func main() {
 	}()
 	loggerStartServer.Infof("Start HTTP Server Successfully on PORT: %d", app.config.Port)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		defer database.Close()
 		loggerStartServer.Fatalf("Start HTTP Server Failed. Error: %s", err.Error())
 	}
 	<-done
+	defer database.Close()
 	loggerStartServer.Infof("Stopped backend application.")
 }
 
