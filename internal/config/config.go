@@ -12,8 +12,8 @@ var (
 
 type Environment struct {
 	Constants
-	RunMod string `env:"RUN_MODE,required=true"`
-	Port   int    `env:"PORT,default=8080"`
+	RunMode string `env:"RUN_MODE,required=true"`
+	Port    int    `env:"PORT,default=8080"`
 
 	CorsAllowOrigin string `env:"CORS_ALLOW_ORIGIN,default=*"`
 
