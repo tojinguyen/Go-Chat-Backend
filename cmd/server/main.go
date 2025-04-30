@@ -9,6 +9,7 @@ import (
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/router"
 	"gochat-backend/internal/usecase"
+	"gochat-backend/pkg/jwt"
 	"log"
 	"os"
 	"os/signal"
@@ -54,9 +55,16 @@ func main() {
 		logger: logger,
 	}
 
+	// Initialize Services
+	jwtService := jwt.NewJwtService(app.config)
+
 	useCaseContainer := usecase.NewUseCaseContainer()
 
-	middleware := middleware.NewMiddleware()
+	middleware := middleware.NewMiddleware(
+		jwtService,
+		logger,
+		*app.config,
+	)
 
 	router := router.InitRouter(app.config, middleware, useCaseContainer)
 

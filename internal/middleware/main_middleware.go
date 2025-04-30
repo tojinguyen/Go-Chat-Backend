@@ -1,7 +1,11 @@
 package middleware
 
 import (
+	"gochat-backend/internal/config"
+	jwtPkg "gochat-backend/pkg/jwt"
+
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type Middleware interface {
@@ -10,8 +14,19 @@ type Middleware interface {
 }
 
 type middleware struct {
+	jwtService jwtPkg.JwtService
+	logger     *logrus.Entry
+	cfg        config.Environment
 }
 
-func NewMiddleware() Middleware {
-	return &middleware{}
+func NewMiddleware(
+	jwtService jwtPkg.JwtService,
+	logger *logrus.Entry,
+	cfg config.Environment,
+) Middleware {
+	return &middleware{
+		jwtService: jwtService,
+		logger:     logger,
+		cfg:        cfg,
+	}
 }
