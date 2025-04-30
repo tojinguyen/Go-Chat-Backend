@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"gochat-backend/internal/domain"
+	domain "gochat-backend/internal/domain/auth"
 )
 
 type AccountRepo struct {
@@ -28,9 +28,9 @@ func (r *AccountRepo) FindByEmail(ctx context.Context, email string) (*domain.Ac
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No user found
-		} 
+		}
 		return nil, err // Some other error occurred
 	}
-	
+
 	return &account, nil
 }
