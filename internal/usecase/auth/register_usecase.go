@@ -45,12 +45,12 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 
 	var avatarURL string
 
-	// if input.Avatar != nil {
-	// 	avatarURL, err = a.fileService.UploadFile(ctx, input.Avatar, "avatars")
-	// 	if err != nil {
-	// 		return nil, fmt.Errorf("failed to upload avatar: %w", err)
-	// 	}
-	// }
+	if input.Avatar != nil {
+		avatarURL, err = a.cloudstorage.UploadAvatar(input.Avatar, "avatars")
+		if err != nil {
+			return nil, fmt.Errorf("failed to upload avatar: %w", err)
+		}
+	}
 
 	verificationCode := a.verificationService.GenerateCode()
 

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"gochat-backend/internal/config"
+	cloudstorage "gochat-backend/internal/infra/cloudinary"
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase/auth"
 	"gochat-backend/pkg/email"
@@ -19,6 +20,9 @@ type SharedDependencies struct {
 
 	//Repositories
 	AccountRepo repository.AccountRepository
+
+	// Cloud Storage
+	CloudStorage cloudstorage.CloudinaryService
 }
 
 type UseCaseContainer struct {
@@ -27,6 +31,13 @@ type UseCaseContainer struct {
 
 func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
 	return &UseCaseContainer{
-		Auth: auth.NewAuthUseCase(deps.Config, deps.JwtService, deps.EmailService, deps.VerificationService, deps.AccountRepo),
+		Auth: auth.NewAuthUseCase(
+			deps.Config,
+			deps.JwtService,
+			deps.EmailService,
+			deps.VerificationService,
+			deps.AccountRepo,
+			deps.CloudStorage,
+		),
 	}
 }

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"gochat-backend/internal/config"
+	cloudstorage "gochat-backend/internal/infra/cloudinary"
 	"gochat-backend/internal/repository"
 	"gochat-backend/pkg/email"
 	"gochat-backend/pkg/jwt"
@@ -19,6 +20,7 @@ type authUseCase struct {
 	emailService        email.EmailService
 	verificationService verification.VerificationService
 	accountRepository   repository.AccountRepository
+	cloudstorage        cloudstorage.CloudinaryService
 }
 
 func NewAuthUseCase(
@@ -27,6 +29,7 @@ func NewAuthUseCase(
 	emailService email.EmailService,
 	verificationService verification.VerificationService,
 	accountRepository repository.AccountRepository,
+	cloudstorage cloudstorage.CloudinaryService,
 ) AuthUseCase {
 	return &authUseCase{
 		cfg:                 cfg,
@@ -34,5 +37,6 @@ func NewAuthUseCase(
 		emailService:        emailService,
 		verificationService: verificationService,
 		accountRepository:   accountRepository,
+		cloudstorage:        cloudstorage,
 	}
 }

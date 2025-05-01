@@ -55,6 +55,11 @@ type Environment struct {
 	// Verification Config
 	VerificationCodeLength        int `env:"VERIFICATION_CODE_LENGTH,default=6"`
 	VerificationCodeExpireMinutes int `env:"VERIFICATION_CODE_EXPIRE_MINUTES,default=5"`
+
+	// Cloudinary Config
+	CloudinaryName   string `env:"CLOUDINARY_NAME,required=true"`
+	CloudinaryKey    string `env:"CLOUDINARY_KEY,required=true"`
+	CloudinarySecret string `env:"CLOUDINARY_SECRET,required=true"`
 }
 
 func Load() (*Environment, error) {

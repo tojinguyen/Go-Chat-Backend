@@ -22,6 +22,7 @@ import (
 
 	"net/http"
 
+	cloudstorage "gochat-backend/internal/infra/cloudinary"
 	"gochat-backend/internal/infra/mysql"
 
 	"github.com/gin-gonic/gin"
@@ -31,9 +32,9 @@ import (
 )
 
 type App struct {
-	config   *config.Environment
-	logger   *logrus.Entry
-	database *mysql.Database
+	config        *config.Environment
+	logger        *logrus.Entry
+	mysqlDatabase *mysql.Database
 }
 
 var listEnvSecret = []string{
@@ -62,10 +63,16 @@ func main() {
 		loggerStartServer.Fatalf("Failed to connect to database: %v", err)
 	}
 
+	// Initialize Cloudinary Service
+	cldService, err := InitCloudinary(cfg)
+	if err != nil {
+		loggerStartServer.Fatalf("Failed to create Cloudinary client: %v", err)
+	}
+
 	app := &App{
-		config:   cfg,
-		logger:   logger,
-		database: db,
+		config:        cfg,
+		logger:        logger,
+		mysqlDatabase: db,
 	}
 
 	// Initialize Services
@@ -82,6 +89,7 @@ func main() {
 		EmailService:        emailService,
 		VerificationService: verificationService,
 		AccountRepo:         accountRepo,
+		CloudStorage:        cldService,
 	}
 
 	useCaseContainer := usecase.NewUseCaseContainer(deps)
@@ -125,8 +133,16 @@ func InitDatabase(cfg *config.Environment) (*mysql.Database, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MySQL: %v", err)
 	}
-	database := mysql.NewDatabase(db)
+	database := mysql.NewMySqlDatabase(db)
 	return database, nil
+}
+
+func InitCloudinary(cfg *config.Environment) (cloudstorage.CloudinaryService, error) {
+	cldService, err := cloudstorage.NewCloudinaryService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Cloudinary client: %v", err)
+	}
+	return cldService, nil
 }
 
 func GracefulShutDown(config *config.Environment, quit chan bool, server *http.Server) error {
