@@ -60,6 +60,12 @@ type Environment struct {
 	CloudinaryName   string `env:"CLOUDINARY_NAME,required=true"`
 	CloudinaryKey    string `env:"CLOUDINARY_KEY,required=true"`
 	CloudinarySecret string `env:"CLOUDINARY_SECRET,required=true"`
+
+	// Redis Config
+	RedisHost     string `env:"REDIS_HOST,required=true"`
+	RedisPort     int    `env:"REDIS_PORT,required=true"`
+	RedisPassword string `env:"REDIS_PASSWORD,required=true"`
+	RedisDB       int    `env:"REDIS_DB,default=0"`
 }
 
 func Load() (*Environment, error) {

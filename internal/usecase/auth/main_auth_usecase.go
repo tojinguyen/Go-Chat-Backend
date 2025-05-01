@@ -4,6 +4,7 @@ import (
 	"context"
 	"gochat-backend/internal/config"
 	cloudstorage "gochat-backend/internal/infra/cloudinaryinfra"
+	"gochat-backend/internal/infra/redisinfra"
 	"gochat-backend/internal/repository"
 	"gochat-backend/pkg/email"
 	"gochat-backend/pkg/jwt"
@@ -21,6 +22,7 @@ type authUseCase struct {
 	verificationService verification.VerificationService
 	accountRepository   repository.AccountRepository
 	cloudstorage        cloudstorage.CloudinaryService
+	redisService        redisinfra.RedisService
 }
 
 func NewAuthUseCase(
@@ -30,6 +32,7 @@ func NewAuthUseCase(
 	verificationService verification.VerificationService,
 	accountRepository repository.AccountRepository,
 	cloudstorage cloudstorage.CloudinaryService,
+	redisService redisinfra.RedisService,
 ) AuthUseCase {
 	return &authUseCase{
 		cfg:                 cfg,
@@ -38,5 +41,6 @@ func NewAuthUseCase(
 		verificationService: verificationService,
 		accountRepository:   accountRepository,
 		cloudstorage:        cloudstorage,
+		redisService:        redisService,
 	}
 }

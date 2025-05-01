@@ -24,6 +24,7 @@ import (
 
 	cloudstorage "gochat-backend/internal/infra/cloudinaryinfra"
 	"gochat-backend/internal/infra/mysqlinfra"
+	"gochat-backend/internal/infra/redisinfra"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -69,6 +70,12 @@ func main() {
 		loggerStartServer.Fatalf("Failed to create Cloudinary client: %v", err)
 	}
 
+	// Initialize Redis Service
+	redisService, err := InitRedis(cfg)
+	if err != nil {
+		loggerStartServer.Fatalf("Failed to create Redis client: %v", err)
+	}
+
 	app := &App{
 		config:        cfg,
 		logger:        logger,
@@ -90,6 +97,7 @@ func main() {
 		VerificationService: verificationService,
 		AccountRepo:         accountRepo,
 		CloudStorage:        cldService,
+		RedisService:        redisService,
 	}
 
 	useCaseContainer := usecase.NewUseCaseContainer(deps)
@@ -143,6 +151,14 @@ func InitCloudinary(cfg *config.Environment) (cloudstorage.CloudinaryService, er
 		return nil, fmt.Errorf("failed to create Cloudinary client: %v", err)
 	}
 	return cldService, nil
+}
+
+func InitRedis(cfg *config.Environment) (redisinfra.RedisService, error) {
+	redisService, err := redisinfra.NewRedisService(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Redis client: %v", err)
+	}
+	return redisService, nil
 }
 
 func GracefulShutDown(config *config.Environment, quit chan bool, server *http.Server) error {
