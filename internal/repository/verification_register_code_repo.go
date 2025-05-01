@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	domain "gochat-backend/internal/domain/auth"
 	"gochat-backend/internal/infra/mysqlinfra"
 	"time"
@@ -12,20 +13,22 @@ import (
 
 type VerificationRegisterCodeRepository interface {
 	CreateVerificationCode(ctx context.Context, code *domain.RegistrationVerificationCode) error
-	FindByEmailAndType(ctx context.Context, email string, codeType string) (*domain.RegistrationVerificationCode, error)
-	FindByCodeAndType(ctx context.Context, code string, codeType string) (*domain.RegistrationVerificationCode, error)
-	MarkAsVerified(ctx context.Context, id string) error
+	GetVerificationCodeByID(ctx context.Context, id string) (*domain.RegistrationVerificationCode, error)
+	GetVerificationCodeByEmail(ctx context.Context, email string) (*domain.RegistrationVerificationCode, error)
+	VerifyCode(ctx context.Context, id string, code string) error
+	UpdateVerificationStatus(ctx context.Context, id string, verified bool) error
+	DeleteVerificationCode(ctx context.Context, id string) error
 }
 
-type VerificationRepo struct {
+type RegisterVerificationRepo struct {
 	database *mysqlinfra.Database
 }
 
-func NewVerificationRepo(db *mysqlinfra.Database) *VerificationRepo {
-	return &VerificationRepo{database: db}
+func NewVerificationRepo(db *mysqlinfra.Database) *RegisterVerificationRepo {
+	return &RegisterVerificationRepo{database: db}
 }
 
-func (r *VerificationRepo) CreateVerificationCode(ctx context.Context, code *domain.RegistrationVerificationCode) error {
+func (r *RegisterVerificationRepo) CreateVerificationCode(ctx context.Context, code *domain.RegistrationVerificationCode) error {
 	if code.ID == "" {
 		code.ID = uuid.New().String()
 	}
@@ -56,28 +59,27 @@ func (r *VerificationRepo) CreateVerificationCode(ctx context.Context, code *dom
 	})
 }
 
-func (r *VerificationRepo) FindByEmailAndType(ctx context.Context, email string, codeType string) (*domain.RegistrationVerificationCode, error) {
-	var code domain.RegistrationVerificationCode
+func (r *RegisterVerificationRepo) GetVerificationCodeByID(ctx context.Context, id string) (*domain.RegistrationVerificationCode, error) {
 	query := `
-        SELECT 
-            id, user_id, email, code, type, verified, expires_at, created_at, verified_at
+        SELECT id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at 
         FROM verification_codes 
-        WHERE email = ? AND type = ?
-        ORDER BY created_at DESC
-        LIMIT 1
+        WHERE id = ? AND type = 'register'
     `
 
-	var verifiedAt sql.NullTime
-	err := r.database.DB.QueryRowContext(ctx, query, email, codeType).Scan(
+	var code domain.RegistrationVerificationCode
+
+	err := r.database.DB.QueryRowContext(ctx, query, id).Scan(
 		&code.ID,
 		&code.UserID,
 		&code.Email,
+		&code.Name,
+		&code.HashedPassword,
+		&code.Avatar,
 		&code.Code,
 		&code.Type,
 		&code.Verified,
 		&code.ExpiresAt,
 		&code.CreatedAt,
-		&verifiedAt,
 	)
 
 	if err != nil {
@@ -85,36 +87,33 @@ func (r *VerificationRepo) FindByEmailAndType(ctx context.Context, email string,
 			return nil, nil
 		}
 		return nil, err
-	}
-
-	if verifiedAt.Valid {
-		code.VerifiedAt = &verifiedAt.Time
 	}
 
 	return &code, nil
 }
 
-func (r *VerificationRepo) FindByCodeAndType(ctx context.Context, code string, codeType string) (*domain.RegistrationVerificationCode, error) {
-	var verificationCode domain.RegistrationVerificationCode
+func (r *RegisterVerificationRepo) GetVerificationCodeByEmail(ctx context.Context, email string) (*domain.RegistrationVerificationCode, error) {
 	query := `
-        SELECT 
-            id, user_id, email, code, type, verified, expires_at, created_at, verified_at
+        SELECT id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at 
         FROM verification_codes 
-        WHERE code = ? AND type = ? AND verified = false AND expires_at > NOW()
-        LIMIT 1
+        WHERE email = ? AND type = 'register'
+        ORDER BY created_at DESC LIMIT 1
     `
 
-	var verifiedAt sql.NullTime
-	err := r.database.DB.QueryRowContext(ctx, query, code, codeType).Scan(
-		&verificationCode.ID,
-		&verificationCode.UserID,
-		&verificationCode.Email,
-		&verificationCode.Code,
-		&verificationCode.Type,
-		&verificationCode.Verified,
-		&verificationCode.ExpiresAt,
-		&verificationCode.CreatedAt,
-		&verifiedAt,
+	var code domain.RegistrationVerificationCode
+
+	err := r.database.DB.QueryRowContext(ctx, query, email).Scan(
+		&code.ID,
+		&code.UserID,
+		&code.Email,
+		&code.Name,
+		&code.HashedPassword,
+		&code.Avatar,
+		&code.Code,
+		&code.Type,
+		&code.Verified,
+		&code.ExpiresAt,
+		&code.CreatedAt,
 	)
 
 	if err != nil {
@@ -124,16 +123,41 @@ func (r *VerificationRepo) FindByCodeAndType(ctx context.Context, code string, c
 		return nil, err
 	}
 
-	if verifiedAt.Valid {
-		verificationCode.VerifiedAt = &verifiedAt.Time
-	}
-
-	return &verificationCode, nil
+	return &code, nil
 }
 
-func (r *VerificationRepo) MarkAsVerified(ctx context.Context, id string) error {
+func (r *RegisterVerificationRepo) VerifyCode(ctx context.Context, id string, code string) error {
+	query := `
+        SELECT id FROM verification_codes 
+        WHERE id = ? AND code = ? AND type = 'register' AND verified = false AND expires_at > NOW()
+    `
+
+	var verificationID string
+	err := r.database.DB.QueryRowContext(ctx, query, id, code).Scan(&verificationID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return errors.New("invalid or expired verification code")
+		}
+		return err
+	}
+
+	return r.UpdateVerificationStatus(ctx, id, true)
+}
+
+func (r *RegisterVerificationRepo) UpdateVerificationStatus(ctx context.Context, id string, verified bool) error {
+	query := `UPDATE verification_codes SET verified = ? WHERE id = ?`
+
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
-		query := `UPDATE verification_codes SET verified = true, verified_at = NOW() WHERE id = ?`
+		_, err := tx.ExecContext(ctx, query, verified, id)
+		return err
+	})
+}
+
+func (r *RegisterVerificationRepo) DeleteVerificationCode(ctx context.Context, id string) error {
+	query := `DELETE FROM verification_codes WHERE id = ?`
+
+	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, query, id)
 		return err
 	})

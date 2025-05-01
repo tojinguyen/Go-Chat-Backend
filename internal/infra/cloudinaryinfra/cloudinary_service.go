@@ -15,6 +15,7 @@ import (
 
 type CloudinaryService interface {
 	UploadAvatar(file *multipart.FileHeader, fileName string) (string, error)
+	MoveAvatar(avatarUrl string, fileName string) (string, error)
 }
 
 type cloudinaryService struct {
@@ -53,6 +54,27 @@ func (c *cloudinaryService) UploadAvatar(file *multipart.FileHeader, fileName st
 	}
 
 	uoloadResult, err := c.cld.Upload.Upload(ctx, file, uploadParams)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload file to Cloudinary: %v", err)
+	}
+
+	return uoloadResult.SecureURL, nil
+}
+
+func (c *cloudinaryService) MoveAvatar(avatarUrl string, fileName string) (string, error) {
+	ctx := context.Background()
+
+	extension := filepath.Ext(fileName)
+	uniqueFileName := uuid.New().String() + extension
+
+	uploadParams := uploader.UploadParams{
+		PublicID:       strings.TrimSuffix(uniqueFileName, extension),
+		Folder:         "avatars",
+		ResourceType:   "image",
+		Transformation: "w_500,h_500,c_fill,g_face",
+	}
+
+	uoloadResult, err := c.cld.Upload.Upload(ctx, avatarUrl, uploadParams)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload file to Cloudinary: %v", err)
 	}

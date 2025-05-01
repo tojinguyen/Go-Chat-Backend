@@ -7,6 +7,7 @@ import (
 	domain "gochat-backend/internal/domain/auth"
 	"gochat-backend/pkg/verification"
 	"mime/multipart"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -96,6 +97,71 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 }
 
 func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegistrationInput) (*RegisterOutput, error) {
+	verificationRecord, err := a.verificationRegisterRepository.GetVerificationCodeByID(ctx, input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get verification record: %w", err)
+	}
 
-	return nil, nil
+	if verificationRecord == nil {
+		return nil, errors.New("verification record not found")
+	}
+
+	// Check if code is expired
+	if time.Now().UTC().After(verificationRecord.ExpiresAt) {
+		return nil, errors.New("verification code has expired")
+	}
+
+	// Check if code is already verified
+	if verificationRecord.Verified {
+		return nil, errors.New("email already verified")
+	}
+
+	// Verify the code
+	if verificationRecord.Code != input.Code {
+		return nil, errors.New("invalid verification code")
+	}
+
+	// Create user account
+	account := &domain.Account{
+		ID:        verificationRecord.UserID,
+		Name:      verificationRecord.Name,
+		Email:     verificationRecord.Email,
+		Password:  verificationRecord.HashedPassword,
+		AvatarURL: verificationRecord.Avatar,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	}
+
+	// Save user to database
+	err = a.accountRepository.CreateUser(ctx, account)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user account: %w", err)
+	}
+
+	err = a.verificationRegisterRepository.DeleteVerificationCode(ctx, verificationRecord.ID)
+	if err != nil {
+		fmt.Printf("Failed to delete verification record: %v\n", err)
+	}
+
+	// If avatar was uploaded to temporary location, move it to permanent location
+	if verificationRecord.Avatar != "" && strings.Contains(verificationRecord.Avatar, "avatars/temp") {
+		newAvatarURL, err := a.cloudstorage.MoveAvatar(verificationRecord.Avatar, fmt.Sprintf("avatars/%s", account.ID))
+		if err != nil {
+			fmt.Printf("Failed to move avatar to permanent location: %v\n", err)
+		} else {
+			// Update the account with the new avatar URL
+			account.AvatarURL = newAvatarURL
+			err = a.accountRepository.UpdateAvatar(ctx, account.ID, newAvatarURL)
+			if err != nil {
+				fmt.Printf("Failed to update avatar URL: %v\n", err)
+			}
+		}
+	}
+
+	return &RegisterOutput{
+		ID:        account.ID,
+		Name:      account.Name,
+		Email:     account.Email,
+		AvatarURL: account.AvatarURL,
+	}, nil
 }

@@ -17,6 +17,7 @@ type AccountRepository interface {
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
 	UpdatePassword(ctx context.Context, id string, password string) error
 	UpdateProfileInfo(ctx context.Context, account *domain.Account) error
+	UpdateAvatar(ctx context.Context, id string, avatarURL string) error
 }
 
 type AccountRepo struct {
@@ -146,6 +147,14 @@ func (r *AccountRepo) UpdateProfileInfo(ctx context.Context, account *domain.Acc
 			time.Now(),
 			account.ID,
 		)
+		return err
+	})
+}
+
+func (r *AccountRepo) UpdateAvatar(ctx context.Context, id string, avatarURL string) error {
+	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
+		query := `UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?`
+		_, err := tx.ExecContext(ctx, query, avatarURL, time.Now(), id)
 		return err
 	})
 }
