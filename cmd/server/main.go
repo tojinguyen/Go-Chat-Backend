@@ -23,6 +23,7 @@ import (
 	"gochat-backend/internal/infra/mysql"
 
 	"github.com/gin-gonic/gin"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 )
