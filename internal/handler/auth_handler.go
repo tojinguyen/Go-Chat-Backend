@@ -1,26 +1,15 @@
 package handler
 
 import (
-	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
-type AuthHandler struct {
-	repo *repository.AccountRepo
-}
-
-func NewAuthHandler(repo *repository.AccountRepo) *AuthHandler {
-	return &AuthHandler{
-		repo: repo,
-	}
-}
-
 type RegisterRequest struct {
 	Name     string `json:"name" binding:"required,max=255"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Email    string `json:"email" binding:"required,email,customEmail,max=255"`
+	Password string `json:"password" binding:"required,min=6,max=255,customPassword"`
 }
 
 func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
