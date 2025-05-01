@@ -13,16 +13,19 @@ import (
 
 type AuthUseCase interface {
 	Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error)
+	VerifyRegistration(ctx context.Context, input VerifyRegistrationInput) (*RegisterOutput, error)
 }
 
 type authUseCase struct {
-	cfg                 *config.Environment
-	jwtService          jwt.JwtService
-	emailService        email.EmailService
-	verificationService verification.VerificationService
-	accountRepository   repository.AccountRepository
-	cloudstorage        cloudstorage.CloudinaryService
-	redisService        redisinfra.RedisService
+	cfg                            *config.Environment
+	jwtService                     jwt.JwtService
+	emailService                   email.EmailService
+	verificationService            verification.VerificationService
+	accountRepository              repository.AccountRepository
+	verificationRegisterRepository repository.VerificationRegisterCodeRepository
+
+	cloudstorage cloudstorage.CloudinaryService
+	redisService redisinfra.RedisService
 }
 
 func NewAuthUseCase(
@@ -31,16 +34,18 @@ func NewAuthUseCase(
 	emailService email.EmailService,
 	verificationService verification.VerificationService,
 	accountRepository repository.AccountRepository,
+	verificationRegisterRepository repository.VerificationRegisterCodeRepository,
 	cloudstorage cloudstorage.CloudinaryService,
 	redisService redisinfra.RedisService,
 ) AuthUseCase {
 	return &authUseCase{
-		cfg:                 cfg,
-		jwtService:          jwtService,
-		emailService:        emailService,
-		verificationService: verificationService,
-		accountRepository:   accountRepository,
-		cloudstorage:        cloudstorage,
-		redisService:        redisService,
+		cfg:                            cfg,
+		jwtService:                     jwtService,
+		emailService:                   emailService,
+		verificationService:            verificationService,
+		verificationRegisterRepository: verificationRegisterRepository,
+		accountRepository:              accountRepository,
+		cloudstorage:                   cloudstorage,
+		redisService:                   redisService,
 	}
 }

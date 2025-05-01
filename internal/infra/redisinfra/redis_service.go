@@ -51,7 +51,7 @@ func (r *redisService) Get(ctx context.Context, key string, dest interface{}) er
 	data, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
 		if err == redis.Nil {
-			return fmt.Errorf("key %s not found", key)
+			return nil // Key does not exist
 		}
 		return err
 	}

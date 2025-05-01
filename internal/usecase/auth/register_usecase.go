@@ -7,6 +7,7 @@ import (
 	domain "gochat-backend/internal/domain/auth"
 	"gochat-backend/pkg/verification"
 	"mime/multipart"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -17,6 +18,12 @@ type RegisterInput struct {
 	Email    string                `json:"email" binding:"required,email,customEmail,max=255"`
 	Password string                `json:"password" binding:"required,customPassword,min=6,max=255"`
 	Avatar   *multipart.FileHeader `json:"avatar" binding:"required,omitempty"`
+}
+
+type VerifyRegistrationInput struct {
+	ID    string `json:"id" binding:"required"`
+	Email string `json:"email" binding:"required,email,customEmail,max=255"`
+	Code  string `json:"code" binding:"required"`
 }
 
 type RegisterOutput struct {
@@ -46,24 +53,34 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 	var avatarURL string
 
 	if input.Avatar != nil {
-		avatarURL, err = a.cloudstorage.UploadAvatar(input.Avatar, "avatars")
+		avatarURL, err = a.cloudstorage.UploadAvatar(input.Avatar, "avatars/temp")
 		if err != nil {
 			return nil, fmt.Errorf("failed to upload avatar: %w", err)
 		}
 	}
 
+	userID := uuid.New().String()
 	verificationCode := a.verificationService.GenerateCode()
 
-	account := &domain.Account{
-		ID:        uuid.New().String(),
-		Name:      input.Name,
-		Email:     input.Email,
-		Password:  string(hashedPassword),
-		AvatarURL: avatarURL,
+	expiresAt := time.Now().UTC().Add(time.Duration(a.cfg.VerificationCodeExpireMinutes) * time.Minute)
+
+	verificationRecord := &domain.RegistrationVerificationCode{
+		ID:             uuid.New().String(),
+		UserID:         userID,
+		Email:          input.Email,
+		Name:           input.Name,
+		HashedPassword: string(hashedPassword),
+		Avatar:         avatarURL,
+		Code:           verificationCode,
+		Type:           verification.VerificationCodeTypeRegister,
+		Verified:       false,
+		ExpiresAt:      expiresAt,
+		CreatedAt:      time.Now(),
 	}
 
-	if err := a.accountRepository.CreateUser(ctx, account); err != nil {
-		return nil, fmt.Errorf("failed to create account: %w", err)
+	err = a.verificationRegisterRepository.CreateVerificationCode(ctx, verificationRecord)
+	if err != nil {
+		return nil, fmt.Errorf("failed to save verification data: %w", err)
 	}
 
 	if err := a.emailService.SendVerificationCode(input.Email, verificationCode, verification.VerificationCodeTypeRegister); err != nil {
@@ -71,9 +88,14 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 	}
 
 	return &RegisterOutput{
-		ID:        account.ID,
-		Name:      account.Name,
-		Email:     account.Email,
-		AvatarURL: account.AvatarURL,
+		ID:        userID,
+		Name:      input.Name,
+		Email:     input.Email,
+		AvatarURL: avatarURL,
 	}, nil
+}
+
+func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegistrationInput) (*RegisterOutput, error) {
+
+	return nil, nil
 }

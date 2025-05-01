@@ -20,7 +20,8 @@ type SharedDependencies struct {
 	VerificationService verification.VerificationService
 
 	//Repositories
-	AccountRepo repository.AccountRepository
+	AccountRepo              repository.AccountRepository
+	VerificationRegisterRepo repository.VerificationRegisterCodeRepository
 
 	// Cloud Storage
 	CloudStorage cloudinaryinfra.CloudinaryService
@@ -41,6 +42,7 @@ func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
 			deps.EmailService,
 			deps.VerificationService,
 			deps.AccountRepo,
+			deps.VerificationRegisterRepo,
 			deps.CloudStorage,
 			deps.RedisService,
 		),

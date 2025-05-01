@@ -10,10 +10,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type VerificationCodeRepository interface {
-	CreateVerificationCode(ctx context.Context, code *domain.VerificationCode) error
-	FindByEmailAndType(ctx context.Context, email string, codeType string) (*domain.VerificationCode, error)
-	FindByCodeAndType(ctx context.Context, code string, codeType string) (*domain.VerificationCode, error)
+type VerificationRegisterCodeRepository interface {
+	CreateVerificationCode(ctx context.Context, code *domain.RegistrationVerificationCode) error
+	FindByEmailAndType(ctx context.Context, email string, codeType string) (*domain.RegistrationVerificationCode, error)
+	FindByCodeAndType(ctx context.Context, code string, codeType string) (*domain.RegistrationVerificationCode, error)
 	MarkAsVerified(ctx context.Context, id string) error
 }
 
@@ -25,7 +25,7 @@ func NewVerificationRepo(db *mysqlinfra.Database) *VerificationRepo {
 	return &VerificationRepo{database: db}
 }
 
-func (r *VerificationRepo) CreateVerificationCode(ctx context.Context, code *domain.VerificationCode) error {
+func (r *VerificationRepo) CreateVerificationCode(ctx context.Context, code *domain.RegistrationVerificationCode) error {
 	if code.ID == "" {
 		code.ID = uuid.New().String()
 	}
@@ -56,8 +56,8 @@ func (r *VerificationRepo) CreateVerificationCode(ctx context.Context, code *dom
 	})
 }
 
-func (r *VerificationRepo) FindByEmailAndType(ctx context.Context, email string, codeType string) (*domain.VerificationCode, error) {
-	var code domain.VerificationCode
+func (r *VerificationRepo) FindByEmailAndType(ctx context.Context, email string, codeType string) (*domain.RegistrationVerificationCode, error) {
+	var code domain.RegistrationVerificationCode
 	query := `
         SELECT 
             id, user_id, email, code, type, verified, expires_at, created_at, verified_at
@@ -94,8 +94,8 @@ func (r *VerificationRepo) FindByEmailAndType(ctx context.Context, email string,
 	return &code, nil
 }
 
-func (r *VerificationRepo) FindByCodeAndType(ctx context.Context, code string, codeType string) (*domain.VerificationCode, error) {
-	var verificationCode domain.VerificationCode
+func (r *VerificationRepo) FindByCodeAndType(ctx context.Context, code string, codeType string) (*domain.RegistrationVerificationCode, error) {
+	var verificationCode domain.RegistrationVerificationCode
 	query := `
         SELECT 
             id, user_id, email, code, type, verified, expires_at, created_at, verified_at

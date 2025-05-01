@@ -89,15 +89,17 @@ func main() {
 
 	// Initialize Repositories
 	accountRepo := repository.NewUserRepo(db)
+	verificationRepo := repository.NewVerificationRepo(db)
 
 	deps := &usecase.SharedDependencies{
-		Config:              cfg,
-		JwtService:          jwtService,
-		EmailService:        emailService,
-		VerificationService: verificationService,
-		AccountRepo:         accountRepo,
-		CloudStorage:        cldService,
-		RedisService:        redisService,
+		Config:                   cfg,
+		JwtService:               jwtService,
+		EmailService:             emailService,
+		VerificationService:      verificationService,
+		AccountRepo:              accountRepo,
+		VerificationRegisterRepo: verificationRepo,
+		CloudStorage:             cldService,
+		RedisService:             redisService,
 	}
 
 	useCaseContainer := usecase.NewUseCaseContainer(deps)
