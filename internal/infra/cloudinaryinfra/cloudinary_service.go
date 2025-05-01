@@ -1,4 +1,4 @@
-package cloudstorage
+package cloudinaryinfra
 
 import (
 	"context"

@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	domain "gochat-backend/internal/domain/auth"
-	"gochat-backend/internal/infra/mysql"
+	"gochat-backend/internal/infra/mysqlinfra"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,10 +20,10 @@ type AccountRepository interface {
 }
 
 type AccountRepo struct {
-	database *mysql.Database
+	database *mysqlinfra.Database
 }
 
-func NewUserRepo(db *mysql.Database) *AccountRepo {
+func NewUserRepo(db *mysqlinfra.Database) *AccountRepo {
 	return &AccountRepo{database: db}
 }
 

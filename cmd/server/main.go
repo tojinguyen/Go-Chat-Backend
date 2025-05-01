@@ -22,8 +22,8 @@ import (
 
 	"net/http"
 
-	cloudstorage "gochat-backend/internal/infra/cloudinary"
-	"gochat-backend/internal/infra/mysql"
+	cloudstorage "gochat-backend/internal/infra/cloudinaryinfra"
+	"gochat-backend/internal/infra/mysqlinfra"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
@@ -34,7 +34,7 @@ import (
 type App struct {
 	config        *config.Environment
 	logger        *logrus.Entry
-	mysqlDatabase *mysql.Database
+	mysqlDatabase *mysqlinfra.Database
 }
 
 var listEnvSecret = []string{
@@ -128,12 +128,12 @@ func main() {
 	loggerStartServer.Infof("Stopped backend application.")
 }
 
-func InitDatabase(cfg *config.Environment) (*mysql.Database, error) {
-	db, err := mysql.ConnectMysql(cfg)
+func InitDatabase(cfg *config.Environment) (*mysqlinfra.Database, error) {
+	db, err := mysqlinfra.ConnectMysql(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to MySQL: %v", err)
 	}
-	database := mysql.NewMySqlDatabase(db)
+	database := mysqlinfra.NewMySqlDatabase(db)
 	return database, nil
 }
 

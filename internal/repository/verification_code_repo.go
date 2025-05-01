@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	domain "gochat-backend/internal/domain/auth"
-	"gochat-backend/internal/infra/mysql"
+	"gochat-backend/internal/infra/mysqlinfra"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,10 +18,10 @@ type VerificationCodeRepository interface {
 }
 
 type VerificationRepo struct {
-	database *mysql.Database
+	database *mysqlinfra.Database
 }
 
-func NewVerificationRepo(db *mysql.Database) *VerificationRepo {
+func NewVerificationRepo(db *mysqlinfra.Database) *VerificationRepo {
 	return &VerificationRepo{database: db}
 }
 
