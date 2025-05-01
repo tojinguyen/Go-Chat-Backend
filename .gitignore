@@ -1,0 +1,40 @@
+# ====================================
+# Go build artifacts
+# ====================================
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Coverage files
+*.cover
+
+# Dependency dirs
+vendor/
+
+# Module files (optional to ignore go.sum, thường vẫn giữ lại)
+# go.sum
+
+# IDE/editor configs
+.idea/
+.vscode/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temp files
+**/tmp/
+
+# ====================================
+# Env files (NEVER commit secrets!)
+# ====================================
+.env
+.env.*
