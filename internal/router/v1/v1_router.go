@@ -13,6 +13,13 @@ func InitV1Router(
 	useCaseContainer *usecase.UseCaseContainer,
 ) {
 	r.Use()
+
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
+
 	{
 		InitAuthRouter(r.Group("/auth"), middleware, useCaseContainer.Auth)
 	}
