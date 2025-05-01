@@ -186,7 +186,7 @@ func setupSwagger() {
 
 	log.Println("=====================================================")
 	log.Println("🚀 Server started successfully!")
-	log.Println("📝 API Documentation: https://localhost:8080/api/v1/swagger/index.html")
+	log.Println("📝 API Documentation: http://localhost:8080/docs/index.html")
 	log.Println("=====================================================")
 }
 
