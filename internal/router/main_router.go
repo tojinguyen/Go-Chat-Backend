@@ -81,9 +81,9 @@ func InitRouter(
 		useCaseContainer,
 	)
 
-	// router.NoRoute(func(c *gin.Context) {
-	// 	reverseProxy(c, config)
-	// })
+	router.NoRoute(func(c *gin.Context) {
+		reverseProxy(c, config)
+	})
 
 	return router
 }
