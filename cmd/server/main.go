@@ -10,7 +10,9 @@ import (
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/router"
 	"gochat-backend/internal/usecase"
+	"gochat-backend/pkg/email"
 	"gochat-backend/pkg/jwt"
+	"gochat-backend/pkg/verification"
 	"log"
 	"os"
 	"os/signal"
@@ -68,14 +70,18 @@ func main() {
 
 	// Initialize Services
 	jwtService := jwt.NewJwtService(app.config)
+	emailService := email.NewSMTPEmailService(app.config)
+	verificationService := verification.NewVerificationService(app.config)
 
 	// Initialize Repositories
 	accountRepo := repository.NewUserRepo(db)
 
 	deps := &usecase.SharedDependencies{
-		Config:      cfg,
-		JwtService:  jwtService,
-		AccountRepo: accountRepo,
+		Config:              cfg,
+		JwtService:          jwtService,
+		EmailService:        emailService,
+		VerificationService: verificationService,
+		AccountRepo:         accountRepo,
 	}
 
 	useCaseContainer := usecase.NewUseCaseContainer(deps)

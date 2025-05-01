@@ -43,6 +43,18 @@ type Environment struct {
 	// FE Config
 	FrontendUri  string `env:"FRONTEND_URI,required=true"`
 	FrontendPort int    `env:"FRONTEND_PORT,required=true"`
+
+	// Email Config
+	EmailHost string `env:"EMAIL_HOST,required=true"`
+	EmailPort int    `env:"EMAIL_PORT,required=true"`
+	EmailUser string `env:"EMAIL_USER,required=true"`
+	EmailPass string `env:"EMAIL_PASS,required=true"`
+	EmailFrom string `env:"EMAIL_FROM,required=true"`
+	EmailName string `env:"EMAIL_NAME,required=true"`
+
+	// Verification Config
+	VerificationCodeLength        int `env:"VERIFICATION_CODE_LENGTH,default=6"`
+	VerificationCodeExpireMinutes int `env:"VERIFICATION_CODE_EXPIRE_MINUTES,default=5"`
 }
 
 func Load() (*Environment, error) {
