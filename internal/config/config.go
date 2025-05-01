@@ -57,9 +57,9 @@ type Environment struct {
 	VerificationCodeExpireMinutes int `env:"VERIFICATION_CODE_EXPIRE_MINUTES,default=5"`
 
 	// Cloudinary Config
-	CloudinaryName   string `env:"CLOUDINARY_NAME,required=true"`
-	CloudinaryKey    string `env:"CLOUDINARY_KEY,required=true"`
-	CloudinarySecret string `env:"CLOUDINARY_SECRET,required=true"`
+	CloudinaryName   string `env:"CLOUDINARY_CLOUD_NAME,required=true"`
+	CloudinaryKey    string `env:"CLOUDINARY_API_KEY,required=true"`
+	CloudinarySecret string `env:"CLOUDINARY_API_SECRET,required=true"`
 
 	// Redis Config
 	RedisHost     string `env:"REDIS_HOST,required=true"`
