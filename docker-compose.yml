@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.41-debian
+    container_name: realtime_chat_app_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: toai20102002
+      MYSQL_DATABASE: chat_app_db
+      MYSQL_USER: tojidev
+      MYSQL_PASSWORD: toai20102002
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_realtime-chat-data:/var/lib/mysql
+    networks:
+      - chat_app_network
+    restart: unless-stopped
+
+volumes:
+  mysql_realtime-chat-data:
+
+networks:
+  chat_app_network:
+    driver: bridge
