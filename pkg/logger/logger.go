@@ -37,7 +37,7 @@ func Log(ctx context.Context,
 	apiOrder := ctx.Value("apiOrder")
 	var errorCode *errorConstants.ErrorCode
 	if errorCodeSrc != nil {
-		if screenId == nil && apiOrder == nil && errorCodeSrc != nil {
+		if screenId == nil && apiOrder == nil {
 			errorCode = &errorConstants.ErrorCode{
 				HTTPCode:    errorCodeSrc.HTTPCode,
 				Type:        errorCodeSrc.Type,
