@@ -3,6 +3,9 @@ package handler
 import (
 	"gochat-backend/internal/usecase/auth"
 	"log"
+	"net/http"
+
+	"gochat-backend/internal/handler"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -19,7 +22,7 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 
 	if err := c.ShouldBindWith(&req, binding.FormMultipart); err != nil {
 		log.Println("Error binding request:", err)
-		c.JSON(400, gin.H{"error": err.Error()})
+		handler.SendErrorResponse(c, 400, err.Error())
 		return
 	}
 
@@ -27,7 +30,7 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 
 	if err != nil {
 		log.Println("Error getting avatar file:", err)
-		c.JSON(400, gin.H{"error": "Failed to get avatar file"})
+		handler.SendErrorResponse(c, 400, "Failed to get avatar file")
 		return
 	}
 
@@ -41,14 +44,11 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 	result, err := authUseCase.Register(c, input)
 	if err != nil {
 		log.Println("Error during registration:", err)
-		c.JSON(400, gin.H{"error": err.Error()})
+		handler.SendErrorResponse(c, 400, err.Error())
 		return
 	}
 
-	c.JSON(201, gin.H{
-		"message": "Registration successful! Please check your email for verification.",
-		"data":    result,
-	})
+	handler.SendSuccessResponse(c, http.StatusCreated, "Registration successful! Please check your email for verification.", result)
 }
 
 func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {

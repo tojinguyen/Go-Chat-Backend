@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"gochat-backend/internal/handler"
+	authHandler "gochat-backend/internal/handler/auth"
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/usecase/auth"
 
@@ -14,34 +14,34 @@ func InitAuthRouter(
 	authUseCase auth.AuthUseCase,
 ) {
 	router.POST("/register", func(c *gin.Context) {
-		handler.Register(c, authUseCase)
+		authHandler.Register(c, authUseCase)
 	})
 
 	router.POST("/verify-registration-code", func(c *gin.Context) {
-		handler.VerifyRegistrationCode(c, authUseCase)
+		authHandler.VerifyRegistrationCode(c, authUseCase)
 	})
 
 	router.POST("/login", func(c *gin.Context) {
-		handler.Login(c, authUseCase)
+		authHandler.Login(c, authUseCase)
 	})
 
 	router.GET("/refresh-token", func(c *gin.Context) {
-		handler.RefreshToken(c, authUseCase)
+		authHandler.RefreshToken(c, authUseCase)
 	})
 
 	router.PUT("/change-password", middleware.Authentication, func(c *gin.Context) {
-		handler.ChangePassword(c, authUseCase)
+		authHandler.ChangePassword(c, authUseCase)
 	})
 
 	router.PUT("/reset-password", func(context *gin.Context) {
-		handler.ResetPassword(context, authUseCase)
+		authHandler.ResetPassword(context, authUseCase)
 	})
 
 	router.GET("/reset-password", func(context *gin.Context) {
-		handler.CheckTokenResetPassword(context, authUseCase)
+		authHandler.CheckTokenResetPassword(context, authUseCase)
 	})
 
 	router.POST("/reset-password", func(context *gin.Context) {
-		handler.RequestResetPassword(context, authUseCase)
+		authHandler.RequestResetPassword(context, authUseCase)
 	})
 }
