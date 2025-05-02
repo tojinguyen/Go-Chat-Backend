@@ -18,7 +18,7 @@ func NewMySqlDatabase(db *sql.DB) *Database {
 }
 
 func ConnectMysql(cfg *config.Environment) (*sql.DB, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&charset=utf8mb4&collation=utf8mb4_unicode_ci&multiStatements=true",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?parseTime=true&charset=utf8mb4&collation=utf8mb4_unicode_ci&multiStatements=true",
 		cfg.MysqlUser,
 		cfg.MysqlPassword,
 		cfg.MysqlHost,
