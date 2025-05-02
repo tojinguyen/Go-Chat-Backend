@@ -48,6 +48,23 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 		return nil, errors.New("email already exists")
 	}
 
+	// Check if email exists in verification records and delete if found
+	existingVerification, err := a.verificationRegisterRepository.GetVerificationCodeByEmail(ctx, input.Email)
+	if err != nil {
+		log.Printf("Error checking if email exists in verification records: %v\n", err)
+		return nil, fmt.Errorf("failed to check verification records: %w", err)
+	}
+
+	if existingVerification != nil {
+		// Delete the existing verification record
+		err = a.verificationRegisterRepository.DeleteVerificationCode(ctx, existingVerification.ID)
+		if err != nil {
+			log.Printf("Error deleting existing verification record: %v\n", err)
+			return nil, fmt.Errorf("failed to delete existing verification record: %w", err)
+		}
+		log.Printf("Deleted existing verification record for email: %s\n", input.Email)
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 
 	if err != nil {
