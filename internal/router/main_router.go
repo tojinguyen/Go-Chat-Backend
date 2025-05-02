@@ -1,14 +1,10 @@
 package router
 
 import (
-	"fmt"
 	"gochat-backend/internal/config"
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/usecase"
 	"gochat-backend/internal/validations"
-	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"strings"
 	"time"
 
@@ -21,10 +17,6 @@ import (
 
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
-)
-
-const (
-	xForwardedProtoHeader = "x-forwarded-proto"
 )
 
 func InitRouter(
@@ -81,27 +73,5 @@ func InitRouter(
 		useCaseContainer,
 	)
 
-	router.NoRoute(func(c *gin.Context) {
-		reverseProxy(c, config)
-	})
-
 	return router
-}
-
-func reverseProxy(c *gin.Context, config *config.Environment) {
-	if c.GetHeader(xForwardedProtoHeader) != "https" {
-		sslUrl := "https://" + c.Request.Host + c.Request.RequestURI
-		c.Redirect(http.StatusFound, sslUrl)
-		return
-	}
-	remote, _ := url.Parse(fmt.Sprintf("http://localhost:%d", config.FrontendPort))
-	proxy := httputil.NewSingleHostReverseProxy(remote)
-	proxy.Director = func(req *http.Request) {
-		req.Header = c.Request.Header
-		req.Host = remote.Host
-		req.URL = c.Request.URL
-		req.URL.Scheme = remote.Scheme
-		req.URL.Host = remote.Host
-	}
-	proxy.ServeHTTP(c.Writer, c.Request)
 }
