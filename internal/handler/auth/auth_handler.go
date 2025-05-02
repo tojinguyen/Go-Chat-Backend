@@ -17,6 +17,12 @@ type RegisterRequest struct {
 	Password string `form:"password" binding:"required,min=6,max=255"`
 }
 
+type VerifyRegistrationRequest struct {
+	ID    string `json:"id" binding:"required"`
+	Email string `json:"email" binding:"required,email,customEmail,max=255"`
+	Code  string `json:"code" binding:"required"`
+}
+
 func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 	var req RegisterRequest
 
@@ -52,6 +58,28 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 }
 
 func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {
+	var req VerifyRegistrationRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Println("Error binding verification request:", err)
+		handler.SendErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	input := auth.VerifyRegistrationInput{
+		ID:    req.ID,
+		Email: req.Email,
+		Code:  req.Code,
+	}
+
+	result, err := authUseCase.VerifyRegistration(c, input)
+	if err != nil {
+		log.Println("Error during verification:", err)
+		handler.SendErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	handler.SendSuccessResponse(c, http.StatusOK, "Email verification successful! You can now log in.", result)
 }
 
 func Login(c *gin.Context, authUseCase auth.AuthUseCase) {
