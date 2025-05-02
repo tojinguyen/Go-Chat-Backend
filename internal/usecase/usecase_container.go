@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"gochat-backend/internal/infra/cloudinaryinfra"
 	"gochat-backend/internal/infra/redisinfra"
 	"gochat-backend/internal/repository"

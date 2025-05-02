@@ -3,7 +3,7 @@ package mysqlinfra
 import (
 	"database/sql"
 	"fmt"
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"time"
 )
 

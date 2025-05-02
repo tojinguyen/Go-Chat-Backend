@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"time"
 
 	"github.com/redis/go-redis/v9"

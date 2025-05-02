@@ -2,7 +2,7 @@ package mysqlinfra
 
 import (
 	"fmt"
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"log"
 
 	"github.com/golang-migrate/migrate/v4"

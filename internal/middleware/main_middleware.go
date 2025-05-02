@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	jwtPkg "gochat-backend/pkg/jwt"
 
 	"github.com/gin-gonic/gin"

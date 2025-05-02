@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"gochat-backend/internal/infra/mysqlinfra"
 	"log"
 	"os"

@@ -2,7 +2,7 @@ package email
 
 import (
 	"fmt"
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"gochat-backend/pkg/verification"
 	"log"
 

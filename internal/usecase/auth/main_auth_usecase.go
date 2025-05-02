@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	cloudstorage "gochat-backend/internal/infra/cloudinaryinfra"
 	"gochat-backend/internal/infra/redisinfra"
 	"gochat-backend/internal/repository"

@@ -1,10 +1,10 @@
 package jwt
 
 import (
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"time"
 
-	errorConstants "gochat-backend/internal/error"
+	errorConstants "gochat-backend/error"
 
 	"github.com/golang-jwt/jwt"
 )

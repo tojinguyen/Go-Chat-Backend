@@ -3,7 +3,7 @@ package cloudinaryinfra
 import (
 	"context"
 	"fmt"
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"mime/multipart"
 	"path/filepath"
 	"strings"

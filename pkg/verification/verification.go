@@ -1,6 +1,6 @@
 package verification
 
-import "gochat-backend/internal/config"
+import "gochat-backend/config"
 
 type VerificationService interface {
 	GenerateCode() string

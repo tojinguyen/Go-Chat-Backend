@@ -1,7 +1,7 @@
 package router
 
 import (
-	"gochat-backend/internal/config"
+	"gochat-backend/config"
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/usecase"
 	"gochat-backend/internal/validations"
