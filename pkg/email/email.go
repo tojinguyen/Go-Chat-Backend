@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gochat-backend/internal/config"
 	"gochat-backend/pkg/verification"
+	"log"
 
 	"gopkg.in/gomail.v2"
 )
@@ -32,6 +33,7 @@ func NewSMTPEmailService(config *config.Environment) EmailService {
 
 func (s *smtpEmailService) SendVerificationCode(toEmail string, code string, codeType verification.VerificationCodeType) error {
 	if !codeType.IsValid() {
+		log.Printf("Invalid verification code type: %s\n", codeType)
 		return fmt.Errorf("invalid verification code type: %s", codeType)
 	}
 

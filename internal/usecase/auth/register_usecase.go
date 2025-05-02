@@ -6,6 +6,7 @@ import (
 	"fmt"
 	domain "gochat-backend/internal/domain/auth"
 	"gochat-backend/pkg/verification"
+	"log"
 	"mime/multipart"
 	"strings"
 	"time"
@@ -38,16 +39,19 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 	exists, err := a.accountRepository.ExistsByEmail(ctx, input.Email)
 
 	if err != nil {
+		log.Printf("Error checking if email exists: %v\n", err)
 		return nil, fmt.Errorf("failed to check if email exists: %w", err)
 	}
 
 	if exists {
+		log.Printf("Email already exists: %s\n", input.Email)
 		return nil, errors.New("email already exists")
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 
 	if err != nil {
+		log.Printf("Error hashing password: %v\n", err)
 		return nil, fmt.Errorf("failed to hash password: %w", err)
 	}
 
@@ -56,6 +60,7 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 	if input.Avatar != nil {
 		avatarURL, err = a.cloudstorage.UploadAvatar(input.Avatar, "avatars/temp")
 		if err != nil {
+			log.Printf("Error uploading avatar: %v\n", err)
 			return nil, fmt.Errorf("failed to upload avatar: %w", err)
 		}
 	}
@@ -81,10 +86,12 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 
 	err = a.verificationRegisterRepository.CreateVerificationCode(ctx, verificationRecord)
 	if err != nil {
+		log.Printf("Error saving verification data: %v\n", err)
 		return nil, fmt.Errorf("failed to save verification data: %w", err)
 	}
 
 	if err := a.emailService.SendVerificationCode(input.Email, verificationCode, verification.VerificationCodeTypeRegister); err != nil {
+		log.Printf("Error sending verification code: %v\n", err)
 		return nil, fmt.Errorf("failed to send verification code: %w", err)
 	}
 

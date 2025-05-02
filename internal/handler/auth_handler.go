@@ -2,25 +2,23 @@ package handler
 
 import (
 	"gochat-backend/internal/usecase/auth"
+	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 )
 
 type RegisterRequest struct {
-	Name     string `json:"name" binding:"required,max=255"`
-	Email    string `json:"email" binding:"required,email,customEmail,max=255"`
-	Password string `json:"password" binding:"required,min=6,max=255,customPassword"`
+	Name     string `form:"name" binding:"required,max=255"`
+	Email    string `form:"email" binding:"required,email,customEmail,max=255"`
+	Password string `form:"password" binding:"required,min=6,max=255"`
 }
 
 func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
-	if err := c.Request.ParseMultipartForm(10 << 20); err != nil {
-		c.JSON(400, gin.H{"error": "Failed to parse form data"})
-		return
-	}
-
 	var req RegisterRequest
 
-	if err := c.ShouldBind(&req); err != nil {
+	if err := c.ShouldBindWith(&req, binding.FormMultipart); err != nil {
+		log.Println("Error binding request:", err)
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
@@ -28,6 +26,7 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 	file, err := c.FormFile("avatar")
 
 	if err != nil {
+		log.Println("Error getting avatar file:", err)
 		c.JSON(400, gin.H{"error": "Failed to get avatar file"})
 		return
 	}
@@ -41,6 +40,7 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 
 	result, err := authUseCase.Register(c, input)
 	if err != nil {
+		log.Println("Error during registration:", err)
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
