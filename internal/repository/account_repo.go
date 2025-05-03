@@ -18,6 +18,8 @@ type AccountRepository interface {
 	UpdatePassword(ctx context.Context, id string, password string) error
 	UpdateProfileInfo(ctx context.Context, account *domain.Account) error
 	UpdateAvatar(ctx context.Context, id string, avatarURL string) error
+	FindByName(ctx context.Context, name string, limit, offset int) ([]*domain.Account, error)
+	CountByName(ctx context.Context, name string) (int, error)
 }
 
 type AccountRepo struct {
@@ -157,4 +159,58 @@ func (r *AccountRepo) UpdateAvatar(ctx context.Context, id string, avatarURL str
 		_, err := tx.ExecContext(ctx, query, avatarURL, time.Now(), id)
 		return err
 	})
+}
+
+func (r *AccountRepo) FindByName(ctx context.Context, name string, limit, offset int) ([]*domain.Account, error) {
+	query := `
+        SELECT 
+            id, name, email, password, avatar_url, created_at, updated_at 
+        FROM users 
+        WHERE name LIKE ? 
+        LIMIT ? OFFSET ?
+    `
+
+	searchPattern := "%" + name + "%"
+	rows, err := r.database.DB.QueryContext(ctx, query, searchPattern, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var accounts []*domain.Account
+	for rows.Next() {
+		var account domain.Account
+		err := rows.Scan(
+			&account.ID,
+			&account.Name,
+			&account.Email,
+			&account.Password,
+			&account.AvatarURL,
+			&account.CreatedAt,
+			&account.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, &account)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return accounts, nil
+}
+
+func (r *AccountRepo) CountByName(ctx context.Context, name string) (int, error) {
+	query := `SELECT COUNT(*) FROM users WHERE name LIKE ?`
+
+	searchPattern := "%" + name + "%"
+	var count int
+	err := r.database.DB.QueryRowContext(ctx, query, searchPattern).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
 }
