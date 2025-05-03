@@ -15,7 +15,7 @@ type CustomJwtClaims struct {
 }
 
 type GenerateTokenInput struct {
-	UserId int
+	UserId string
 	Email  string
 	Role   string
 }
