@@ -14,11 +14,11 @@ func InitProfileRouter(
 	middleware middleware.Middleware,
 	profileUseCase profile.ProfileUseCase,
 ) {
-	router.GET("/profile/:id", middleware.Authentication, func(c *gin.Context) {
+	router.GET("/users/:id", middleware.Authentication, func(c *gin.Context) {
 		profileHandler.GetUserProfile(c, profileUseCase)
 	})
 
-	router.GET("/profiles/search", middleware.Authentication, func(c *gin.Context) {
+	router.GET("/users", middleware.Authentication, func(c *gin.Context) {
 		profileHandler.SearchUsersByName(c, profileUseCase)
 	})
 }

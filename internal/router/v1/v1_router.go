@@ -23,4 +23,8 @@ func InitV1Router(
 	{
 		InitAuthRouter(r.Group("/auth"), middleware, useCaseContainer.Auth)
 	}
+
+	{
+		InitProfileRouter(r.Group("/profile"), middleware, useCaseContainer.Profile)
+	}
 }

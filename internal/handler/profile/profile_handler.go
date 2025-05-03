@@ -1,7 +1,11 @@
 package handler
 
 import (
+	"gochat-backend/internal/handler"
 	"gochat-backend/internal/usecase/profile"
+	"log"
+	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,16 +23,36 @@ func GetUserProfile(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 }
 
 func SearchUsersByName(c *gin.Context, profileUseCase profile.ProfileUseCase) {
-	query := c.Query("query")
-	if query == "" {
-		c.JSON(400, gin.H{"error": "Query parameter is required"})
+	name := c.Query("name")
+	if name == "" {
+		handler.SendErrorResponse(c, http.StatusBadRequest, "Name parameter is required")
 		return
 	}
 
-	profiles, err := profileUseCase.SearchUsersByName(c.Request.Context(), profile.SearchUsersInput{Name: query})
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 || limit > 100 {
+		limit = 10
+	}
+
+	input := profile.SearchUsersInput{
+		Name:  name,
+		Page:  page,
+		Limit: limit,
+	}
+
+	profiles, err := profileUseCase.SearchUsersByName(c.Request.Context(), input)
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		log.Printf("Error searching users: %v\n", err)
+		handler.SendErrorResponse(c, http.StatusInternalServerError, "Failed to search users")
 		return
 	}
-	c.JSON(200, profiles)
+	handler.SendSuccessResponse(c, http.StatusOK, "Users found", profiles)
 }
