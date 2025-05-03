@@ -28,10 +28,7 @@ func (m *middleware) Authentication(c *gin.Context) {
 
 	claims, err := m.jwtService.ValidateAccessToken(tokenString)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"success": false,
-			"message": err.Error(),
-		})
+		handler.SendErrorResponse(c, http.StatusUnauthorized, err.Error())
 		c.Abort()
 		return
 	}
