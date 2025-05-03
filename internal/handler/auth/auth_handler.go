@@ -83,6 +83,22 @@ func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {
 }
 
 func Login(c *gin.Context, authUseCase auth.AuthUseCase) {
+	var req auth.LoginInput
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Println("Error binding login request:", err)
+		handler.SendErrorResponse(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	result, err := authUseCase.Login(c, req)
+	if err != nil {
+		log.Println("Error during login:", err)
+		handler.SendErrorResponse(c, http.StatusUnauthorized, "Invalid email or password")
+		return
+	}
+
+	handler.SendSuccessResponse(c, http.StatusOK, "Login successful", result)
 }
 
 func RefreshToken(c *gin.Context, authUseCase auth.AuthUseCase) {
