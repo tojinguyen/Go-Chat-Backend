@@ -86,6 +86,7 @@ func (l *logger) Info(message logrus.Fields, msg string) {
 	}
 	l.Log.Info(msg)
 }
+
 func (l *logger) Error(message logrus.Fields, msg string) {
 	if message != nil {
 		l.Log = l.Log.WithFields(message)

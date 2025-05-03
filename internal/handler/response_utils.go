@@ -9,7 +9,6 @@ type APIResponse struct {
 	Data    interface{} `json:"data"`
 }
 
-// SendSuccessResponse sends a success response
 func SendSuccessResponse(c *gin.Context, statusCode int, message string, data interface{}) {
 	c.JSON(statusCode, APIResponse{
 		Success: true,
@@ -18,7 +17,6 @@ func SendSuccessResponse(c *gin.Context, statusCode int, message string, data in
 	})
 }
 
-// SendErrorResponse sends an error response
 func SendErrorResponse(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, APIResponse{
 		Success: false,
