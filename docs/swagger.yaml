@@ -50,6 +50,39 @@ definitions:
     - code
     - email
     type: object
+  profile.ProfileOutput:
+    properties:
+      avatar_url:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  profile.SearchUsersOutput:
+    properties:
+      limit:
+        type: integer
+      page:
+        type: integer
+      total_count:
+        type: integer
+      users:
+        items:
+          $ref: '#/definitions/profile.UserItem'
+        type: array
+    type: object
+  profile.UserItem:
+    properties:
+      avatar_url:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -94,7 +127,7 @@ paths:
             $ref: '#/definitions/handler.APIResponse'
       summary: Login
       tags:
-      - auth
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -139,7 +172,7 @@ paths:
             $ref: '#/definitions/handler.APIResponse'
       summary: Register a new user
       tags:
-      - auth
+      - Auth
   /auth/verify:
     post:
       consumes:
@@ -170,5 +203,85 @@ paths:
             $ref: '#/definitions/handler.APIResponse'
       summary: Verify user registration code
       tags:
-      - auth
+      - Auth
+  /profile/users:
+    get:
+      consumes:
+      - application/json
+      description: Search for users with pagination by their name
+      parameters:
+      - description: Name to search for
+        in: query
+        name: name
+        required: true
+        type: string
+      - default: 1
+        description: 'Page number (default: 1)'
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: 'Number of items per page (default: 10, max: 100)'
+        in: query
+        maximum: 100
+        minimum: 1
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/profile.SearchUsersOutput'
+              type: object
+        "400":
+          description: Name parameter is required
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Failed to search users
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Search users by name
+      tags:
+      - Profile
+  /profile/users/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Fetch a user's profile information by their ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/profile.ProfileOutput'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user profile details
+      tags:
+      - Profile
 swagger: "2.0"

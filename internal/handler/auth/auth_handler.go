@@ -30,7 +30,7 @@ type LoginRequest struct {
 // Register godoc
 // @Summary Register a new user
 // @Description Register a new user with name, email, password and avatar
-// @Tags auth
+// @Tags Auth
 // @Accept multipart/form-data
 // @Produce json
 // @Param name formData string true "User name"
@@ -77,7 +77,7 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 // VerifyRegistrationCode godoc
 // @Summary Verify user registration code
 // @Description Verify the registration code sent to user's email
-// @Tags auth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body VerifyRegistrationRequest true "Email and verification code"
@@ -111,7 +111,7 @@ func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {
 // Login godoc
 // @Summary Login
 // @Description Login with email and password
-// @Tags auth
+// @Tags Auth
 // @Accept json
 // @Produce json
 // @Param request body LoginRequest true "Login credentials"

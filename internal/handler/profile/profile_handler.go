@@ -10,6 +10,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetUserProfile godoc
+// @Summary Get user profile details
+// @Description Fetch a user's profile information by their ID
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Param id path string true "User ID"
+// @Success 200 {object} profile.ProfileOutput
+// @Failure 404 {object} handler.APIResponse "User not found"
+// @Failure 500 {object} handler.APIResponse "Server error"
+// @Security BearerAuth
+// @Router /profile/users/{id} [get]
 func GetUserProfile(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 	userID := c.Param("id")
 	profile, err := profileUseCase.GetUserProfile(c.Request.Context(), userID)
@@ -22,6 +34,20 @@ func GetUserProfile(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 	c.JSON(200, profile)
 }
 
+// SearchUsersByName godoc
+// @Summary Search users by name
+// @Description Search for users with pagination by their name
+// @Tags Profile
+// @Accept json
+// @Produce json
+// @Param name query string true "Name to search for"
+// @Param page query int false "Page number (default: 1)" default(1) minimum(1)
+// @Param limit query int false "Number of items per page (default: 10, max: 100)" default(10) minimum(1) maximum(100)
+// @Success 200 {object} handler.APIResponse{data=profile.SearchUsersOutput}
+// @Failure 400 {object} handler.APIResponse "Name parameter is required"
+// @Failure 500 {object} handler.APIResponse "Failed to search users"
+// @Security BearerAuth
+// @Router /profile/users [get]
 func SearchUsersByName(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 	name := c.Query("name")
 	if name == "" {
