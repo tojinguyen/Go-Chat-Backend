@@ -18,8 +18,13 @@ type LoginInput struct {
 }
 
 type LoginOutput struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
+	AccessToken  string `json:"accessToken"`
+	RefreshToken string `json:"refreshToken"`
+	UserId       string `json:"userId"`
+	Email        string `json:"email"`
+	FullName     string `json:"fullName"`
+	Role         string `json:"role"`
+	AvatarUrl    string `json:"avatarUrl"`
 }
 
 func (a *authUseCase) Login(ctx context.Context, input LoginInput) (*LoginOutput, error) {
@@ -71,5 +76,10 @@ func (a *authUseCase) Login(ctx context.Context, input LoginInput) (*LoginOutput
 	return &LoginOutput{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		UserId:       account.ID,
+		Email:        account.Email,
+		FullName:     account.Name,
+		Role:         config.USER,
+		AvatarUrl:    account.AvatarURL,
 	}, nil
 }
