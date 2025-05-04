@@ -23,7 +23,6 @@ type RegisterInput struct {
 }
 
 type VerifyRegistrationInput struct {
-	ID    string `json:"id" binding:"required"`
 	Email string `json:"email" binding:"required,email,customEmail,max=255"`
 	Code  string `json:"code" binding:"required"`
 }
@@ -121,7 +120,7 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 }
 
 func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegistrationInput) (*RegisterOutput, error) {
-	verificationRecord, err := a.verificationRegisterRepository.GetVerificationCodeByID(ctx, input.ID)
+	verificationRecord, err := a.verificationRegisterRepository.GetVerificationCodeByEmail(ctx, input.Email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get verification record: %w", err)
 	}

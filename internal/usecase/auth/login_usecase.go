@@ -14,7 +14,7 @@ import (
 
 type LoginInput struct {
 	Email    string `json:"email" binding:"required,email,customEmail,max=255"`
-	Password string `json:"password" binding:"required,customPassword,min=6,max=255"`
+	Password string `json:"password" binding:"required,min=6,max=255"`
 }
 
 type LoginOutput struct {

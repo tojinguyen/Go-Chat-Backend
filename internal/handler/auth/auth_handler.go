@@ -18,9 +18,13 @@ type RegisterRequest struct {
 }
 
 type VerifyRegistrationRequest struct {
-	ID    string `json:"id" binding:"required"`
 	Email string `json:"email" binding:"required,email,customEmail,max=255"`
 	Code  string `json:"code" binding:"required"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required,email,customEmail,max=255"`
+	Password string `json:"password" binding:"required,min=6,max=255"`
 }
 
 func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
@@ -67,7 +71,6 @@ func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {
 	}
 
 	input := auth.VerifyRegistrationInput{
-		ID:    req.ID,
 		Email: req.Email,
 		Code:  req.Code,
 	}
@@ -83,7 +86,7 @@ func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {
 }
 
 func Login(c *gin.Context, authUseCase auth.AuthUseCase) {
-	var req auth.LoginInput
+	var req LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		log.Println("Error binding login request:", err)
@@ -91,7 +94,12 @@ func Login(c *gin.Context, authUseCase auth.AuthUseCase) {
 		return
 	}
 
-	result, err := authUseCase.Login(c, req)
+	input := auth.LoginInput{
+		Email:    req.Email,
+		Password: req.Password,
+	}
+
+	result, err := authUseCase.Login(c, input)
 	if err != nil {
 		log.Println("Error during login:", err)
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Invalid email or password")
