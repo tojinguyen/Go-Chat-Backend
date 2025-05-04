@@ -8,9 +8,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/mysql"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/joho/godotenv"
 )
 
@@ -58,12 +55,10 @@ func main() {
 	database := mysqlinfra.NewMySqlDatabase(db)
 	defer database.Close()
 
-	// Run migrations
-	if err := runMigration(database, action, version); err != nil {
+	// Sử dụng hàm ExecuteMigration từ package mysqlinfra
+	if err := mysqlinfra.ExecuteMigration(database, action, version); err != nil {
 		log.Fatalf("Migration failed: %v", err)
 	}
-
-	fmt.Println("Migrations completed successfully")
 }
 
 func printHelp() {
@@ -81,87 +76,7 @@ func printHelp() {
 	fmt.Println("  go run cmd/migrate/main.go down")
 	fmt.Println("  go run cmd/migrate/main.go force 0")
 	fmt.Println("  go run cmd/migrate/main.go goto 1")
-}
-
-func runMigration(db *mysqlinfra.Database, action string, version int) error {
-	driver, err := mysql.WithInstance(db.DB, &mysql.Config{})
-	if err != nil {
-		return fmt.Errorf("failed to create migration driver: %w", err)
-	}
-
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://migrations/mysql",
-		"mysql",
-		driver,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to create migration instance: %w", err)
-	}
-
-	var migrationErr error
-
-	switch action {
-	case "up":
-		migrationErr = m.Up()
-		if migrationErr != nil {
-			if migrationErr == migrate.ErrNoChange {
-				fmt.Println("Database is already up to date")
-				return nil
-			}
-			return fmt.Errorf("failed to apply migrations: %w", migrationErr)
-		}
-		fmt.Println("Successfully applied all migrations")
-
-	case "down":
-		migrationErr = m.Down()
-		if migrationErr != nil {
-			if migrationErr == migrate.ErrNoChange {
-				fmt.Println("No migrations to rollback")
-				return nil
-			}
-			return fmt.Errorf("failed to rollback migrations: %w", migrationErr)
-		}
-		fmt.Println("Successfully rolled back all migrations")
-
-	case "reset":
-		migrationErr = m.Down()
-		if migrationErr != nil && migrationErr != migrate.ErrNoChange {
-			return fmt.Errorf("failed to rollback migrations during reset: %w", migrationErr)
-		}
-
-		migrationErr = m.Up()
-		if migrationErr != nil && migrationErr != migrate.ErrNoChange {
-			return fmt.Errorf("failed to apply migrations during reset: %w", migrationErr)
-		}
-		fmt.Println("Successfully reset and applied all migrations")
-
-	case "force":
-		if version < 0 {
-			return fmt.Errorf("force requires a valid version number")
-		}
-		migrationErr = m.Force(version)
-		if migrationErr != nil {
-			return fmt.Errorf("failed to force version to %d: %w", version, migrationErr)
-		}
-		fmt.Printf("Successfully forced version to %d\n", version)
-
-	case "goto":
-		if version < 0 {
-			return fmt.Errorf("goto requires a valid version number")
-		}
-		migrationErr = m.Migrate(uint(version))
-		if migrationErr != nil {
-			if migrationErr == migrate.ErrNoChange {
-				fmt.Printf("Database is already at version %d\n", version)
-				return nil
-			}
-			return fmt.Errorf("failed to migrate to version %d: %w", version, migrationErr)
-		}
-		fmt.Printf("Successfully migrated to version %d\n", version)
-
-	default:
-		return fmt.Errorf("unknown action: %s (try 'help' for usage)", action)
-	}
-
-	return nil
+	fmt.Println("\nAlternatively, you can set the following environment variables:")
+	fmt.Println("  MIGRATION_ACTION=up|down|reset|force|goto")
+	fmt.Println("  MIGRATION_VERSION=N (required for force and goto actions)")
 }
