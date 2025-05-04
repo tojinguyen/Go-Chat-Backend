@@ -38,8 +38,8 @@ func (r *RegisterVerificationRepo) CreateVerificationCode(ctx context.Context, c
 	}
 
 	query := `
-        INSERT INTO verification_codes (id, user_id, email, code, type, verified, expires_at, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        INSERT INTO verification_codes (id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(
@@ -48,6 +48,9 @@ func (r *RegisterVerificationRepo) CreateVerificationCode(ctx context.Context, c
 			code.ID,
 			code.UserID,
 			code.Email,
+			code.Name,
+			code.HashedPassword,
+			code.Avatar,
 			code.Code,
 			code.Type,
 			code.Verified,
