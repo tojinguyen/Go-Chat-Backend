@@ -27,6 +27,19 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required,min=6,max=255"`
 }
 
+// Register godoc
+// @Summary Register a new user
+// @Description Register a new user with name, email, password and avatar
+// @Tags auth
+// @Accept multipart/form-data
+// @Produce json
+// @Param name formData string true "User name"
+// @Param email formData string true "Email"
+// @Param password formData string true "Password"
+// @Param avatar formData file true "Avatar image"
+// @Success 201 {object} handler.APIResponse{data=auth.RegisterOutput}
+// @Failure 400 {object} handler.APIResponse
+// @Router /auth/register [post]
 func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 	var req RegisterRequest
 
@@ -61,6 +74,16 @@ func Register(c *gin.Context, authUseCase auth.AuthUseCase) {
 	handler.SendSuccessResponse(c, http.StatusCreated, "Registration successful! Please check your email for verification.", result)
 }
 
+// VerifyRegistrationCode godoc
+// @Summary Verify user registration code
+// @Description Verify the registration code sent to user's email
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body VerifyRegistrationRequest true "Email and verification code"
+// @Success 200 {object} handler.APIResponse{data=auth.RegisterOutput}
+// @Failure 400 {object} handler.APIResponse "Invalid request or verification failed"
+// @Router /auth/verify [post]
 func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {
 	var req VerifyRegistrationRequest
 
@@ -85,6 +108,16 @@ func VerifyRegistrationCode(c *gin.Context, authUseCase auth.AuthUseCase) {
 	handler.SendSuccessResponse(c, http.StatusOK, "Email verification successful! You can now log in.", result)
 }
 
+// Login godoc
+// @Summary Login
+// @Description Login with email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Login credentials"
+// @Success 200 {object} handler.APIResponse{data=auth.LoginOutput}
+// @Failure 401 {object} handler.APIResponse
+// @Router /auth/login [post]
 func Login(c *gin.Context, authUseCase auth.AuthUseCase) {
 	var req LoginRequest
 
