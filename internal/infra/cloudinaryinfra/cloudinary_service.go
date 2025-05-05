@@ -6,6 +6,7 @@ import (
 	"gochat-backend/config"
 	"mime/multipart"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/cloudinary/cloudinary-go/v2"
@@ -14,7 +15,7 @@ import (
 )
 
 type CloudinaryService interface {
-	UploadAvatar(file *multipart.FileHeader, fileName string) (string, error)
+	UploadAvatar(file *multipart.FileHeader, folderPath string) (string, error)
 	MoveAvatar(avatarUrl string, fileName string) (string, error)
 }
 
@@ -40,30 +41,53 @@ func NewCloudinaryService(cfg *config.Environment) (CloudinaryService, error) {
 	}, nil
 }
 
-func (c *cloudinaryService) UploadAvatar(file *multipart.FileHeader, fileName string) (string, error) {
+func (c *cloudinaryService) UploadAvatar(file *multipart.FileHeader, folderPath string) (string, error) {
 	ctx := context.Background()
 
-	extension := filepath.Ext(fileName)
+	src, err := file.Open()
+	if err != nil {
+		return "", fmt.Errorf("cannot open file: %v", err)
+	}
+	defer src.Close()
+
+	extension := filepath.Ext(file.Filename)
 	uniqueFileName := uuid.New().String() + extension
+
+	fmt.Printf("Uploading file %s to folder %s\n", file.Filename, folderPath)
 
 	uploadParams := uploader.UploadParams{
 		PublicID:       strings.TrimSuffix(uniqueFileName, extension),
-		Folder:         "avatars",
+		Folder:         folderPath,
 		ResourceType:   "image",
-		Transformation: "w_500,h_500,c_fill,g_face",
+		Transformation: "c_fill,g_face,w_500,h_500",
 	}
 
-	uoloadResult, err := c.cld.Upload.Upload(ctx, file, uploadParams)
+	uploadResult, err := c.cld.Upload.Upload(ctx, src, uploadParams)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload file to Cloudinary: %v", err)
 	}
 
-	return uoloadResult.SecureURL, nil
+	if uploadResult.Error.Message != "" {
+		return "", fmt.Errorf("failed to upload file to Cloudinary: %s", uploadResult.Error.Message)
+	}
+
+	fmt.Printf("Uploaded file to Cloudinary: %+v\n", uploadResult)
+
+	if uploadResult == nil || uploadResult.SecureURL == "" {
+		return "", fmt.Errorf("upload succeeded but returned empty URL")
+	}
+
+	return uploadResult.SecureURL, nil
 }
 
 func (c *cloudinaryService) MoveAvatar(avatarUrl string, fileName string) (string, error) {
 	ctx := context.Background()
 
+	publicIDWithPath := extractPublicIDFromURL(avatarUrl)
+
+	fmt.Printf("Moving avatar from URL: %s\n", avatarUrl)
+	fmt.Printf("Extracted public ID: %s\n", publicIDWithPath)
+
 	extension := filepath.Ext(fileName)
 	uniqueFileName := uuid.New().String() + extension
 
@@ -74,10 +98,58 @@ func (c *cloudinaryService) MoveAvatar(avatarUrl string, fileName string) (strin
 		Transformation: "w_500,h_500,c_fill,g_face",
 	}
 
-	uoloadResult, err := c.cld.Upload.Upload(ctx, avatarUrl, uploadParams)
+	uploadResult, err := c.cld.Upload.Upload(ctx, avatarUrl, uploadParams)
 	if err != nil {
 		return "", fmt.Errorf("failed to upload file to Cloudinary: %v", err)
 	}
 
-	return uoloadResult.SecureURL, nil
+	// Kiểm tra lỗi và kết quả
+	if uploadResult == nil || uploadResult.SecureURL == "" {
+		return "", fmt.Errorf("upload succeeded but returned empty URL")
+	}
+
+	// Xóa file cũ sau khi đã upload xong
+	if publicIDWithPath != "" {
+		destroyParams := uploader.DestroyParams{
+			PublicID:     publicIDWithPath,
+			ResourceType: "image",
+		}
+
+		// Xóa file cũ
+		destroyResult, err := c.cld.Upload.Destroy(ctx, destroyParams)
+		if err != nil {
+			// Chỉ log lỗi, không return vì file mới đã được tạo thành công
+			fmt.Printf("Warning: Failed to delete old avatar: %v\n", err)
+		} else {
+			fmt.Printf("Deleted old avatar. Result: %v\n", destroyResult)
+		}
+	}
+
+	return uploadResult.SecureURL, nil
+}
+
+// Hàm hỗ trợ để trích xuất public ID từ URL của Cloudinary
+func extractPublicIDFromURL(url string) string {
+	// URL Cloudinary thường có dạng: https://res.cloudinary.com/{cloud_name}/image/upload/v{version}/{folder}/{public_id}.{extension}
+
+	// Tìm phần upload/ trong URL
+	uploadIndex := strings.Index(url, "/upload/")
+	if uploadIndex == -1 {
+		return ""
+	}
+
+	// Lấy phần sau upload/
+	pathAfterUpload := url[uploadIndex+8:] // +8 để bỏ qua "/upload/"
+
+	// Loại bỏ phần version nếu có (v1234567890/)
+	versionRegex := regexp.MustCompile(`^v\d+/`)
+	pathAfterUpload = versionRegex.ReplaceAllString(pathAfterUpload, "")
+
+	// Lấy phần trước extension
+	extIndex := strings.LastIndex(pathAfterUpload, ".")
+	if extIndex != -1 {
+		pathAfterUpload = pathAfterUpload[:extIndex]
+	}
+
+	return pathAfterUpload
 }

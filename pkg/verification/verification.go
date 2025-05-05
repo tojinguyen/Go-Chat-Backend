@@ -1,6 +1,13 @@
 package verification
 
-import "gochat-backend/config"
+import (
+	"fmt"
+	"gochat-backend/config"
+	"strconv"
+	"strings"
+
+	"github.com/google/uuid"
+)
 
 type VerificationService interface {
 	GenerateCode() string
@@ -17,9 +24,24 @@ func NewVerificationService(config *config.Environment) VerificationService {
 }
 
 func (v *verificationService) GenerateCode() string {
-	code := make([]byte, v.config.VerificationCodeLength)
-	for i := range code {
-		code[i] = byte('0' + i%10) // Generate a digit (0-9)
+	// Tạo một UUID ngẫu nhiên
+	uuidObj := uuid.New()
+
+	// Chuyển UUID thành chuỗi và loại bỏ dấu gạch ngang
+	uuidStr := strings.ReplaceAll(uuidObj.String(), "-", "")
+
+	// Nếu cần mã chỉ gồm số, chuyển các ký tự thành số
+	numericCode := ""
+	for i := 0; i < len(uuidStr) && len(numericCode) < int(v.config.VerificationCodeLength); i++ {
+		// Chuyển từng ký tự hex thành giá trị số
+		hexVal, _ := strconv.ParseInt(string(uuidStr[i]), 16, 64)
+		numericCode += fmt.Sprintf("%d", hexVal%10)
 	}
-	return string(code)
+
+	// Đảm bảo độ dài của mã bằng với cấu hình
+	if len(numericCode) > int(v.config.VerificationCodeLength) {
+		numericCode = numericCode[:v.config.VerificationCodeLength]
+	}
+
+	return numericCode
 }

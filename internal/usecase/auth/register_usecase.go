@@ -35,6 +35,8 @@ type RegisterOutput struct {
 }
 
 func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error) {
+	log.Printf("Registering user with email: %s\n", input.Email)
+
 	exists, err := a.accountRepository.ExistsByEmail(ctx, input.Email)
 
 	if err != nil {
@@ -79,6 +81,10 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 			log.Printf("Error uploading avatar: %v\n", err)
 			return nil, fmt.Errorf("failed to upload avatar: %w", err)
 		}
+		log.Printf("Avatar uploaded successfully. URL: %s\n", avatarURL)
+	} else {
+		avatarURL = a.cfg.DefaultAvatarURL
+		log.Printf("Avatar is nil, using default avatar URL. Default URL: %s\n", a.cfg.DefaultAvatarURL)
 	}
 
 	userID := uuid.New().String()
