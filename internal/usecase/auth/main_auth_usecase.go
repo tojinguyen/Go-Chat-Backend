@@ -15,6 +15,8 @@ type AuthUseCase interface {
 	Register(ctx context.Context, input RegisterInput) (*RegisterOutput, error)
 	VerifyRegistration(ctx context.Context, input VerifyRegistrationInput) (*RegisterOutput, error)
 	Login(ctx context.Context, input LoginInput) (*LoginOutput, error)
+	VerifyToken(ctx context.Context, token string) (*LoginOutput, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*LoginOutput, error)
 }
 
 type authUseCase struct {

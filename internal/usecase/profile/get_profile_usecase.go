@@ -7,7 +7,7 @@ import (
 )
 
 func (p *profileUseCase) GetUserProfile(ctx context.Context, userID string) (*ProfileOutput, error) {
-	account, err := p.accountRepository.FindByID(ctx, userID)
+	account, err := p.accountRepository.FindById(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user profile: %w", err)
 	}

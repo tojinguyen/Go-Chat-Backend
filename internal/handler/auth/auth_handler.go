@@ -142,7 +142,44 @@ func Login(c *gin.Context, authUseCase auth.AuthUseCase) {
 	handler.SendSuccessResponse(c, http.StatusOK, "Login successful", result)
 }
 
+func VerifyToken(c *gin.Context, authUseCase auth.AuthUseCase) {
+	// Extract the token from the request header
+	token := c.Request.Header.Get("Authorization")
+	log.Println("Verify Token:", token)
+	if token == "" {
+		handler.SendErrorResponse(c, http.StatusUnauthorized, "Token is required")
+		return
+	}
+
+	// Verify the token using the authUseCase
+	result, err := authUseCase.VerifyToken(c, token)
+	if err != nil {
+		log.Println("Error verifying token:", err)
+		handler.SendErrorResponse(c, http.StatusUnauthorized, "Invalid or expired token")
+		return
+	}
+
+	handler.SendSuccessResponse(c, http.StatusOK, "Token is valid", result)
+}
+
 func RefreshToken(c *gin.Context, authUseCase auth.AuthUseCase) {
+	// Extract the refresh token from the request header
+	refreshToken := c.Request.Header.Get("Authorization")
+	log.Println("Refresh Token:", refreshToken)
+	if refreshToken == "" {
+		handler.SendErrorResponse(c, http.StatusUnauthorized, "Refresh token is required")
+		return
+	}
+
+	// Refresh the token using the authUseCase
+	result, err := authUseCase.RefreshToken(c, refreshToken)
+	if err != nil {
+		log.Println("Error refreshing token:", err)
+		handler.SendErrorResponse(c, http.StatusUnauthorized, "Invalid or expired refresh token")
+		return
+	}
+
+	handler.SendSuccessResponse(c, http.StatusOK, "Token refreshed successfully", result)
 }
 
 func ChangePassword(c *gin.Context, authUseCase auth.AuthUseCase) {

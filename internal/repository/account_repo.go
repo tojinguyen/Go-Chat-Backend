@@ -13,7 +13,7 @@ import (
 type AccountRepository interface {
 	CreateUser(ctx context.Context, account *domain.Account) error
 	FindByEmail(ctx context.Context, email string) (*domain.Account, error)
-	FindByID(ctx context.Context, id string) (*domain.Account, error)
+	FindById(ctx context.Context, id string) (*domain.Account, error)
 	ExistsByEmail(ctx context.Context, email string) (bool, error)
 	UpdatePassword(ctx context.Context, id string, password string) error
 	UpdateProfileInfo(ctx context.Context, account *domain.Account) error
@@ -85,7 +85,7 @@ func (r *AccountRepo) FindByEmail(ctx context.Context, email string) (*domain.Ac
 	return &account, nil
 }
 
-func (r *AccountRepo) FindByID(ctx context.Context, id string) (*domain.Account, error) {
+func (r *AccountRepo) FindById(ctx context.Context, id string) (*domain.Account, error) {
 	var account domain.Account
 	query := `
         SELECT 
