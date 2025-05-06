@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"gochat-backend/pkg/jwt"
 	"log"
+	"strings"
 	"time"
 )
 
 // VerifyToken kiểm tra token truy cập và trả về thông tin người dùng nếu token hợp lệ
 func (a *authUseCase) VerifyToken(ctx context.Context, token string) (*LoginOutput, error) {
+	token = strings.TrimPrefix(token, "Bearer ")
+
 	// Xác thực token truy cập
 	claims, err := a.jwtService.ValidateAccessToken(token)
 	if err != nil {

@@ -142,10 +142,21 @@ func Login(c *gin.Context, authUseCase auth.AuthUseCase) {
 	handler.SendSuccessResponse(c, http.StatusOK, "Login successful", result)
 }
 
+// VerifyToken godoc
+// @Summary Verify authentication token
+// @Description Verify if the provided token is valid and return user information
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Bearer token with format: Bearer {token}"
+// @Success 200 {object} handler.APIResponse{data=auth.LoginOutput} "Token is valid with user information"
+// @Failure 401 {object} handler.APIResponse "Invalid or expired token"
+// @Router /auth/verify [get]
 func VerifyToken(c *gin.Context, authUseCase auth.AuthUseCase) {
 	// Extract the token from the request header
 	token := c.Request.Header.Get("Authorization")
 	log.Println("Verify Token:", token)
+
 	if token == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Token is required")
 		return
@@ -162,16 +173,27 @@ func VerifyToken(c *gin.Context, authUseCase auth.AuthUseCase) {
 	handler.SendSuccessResponse(c, http.StatusOK, "Token is valid", result)
 }
 
+// RefreshToken godoc
+// @Summary Refresh access token
+// @Description Refresh access token using a valid refresh token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param Authorization header string true "Refresh token with format: Bearer {token}"
+// @Success 200 {object} handler.APIResponse{data=auth.LoginOutput} "Contains new access and refresh tokens"
+// @Failure 401 {object} handler.APIResponse "Invalid or expired refresh token"
+// @Router /auth/refresh [post]
 func RefreshToken(c *gin.Context, authUseCase auth.AuthUseCase) {
 	// Extract the refresh token from the request header
 	refreshToken := c.Request.Header.Get("Authorization")
-	log.Println("Refresh Token:", refreshToken)
+	log.Println("Refresh Token Request:", refreshToken)
+
 	if refreshToken == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Refresh token is required")
 		return
 	}
 
-	// Refresh the token using the authUseCase
+	// Call the usecase method to refresh the tokens
 	result, err := authUseCase.RefreshToken(c, refreshToken)
 	if err != nil {
 		log.Println("Error refreshing token:", err)
