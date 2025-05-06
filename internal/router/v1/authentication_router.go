@@ -25,7 +25,7 @@ func InitAuthRouter(
 		authHandler.Login(c, authUseCase)
 	})
 
-	router.GET("/verify-token", middleware.Authentication, func(c *gin.Context) {
+	router.GET("/verify-token", func(c *gin.Context) {
 		authHandler.VerifyToken(c, authUseCase)
 	})
 
