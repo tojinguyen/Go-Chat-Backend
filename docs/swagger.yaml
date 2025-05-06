@@ -138,6 +138,36 @@ paths:
       summary: Login
       tags:
       - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token using a valid refresh token
+      parameters:
+      - description: 'Refresh token with format: Bearer {token}'
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contains new access and refresh tokens
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.LoginOutput'
+              type: object
+        "401":
+          description: Invalid or expired refresh token
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      summary: Refresh access token
+      tags:
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -184,6 +214,35 @@ paths:
       tags:
       - Auth
   /auth/verify:
+    get:
+      consumes:
+      - application/json
+      description: Verify if the provided token is valid and return user information
+      parameters:
+      - description: 'Bearer token with format: Bearer {token}'
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token is valid with user information
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.LoginOutput'
+              type: object
+        "401":
+          description: Invalid or expired token
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      summary: Verify authentication token
+      tags:
+      - Auth
     post:
       consumes:
       - application/json
