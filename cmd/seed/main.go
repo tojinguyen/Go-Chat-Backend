@@ -6,6 +6,7 @@ import (
 	"gochat-backend/config"
 	"gochat-backend/internal/infra/mysqlinfra"
 	"log"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -28,6 +29,19 @@ type Account struct {
 
 var fakerMutex sync.Mutex
 
+// Mảng chứa các URL avatar cố định
+var avatarURLs = []string{
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339952/titan_10_hvq29s.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339951/titan_7_hqp1sc.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339951/titan_9_yhlqyj.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339951/tiga_2_twvfjn.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339951/titan_5_ffyxpm.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339951/titan_8_v4oi7c.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339951/titan_6_ilrlka.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339951/tiga_3_yb2vul.jpg",
+	"https://res.cloudinary.com/durc9hj8m/image/upload/v1745339950/tiga_1_sa6msh.jpg",
+}
+
 func generateFakeUser() Account {
 	now := time.Now()
 	// Lock the mutex before using faker
@@ -35,7 +49,8 @@ func generateFakeUser() Account {
 	password := faker.Password()
 	id := faker.UUIDDigit()
 	name := faker.Name()
-	avatarURL := faker.URL()
+	// Chọn URL avatar ngẫu nhiên từ mảng
+	avatarURL := avatarURLs[rand.Intn(len(avatarURLs))]
 	email := faker.Email()
 	fakerMutex.Unlock()
 
@@ -84,6 +99,9 @@ func insertBatch(db *sql.DB, accounts []Account) error {
 }
 
 func main() {
+	// Khởi tạo seed cho random để các avatar có thể xuất hiện đều nhau
+	rand.Seed(time.Now().UnixNano())
+
 	err := godotenv.Load()
 	if err != nil {
 		log.Printf("Warning: Failed to load .env file: %v", err)
