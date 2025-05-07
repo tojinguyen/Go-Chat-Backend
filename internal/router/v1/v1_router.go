@@ -25,6 +25,10 @@ func InitV1Router(
 	}
 
 	{
-		InitProfileRouter(r.Group("/profile"), middleware, useCaseContainer.Profile)
+		InitUserRouter(r.Group("/user"), middleware, useCaseContainer.Profile)
+	}
+
+	{
+		InitFriendRouter(r.Group("/friends"), middleware, useCaseContainer.Friend)
 	}
 }

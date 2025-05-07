@@ -6,6 +6,7 @@ import (
 	"gochat-backend/internal/infra/redisinfra"
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase/auth"
+	"gochat-backend/internal/usecase/friend"
 	"gochat-backend/internal/usecase/profile"
 	"gochat-backend/pkg/email"
 	"gochat-backend/pkg/jwt"
@@ -34,6 +35,7 @@ type SharedDependencies struct {
 type UseCaseContainer struct {
 	Auth    auth.AuthUseCase
 	Profile profile.ProfileUseCase
+	Friend  friend.FriendUseCase
 }
 
 func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
@@ -51,5 +53,6 @@ func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
 		Profile: profile.NewProfileUseCase(
 			deps.AccountRepo,
 		),
+		Friend: friend.NewFriendUseCase(),
 	}
 }

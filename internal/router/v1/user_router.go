@@ -9,16 +9,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitProfileRouter(
+func InitUserRouter(
 	router gin.IRouter,
 	middleware middleware.Middleware,
 	profileUseCase profile.ProfileUseCase,
 ) {
-	router.GET("/users/:id", middleware.Authentication, func(c *gin.Context) {
+	router.GET("/:id", middleware.Authentication, func(c *gin.Context) {
 		profileHandler.GetUserProfile(c, profileUseCase)
 	})
 
-	router.GET("/users", middleware.Authentication, func(c *gin.Context) {
+	router.GET("/", middleware.Authentication, func(c *gin.Context) {
 		profileHandler.SearchUsersByName(c, profileUseCase)
 	})
 }
