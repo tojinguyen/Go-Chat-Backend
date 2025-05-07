@@ -7,6 +7,7 @@ import (
 	"gochat-backend/internal/infra/mysqlinfra"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bxcodec/faker/v4"
@@ -25,9 +26,20 @@ type Account struct {
 	UpdatedAt time.Time
 }
 
+var fakerMutex sync.Mutex
+
 func generateFakeUser() Account {
 	now := time.Now()
+	// Lock the mutex before using faker
+	fakerMutex.Lock()
 	password := faker.Password()
+	id := faker.UUIDDigit()
+	name := faker.Name()
+	avatarURL := faker.URL()
+	email := faker.Email()
+	fakerMutex.Unlock()
+
+	// Hash password after unlocking the mutex to improve concurrency
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Printf("Failed to hash password: %v", err)
@@ -36,10 +48,10 @@ func generateFakeUser() Account {
 	}
 
 	return Account{
-		ID:        faker.UUIDDigit(),
-		Name:      faker.Name(),
-		AvatarURL: faker.URL(),
-		Email:     faker.Email(),
+		ID:        id,
+		Name:      name,
+		AvatarURL: avatarURL,
+		Email:     email,
 		Password:  string(hashedPassword),
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -52,7 +64,7 @@ func insertBatch(db *sql.DB, accounts []Account) error {
 	}
 
 	var builder strings.Builder
-	builder.WriteString("INSERT INTO accounts (id, name, avatar_url, email, password, created_at, updated_at) VALUES ")
+	builder.WriteString("INSERT INTO users (id, name, avatar_url, email, password, created_at, updated_at) VALUES ")
 
 	args := make([]interface{}, 0, len(accounts)*7)
 
@@ -90,27 +102,92 @@ func main() {
 	database := mysqlinfra.NewMySqlDatabase(db)
 	defer database.Close()
 
-	totalUsers := 100000
+	totalUsers := 50000
 	batchSize := 1000
-	var accounts []Account
+	numWorkers := 8 // Số lượng goroutine cần tạo
 
 	start := time.Now()
-	for i := 0; i < totalUsers; i++ {
-		accounts = append(accounts, generateFakeUser())
-		if len(accounts) >= batchSize {
-			err := insertBatch(db, accounts)
-			if err != nil {
-				log.Fatalf("Batch insert failed at user %d: %v", i, err)
+
+	// Channel để nhận kết quả từ goroutines
+	accountsChan := make(chan Account)
+	// Channel để theo dõi khi nào tất cả goroutines đã hoàn thành
+	done := make(chan bool)
+
+	// Mutex để đảm bảo thread-safety khi chèn dữ liệu vào database
+	var mutex sync.Mutex
+	var insertedCount int
+	var currentBatch []Account
+
+	// Goroutine để thu thập và chèn dữ liệu
+	go func() {
+		for acc := range accountsChan {
+			mutex.Lock()
+			currentBatch = append(currentBatch, acc)
+
+			if len(currentBatch) >= batchSize {
+				batchToInsert := make([]Account, len(currentBatch))
+				copy(batchToInsert, currentBatch)
+				currentBatch = currentBatch[:0]
+				insertedCount += len(batchToInsert)
+
+				// Unblock mutex trước khi thực hiện insert
+				mutex.Unlock()
+
+				if err := insertBatch(db, batchToInsert); err != nil {
+					log.Fatalf("Batch insert failed: %v", err)
+				}
+
+				fmt.Printf("Inserted %d users...\n", insertedCount)
+			} else {
+				mutex.Unlock()
 			}
-			accounts = accounts[:0]
-			fmt.Printf("Inserted %d users...\n", i+1)
 		}
-	}
-	if len(accounts) > 0 {
-		if err := insertBatch(db, accounts); err != nil {
-			log.Fatalf("Final batch insert failed: %v", err)
+
+		// Xử lý batch cuối cùng nếu còn
+		mutex.Lock()
+		if len(currentBatch) > 0 {
+			if err := insertBatch(db, currentBatch); err != nil {
+				log.Fatalf("Final batch insert failed: %v", err)
+			}
+			insertedCount += len(currentBatch)
+			fmt.Printf("Inserted final batch. Total: %d users\n", insertedCount)
 		}
+		mutex.Unlock()
+
+		done <- true
+	}()
+
+	// Tạo worker pool để generate fake users
+	var wg sync.WaitGroup
+	wg.Add(numWorkers)
+
+	usersPerWorker := totalUsers / numWorkers
+
+	for i := 0; i < numWorkers; i++ {
+		go func(workerID int) {
+			defer wg.Done()
+
+			start := workerID * usersPerWorker
+			end := start + usersPerWorker
+			if workerID == numWorkers-1 {
+				// Đảm bảo worker cuối cùng xử lý hết số lượng còn lại
+				end = totalUsers
+			}
+
+			for j := start; j < end; j++ {
+				accountsChan <- generateFakeUser()
+			}
+		}(i)
 	}
+
+	// Đợi tất cả workers hoàn thành
+	go func() {
+		wg.Wait()
+		close(accountsChan)
+	}()
+
+	// Đợi cho đến khi tất cả các batch đã được insert
+	<-done
 
 	fmt.Println("✅ Done! Total time:", time.Since(start))
 }
