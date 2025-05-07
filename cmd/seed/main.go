@@ -14,7 +14,6 @@ import (
 	"github.com/bxcodec/faker/v4"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type Account struct {
@@ -54,20 +53,12 @@ func generateFakeUser() Account {
 	email := faker.Email()
 	fakerMutex.Unlock()
 
-	// Hash password after unlocking the mutex to improve concurrency
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		log.Printf("Failed to hash password: %v", err)
-		// Fallback to plain password in case of error
-		hashedPassword = []byte(password)
-	}
-
 	return Account{
 		ID:        id,
 		Name:      name,
 		AvatarURL: avatarURL,
 		Email:     email,
-		Password:  string(hashedPassword),
+		Password:  password,
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
