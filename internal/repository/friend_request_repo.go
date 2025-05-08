@@ -36,7 +36,7 @@ func (r *friendRequestRepo) CreateFriendRequest(senderID, receiverID int) error 
 		senderID,
 		receiverID,
 		time.Now(),
-		"pending",
+		domainFriend.Pending,
 	)
 	return err
 }
