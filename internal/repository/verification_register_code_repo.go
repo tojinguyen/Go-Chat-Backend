@@ -20,15 +20,15 @@ type VerificationRegisterCodeRepository interface {
 	DeleteVerificationCode(ctx context.Context, id string) error
 }
 
-type RegisterVerificationRepo struct {
+type registerVerificationRepo struct {
 	database *mysqlinfra.Database
 }
 
-func NewVerificationRepo(db *mysqlinfra.Database) *RegisterVerificationRepo {
-	return &RegisterVerificationRepo{database: db}
+func NewVerificationRepo(db *mysqlinfra.Database) *registerVerificationRepo {
+	return &registerVerificationRepo{database: db}
 }
 
-func (r *RegisterVerificationRepo) CreateVerificationCode(ctx context.Context, code *domain.RegistrationVerificationCode) error {
+func (r *registerVerificationRepo) CreateVerificationCode(ctx context.Context, code *domain.RegistrationVerificationCode) error {
 	if code.ID == "" {
 		code.ID = uuid.New().String()
 	}
@@ -62,7 +62,7 @@ func (r *RegisterVerificationRepo) CreateVerificationCode(ctx context.Context, c
 	})
 }
 
-func (r *RegisterVerificationRepo) GetVerificationCodeByID(ctx context.Context, id string) (*domain.RegistrationVerificationCode, error) {
+func (r *registerVerificationRepo) GetVerificationCodeByID(ctx context.Context, id string) (*domain.RegistrationVerificationCode, error) {
 	query := `
         SELECT id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at 
         FROM verification_codes 
@@ -95,7 +95,7 @@ func (r *RegisterVerificationRepo) GetVerificationCodeByID(ctx context.Context, 
 	return &code, nil
 }
 
-func (r *RegisterVerificationRepo) GetVerificationCodeByEmail(ctx context.Context, email string) (*domain.RegistrationVerificationCode, error) {
+func (r *registerVerificationRepo) GetVerificationCodeByEmail(ctx context.Context, email string) (*domain.RegistrationVerificationCode, error) {
 	query := `
         SELECT id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at 
         FROM verification_codes 
@@ -129,7 +129,7 @@ func (r *RegisterVerificationRepo) GetVerificationCodeByEmail(ctx context.Contex
 	return &code, nil
 }
 
-func (r *RegisterVerificationRepo) VerifyCode(ctx context.Context, id string, code string) error {
+func (r *registerVerificationRepo) VerifyCode(ctx context.Context, id string, code string) error {
 	query := `
         SELECT id FROM verification_codes 
         WHERE id = ? AND code = ? AND type = 'register' AND verified = false AND expires_at > NOW()
@@ -148,7 +148,7 @@ func (r *RegisterVerificationRepo) VerifyCode(ctx context.Context, id string, co
 	return r.UpdateVerificationStatus(ctx, id, true)
 }
 
-func (r *RegisterVerificationRepo) UpdateVerificationStatus(ctx context.Context, id string, verified bool) error {
+func (r *registerVerificationRepo) UpdateVerificationStatus(ctx context.Context, id string, verified bool) error {
 	query := `UPDATE verification_codes SET verified = ? WHERE id = ?`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
@@ -157,7 +157,7 @@ func (r *RegisterVerificationRepo) UpdateVerificationStatus(ctx context.Context,
 	})
 }
 
-func (r *RegisterVerificationRepo) DeleteVerificationCode(ctx context.Context, id string) error {
+func (r *registerVerificationRepo) DeleteVerificationCode(ctx context.Context, id string) error {
 	query := `DELETE FROM verification_codes WHERE id = ?`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {

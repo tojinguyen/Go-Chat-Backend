@@ -22,15 +22,15 @@ type AccountRepository interface {
 	CountByName(ctx context.Context, name string) (int, error)
 }
 
-type AccountRepo struct {
+type accountRepo struct {
 	database *mysqlinfra.Database
 }
 
 func NewAccountRepo(db *mysqlinfra.Database) AccountRepository {
-	return &AccountRepo{database: db}
+	return &accountRepo{database: db}
 }
 
-func (r *AccountRepo) CreateUser(ctx context.Context, account *domain.Account) error {
+func (r *accountRepo) CreateUser(ctx context.Context, account *domain.Account) error {
 	if account.Id == "" {
 		account.Id = uuid.New().String()
 	}
@@ -56,7 +56,7 @@ func (r *AccountRepo) CreateUser(ctx context.Context, account *domain.Account) e
 	})
 }
 
-func (r *AccountRepo) FindByEmail(ctx context.Context, email string) (*domain.Account, error) {
+func (r *accountRepo) FindByEmail(ctx context.Context, email string) (*domain.Account, error) {
 	var account domain.Account
 	query := `
         SELECT 
@@ -85,7 +85,7 @@ func (r *AccountRepo) FindByEmail(ctx context.Context, email string) (*domain.Ac
 	return &account, nil
 }
 
-func (r *AccountRepo) FindById(ctx context.Context, id string) (*domain.Account, error) {
+func (r *accountRepo) FindById(ctx context.Context, id string) (*domain.Account, error) {
 	var account domain.Account
 	query := `
         SELECT 
@@ -114,7 +114,7 @@ func (r *AccountRepo) FindById(ctx context.Context, id string) (*domain.Account,
 	return &account, nil
 }
 
-func (r *AccountRepo) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+func (r *accountRepo) ExistsByEmail(ctx context.Context, email string) (bool, error) {
 	query := `SELECT COUNT(*) FROM users WHERE email = ?`
 	var count int
 	err := r.database.DB.QueryRowContext(ctx, query, email).Scan(&count)
@@ -124,7 +124,7 @@ func (r *AccountRepo) ExistsByEmail(ctx context.Context, email string) (bool, er
 	return count > 0, nil
 }
 
-func (r *AccountRepo) UpdatePassword(ctx context.Context, id string, password string) error {
+func (r *accountRepo) UpdatePassword(ctx context.Context, id string, password string) error {
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		query := `UPDATE users SET password = ?, updated_at = ? WHERE id = ?`
 		_, err := tx.ExecContext(ctx, query, password, time.Now(), id)
@@ -132,7 +132,7 @@ func (r *AccountRepo) UpdatePassword(ctx context.Context, id string, password st
 	})
 }
 
-func (r *AccountRepo) UpdateProfileInfo(ctx context.Context, account *domain.Account) error {
+func (r *accountRepo) UpdateProfileInfo(ctx context.Context, account *domain.Account) error {
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		query := `
             UPDATE users SET 
@@ -153,7 +153,7 @@ func (r *AccountRepo) UpdateProfileInfo(ctx context.Context, account *domain.Acc
 	})
 }
 
-func (r *AccountRepo) UpdateAvatar(ctx context.Context, id string, avatarURL string) error {
+func (r *accountRepo) UpdateAvatar(ctx context.Context, id string, avatarURL string) error {
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		query := `UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?`
 		_, err := tx.ExecContext(ctx, query, avatarURL, time.Now(), id)
@@ -161,7 +161,7 @@ func (r *AccountRepo) UpdateAvatar(ctx context.Context, id string, avatarURL str
 	})
 }
 
-func (r *AccountRepo) FindByName(ctx context.Context, name string, limit, offset int) ([]*domain.Account, error) {
+func (r *accountRepo) FindByName(ctx context.Context, name string, limit, offset int) ([]*domain.Account, error) {
 	query := `
         SELECT 
             id, name, email, password, avatar_url, created_at, updated_at 
@@ -202,7 +202,7 @@ func (r *AccountRepo) FindByName(ctx context.Context, name string, limit, offset
 	return accounts, nil
 }
 
-func (r *AccountRepo) CountByName(ctx context.Context, name string) (int, error) {
+func (r *accountRepo) CountByName(ctx context.Context, name string) (int, error) {
 	query := `SELECT COUNT(*) FROM users WHERE name LIKE ?`
 
 	searchPattern := "%" + name + "%"

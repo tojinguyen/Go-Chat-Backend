@@ -16,15 +16,15 @@ type FriendShipRepository interface {
 	RemoveFriendShip(ctx context.Context, userId, friendId string) error
 }
 
-type FriendRepo struct {
+type friendShipRepo struct {
 	database *mysqlinfra.Database
 }
 
 func NewFriendShipRepo(db *mysqlinfra.Database) FriendShipRepository {
-	return &FriendRepo{database: db}
+	return &friendShipRepo{database: db}
 }
 
-func (r *FriendRepo) CreateFriendShip(ctx context.Context, friendShip *domainFriendShip.FriendShip) error {
+func (r *friendShipRepo) CreateFriendShip(ctx context.Context, friendShip *domainFriendShip.FriendShip) error {
 	query := `INSERT INTO friend_ships (user_id_a, user_id_b, created_at) VALUES (?, ?, ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
@@ -39,7 +39,7 @@ func (r *FriendRepo) CreateFriendShip(ctx context.Context, friendShip *domainFri
 	})
 }
 
-func (r *FriendRepo) HasFriendShip(ctx context.Context, userId, friendId string) (bool, error) {
+func (r *friendShipRepo) HasFriendShip(ctx context.Context, userId, friendId string) (bool, error) {
 	query := `SELECT COUNT(*) FROM friend_ships WHERE (user_id_a = ? AND user_id_b = ?) OR (user_id_a = ? AND user_id_b = ?)`
 
 	var count int
@@ -50,7 +50,7 @@ func (r *FriendRepo) HasFriendShip(ctx context.Context, userId, friendId string)
 	return count > 0, nil
 }
 
-func (r *FriendRepo) FindFriendsByUserId(ctx context.Context, userId string, limit, offset int) ([]*domainAuth.Account, error) {
+func (r *friendShipRepo) FindFriendsByUserId(ctx context.Context, userId string, limit, offset int) ([]*domainAuth.Account, error) {
 	query := `
 		SELECT u.id, u.name, u.email, u.avatar_url, u.created_at, u.updated_at 
 		FROM users AS u 
@@ -76,7 +76,7 @@ func (r *FriendRepo) FindFriendsByUserId(ctx context.Context, userId string, lim
 	return friends, nil
 }
 
-func (r *FriendRepo) CountFriendsByUserId(ctx context.Context, userId string) (int, error) {
+func (r *friendShipRepo) CountFriendsByUserId(ctx context.Context, userId string) (int, error) {
 	query := `
 		SELECT COUNT(*) 
 		FROM users AS u 
@@ -91,7 +91,7 @@ func (r *FriendRepo) CountFriendsByUserId(ctx context.Context, userId string) (i
 	return count, nil
 }
 
-func (r *FriendRepo) RemoveFriendShip(ctx context.Context, userId, friendId string) error {
+func (r *friendShipRepo) RemoveFriendShip(ctx context.Context, userId, friendId string) error {
 	query := `DELETE FROM friend_ships WHERE (user_id_a = ? AND user_id_b = ?) OR (user_id_a = ? AND user_id_b = ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
