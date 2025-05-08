@@ -17,11 +17,11 @@ func InitFriendRouter(
 	})
 
 	// Request to add a friend
-	router.GET("/requests", middleware.Authentication, func(c *gin.Context) {
+	router.POST("/requests", middleware.Authentication, func(c *gin.Context) {
 	})
 
 	// Get all friend requests
-	router.POST("/requests", middleware.Authentication, func(c *gin.Context) {
+	router.GET("/requests", middleware.Authentication, func(c *gin.Context) {
 	})
 
 	// Accept a friend request
