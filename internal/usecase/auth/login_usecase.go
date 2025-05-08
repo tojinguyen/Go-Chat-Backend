@@ -47,7 +47,7 @@ func (a *authUseCase) Login(ctx context.Context, input LoginInput) (*LoginOutput
 
 	// Generate JWT tokens
 	jwtInput := &jwt.GenerateTokenInput{
-		UserId: account.ID, // Using string ID instead
+		UserId: account.Id, // Using string ID instead
 		Email:  account.Email,
 		Role:   config.USER, // Assuming default role is USER
 	}
@@ -66,7 +66,7 @@ func (a *authUseCase) Login(ctx context.Context, input LoginInput) (*LoginOutput
 
 	// Store refresh token in Redis with user ID as key for later validation
 	// Using a TTL that matches the refresh token expiration
-	refreshTokenKey := fmt.Sprintf("refresh_token:%s", account.ID)
+	refreshTokenKey := fmt.Sprintf("refresh_token:%s", account.Id)
 	err = a.redisService.Set(ctx, refreshTokenKey, refreshToken, time.Duration(a.cfg.RefreshTokenExpireMinutes)*time.Minute)
 	if err != nil {
 		log.Printf("Error storing refresh token in Redis: %v\n", err)
@@ -76,7 +76,7 @@ func (a *authUseCase) Login(ctx context.Context, input LoginInput) (*LoginOutput
 	return &LoginOutput{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		UserId:       account.ID,
+		UserId:       account.Id,
 		Email:        account.Email,
 		FullName:     account.Name,
 		Role:         config.USER,

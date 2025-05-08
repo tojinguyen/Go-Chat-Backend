@@ -152,7 +152,7 @@ func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegist
 
 	// Create user account
 	account := &domain.Account{
-		ID:        verificationRecord.UserID,
+		Id:        verificationRecord.UserID,
 		Name:      verificationRecord.Name,
 		Email:     verificationRecord.Email,
 		Password:  verificationRecord.HashedPassword,
@@ -174,13 +174,13 @@ func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegist
 
 	// If avatar was uploaded to temporary location, move it to permanent location
 	if verificationRecord.Avatar != "" && strings.Contains(verificationRecord.Avatar, "avatars/temp") {
-		newAvatarURL, err := a.cloudstorage.MoveAvatar(verificationRecord.Avatar, fmt.Sprintf("avatars/%s", account.ID))
+		newAvatarURL, err := a.cloudstorage.MoveAvatar(verificationRecord.Avatar, fmt.Sprintf("avatars/%s", account.Id))
 		if err != nil {
 			fmt.Printf("Failed to move avatar to permanent location: %v\n", err)
 		} else {
 			// Update the account with the new avatar URL
 			account.AvatarURL = newAvatarURL
-			err = a.accountRepository.UpdateAvatar(ctx, account.ID, newAvatarURL)
+			err = a.accountRepository.UpdateAvatar(ctx, account.Id, newAvatarURL)
 			if err != nil {
 				fmt.Printf("Failed to update avatar URL: %v\n", err)
 			}
@@ -188,7 +188,7 @@ func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegist
 	}
 
 	return &RegisterOutput{
-		ID:        account.ID,
+		ID:        account.Id,
 		Name:      account.Name,
 		Email:     account.Email,
 		AvatarURL: account.AvatarURL,

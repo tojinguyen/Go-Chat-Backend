@@ -26,13 +26,13 @@ type AccountRepo struct {
 	database *mysqlinfra.Database
 }
 
-func NewUserRepo(db *mysqlinfra.Database) *AccountRepo {
+func NewAccountRepo(db *mysqlinfra.Database) AccountRepository {
 	return &AccountRepo{database: db}
 }
 
 func (r *AccountRepo) CreateUser(ctx context.Context, account *domain.Account) error {
-	if account.ID == "" {
-		account.ID = uuid.New().String()
+	if account.Id == "" {
+		account.Id = uuid.New().String()
 	}
 
 	query := `
@@ -43,7 +43,7 @@ func (r *AccountRepo) CreateUser(ctx context.Context, account *domain.Account) e
 		_, err := tx.ExecContext(
 			ctx,
 			query,
-			account.ID,
+			account.Id,
 			account.Name,
 			account.Email,
 			account.Password,
@@ -66,7 +66,7 @@ func (r *AccountRepo) FindByEmail(ctx context.Context, email string) (*domain.Ac
     `
 
 	err := r.database.DB.QueryRowContext(ctx, query, email).Scan(
-		&account.ID,
+		&account.Id,
 		&account.Name,
 		&account.Email,
 		&account.Password,
@@ -95,7 +95,7 @@ func (r *AccountRepo) FindById(ctx context.Context, id string) (*domain.Account,
     `
 
 	err := r.database.DB.QueryRowContext(ctx, query, id).Scan(
-		&account.ID,
+		&account.Id,
 		&account.Name,
 		&account.Email,
 		&account.Password,
@@ -147,7 +147,7 @@ func (r *AccountRepo) UpdateProfileInfo(ctx context.Context, account *domain.Acc
 			account.Name,
 			account.AvatarURL,
 			time.Now(),
-			account.ID,
+			account.Id,
 		)
 		return err
 	})
@@ -181,7 +181,7 @@ func (r *AccountRepo) FindByName(ctx context.Context, name string, limit, offset
 	for rows.Next() {
 		var account domain.Account
 		err := rows.Scan(
-			&account.ID,
+			&account.Id,
 			&account.Name,
 			&account.Email,
 			&account.Password,

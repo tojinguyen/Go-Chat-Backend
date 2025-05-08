@@ -17,7 +17,7 @@ func (p *profileUseCase) GetUserProfile(ctx context.Context, userID string) (*Pr
 	}
 
 	return &ProfileOutput{
-		ID:        account.ID,
+		ID:        account.Id,
 		Name:      account.Name,
 		Email:     account.Email,
 		AvatarURL: account.AvatarURL,

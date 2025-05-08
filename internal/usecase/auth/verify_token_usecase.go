@@ -83,7 +83,7 @@ func (a *authUseCase) RefreshToken(ctx context.Context, refreshToken string) (*L
 
 	// Tạo token mới
 	jwtInput := &jwt.GenerateTokenInput{
-		UserId: account.ID,
+		UserId: account.Id,
 		Email:  account.Email,
 		Role:   claims.Role, // Giữ nguyên role từ token cũ
 	}
@@ -117,7 +117,7 @@ func (a *authUseCase) RefreshToken(ctx context.Context, refreshToken string) (*L
 	return &LoginOutput{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
-		UserId:       account.ID,
+		UserId:       account.Id,
 		Email:        account.Email,
 		FullName:     account.Name,
 		Role:         jwtInput.Role,

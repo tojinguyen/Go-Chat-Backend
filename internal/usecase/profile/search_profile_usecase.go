@@ -60,7 +60,7 @@ func (p *profileUseCase) SearchUsersByName(ctx context.Context, input SearchUser
 	var userItems []UserItem
 	for _, user := range users {
 		userItems = append(userItems, UserItem{
-			ID:        user.ID,
+			ID:        user.Id,
 			Name:      user.Name,
 			AvatarURL: user.AvatarURL,
 		})

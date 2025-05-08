@@ -102,7 +102,7 @@ func main() {
 	verificationService := verification.NewVerificationService(app.config)
 
 	// Initialize Repositories
-	accountRepo := repository.NewUserRepo(db)
+	accountRepo := repository.NewAccountRepo(db)
 	verificationRepo := repository.NewVerificationRepo(db)
 
 	deps := &usecase.SharedDependencies{
