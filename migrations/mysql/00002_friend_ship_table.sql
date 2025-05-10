@@ -14,7 +14,9 @@ CREATE TABLE IF NOT EXISTS friend_requests (
     UNIQUE KEY idx_unique_request (user_id_requester, user_id_receiver),
     INDEX idx_receiver (user_id_receiver)
 );
+-- +goose StatementEnd
 
+-- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS friendships (
     id VARCHAR(36) PRIMARY KEY,
     user_id_a VARCHAR(36) NOT NULL,
@@ -32,5 +34,8 @@ CREATE TABLE IF NOT EXISTS friendships (
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE IF EXISTS friendships;
+-- +goose StatementEnd
+
+-- +goose StatementBegin
 DROP TABLE IF EXISTS friend_requests;
 -- +goose StatementEnd
