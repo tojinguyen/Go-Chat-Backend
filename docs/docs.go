@@ -39,7 +39,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "friends"
+                    "Friends"
                 ],
                 "summary": "Get user's friends list",
                 "responses": {
@@ -94,7 +94,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "friends"
+                    "Friends"
                 ],
                 "summary": "Get list of friend requests",
                 "responses": {
@@ -132,9 +132,7 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/api/v1/friends/requests/{friendId}": {
+            },
             "post": {
                 "security": [
                     {
@@ -149,16 +147,18 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "friends"
+                    "Friends"
                 ],
                 "summary": "Send friend request",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "ID of user to add as friend",
-                        "name": "friendId",
-                        "in": "path",
-                        "required": true
+                        "description": "Friend request data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handler.AddFriendRequest"
+                        }
                     }
                 ],
                 "responses": {
@@ -216,7 +216,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "friends"
+                    "Friends"
                 ],
                 "summary": "Accept a friend request",
                 "parameters": [
@@ -277,7 +277,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "friends"
+                    "Friends"
                 ],
                 "summary": "Reject a friend request",
                 "parameters": [
@@ -338,7 +338,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "friends"
+                    "Friends"
                 ],
                 "summary": "Remove a friend",
                 "parameters": [
@@ -878,6 +878,17 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "handler.AddFriendRequest": {
+            "type": "object",
+            "required": [
+                "friendId"
+            ],
+            "properties": {
+                "friendId": {
+                    "type": "string"
                 }
             }
         },

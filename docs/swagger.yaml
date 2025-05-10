@@ -62,6 +62,13 @@ definitions:
       success:
         type: boolean
     type: object
+  handler.AddFriendRequest:
+    properties:
+      friendId:
+        type: string
+    required:
+    - friendId
+    type: object
   handler.LoginRequest:
     properties:
       email:
@@ -164,7 +171,7 @@ paths:
       - BearerAuth: []
       summary: Get user's friends list
       tags:
-      - friends
+      - Friends
   /api/v1/friends/{friendID}:
     delete:
       consumes:
@@ -203,7 +210,7 @@ paths:
       - BearerAuth: []
       summary: Remove a friend
       tags:
-      - friends
+      - Friends
   /api/v1/friends/requests:
     get:
       consumes:
@@ -236,18 +243,18 @@ paths:
       - BearerAuth: []
       summary: Get list of friend requests
       tags:
-      - friends
-  /api/v1/friends/requests/{friendId}:
+      - Friends
     post:
       consumes:
       - application/json
       description: Send a friend request to another user
       parameters:
-      - description: ID of user to add as friend
-        in: path
-        name: friendId
+      - description: Friend request data
+        in: body
+        name: request
         required: true
-        type: string
+        schema:
+          $ref: '#/definitions/handler.AddFriendRequest'
       produces:
       - application/json
       responses:
@@ -279,7 +286,7 @@ paths:
       - BearerAuth: []
       summary: Send friend request
       tags:
-      - friends
+      - Friends
   /api/v1/friends/requests/{requestID}/accept:
     post:
       consumes:
@@ -318,7 +325,7 @@ paths:
       - BearerAuth: []
       summary: Accept a friend request
       tags:
-      - friends
+      - Friends
   /api/v1/friends/requests/{requestID}/reject:
     post:
       consumes:
@@ -357,7 +364,7 @@ paths:
       - BearerAuth: []
       summary: Reject a friend request
       tags:
-      - friends
+      - Friends
   /auth/login:
     post:
       consumes:

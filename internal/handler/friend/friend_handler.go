@@ -18,7 +18,7 @@ type AcceptFriendRequestRequest struct {
 // GetFriends godoc
 // @Summary Get user's friends list
 // @Description Retrieves a list of all friends for the authenticated user
-// @Tags friends
+// @Tags Friends
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -52,7 +52,7 @@ func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // AddFriend godoc
 // @Summary Send friend request
 // @Description Send a friend request to another user
-// @Tags friends
+// @Tags Friends
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -96,7 +96,7 @@ func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // GetFriendRequestList godoc
 // @Summary Get list of friend requests
 // @Description Retrieves a list of pending friend requests for the authenticated user
-// @Tags friends
+// @Tags Friends
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -130,7 +130,7 @@ func GetFriendRequestList(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // AcceptFriendRequest godoc
 // @Summary Accept a friend request
 // @Description Accept a pending friend request from another user
-// @Tags friends
+// @Tags Friends
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -172,7 +172,7 @@ func AcceptFriendRequest(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // RejectFriendRequest godoc
 // @Summary Reject a friend request
 // @Description Reject a pending friend request from another user
-// @Tags friends
+// @Tags Friends
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -214,7 +214,7 @@ func RejectFriendRequest(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // DeleteFriend godoc
 // @Summary Remove a friend
 // @Description Remove a user from the authenticated user's friends list
-// @Tags friends
+// @Tags Friends
 // @Accept json
 // @Produce json
 // @Security BearerAuth
