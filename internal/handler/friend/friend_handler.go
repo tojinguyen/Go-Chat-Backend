@@ -21,7 +21,7 @@ type AcceptFriendRequestRequest struct {
 // @Success 200 {object} handler.APIResponse{data=[]friend.FriendOutput} "List of friends"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /friends [get]
+// @Router /api/v1/friends [get]
 func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	userId, exists := c.Get("userId")
 	if !exists {
@@ -52,18 +52,18 @@ func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param friendID body string true "ID of user to add as friend"
+// @Param friendId path string true "ID of user to add as friend"
 // @Success 200 {object} handler.APIResponse "Friend request sent successfully"
 // @Failure 400 {object} handler.APIResponse "Invalid request"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 404 {object} handler.APIResponse "User not found"
 // @Failure 409 {object} handler.APIResponse "Friend request already sent"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /friends/requests [post]
+// @Router /api/v1/friends/requests/{friendId} [post]
 func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
-	requestID := c.Param("requestID")
-	if requestID == "" {
-		handler.SendErrorResponse(c, 400, "Request ID is required")
+	friendId := c.Param("friendId")
+	if friendId == "" {
+		handler.SendErrorResponse(c, 400, "Friend ID is required")
 		return
 	}
 
@@ -79,7 +79,7 @@ func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
 		return
 	}
 
-	err := friendUseCase.AddFriend(c, userIdStr, requestID)
+	err := friendUseCase.AddFriend(c, userIdStr, friendId)
 
 	if err != nil {
 		handler.SendErrorResponse(c, 500, "Failed to send friend request")
@@ -99,7 +99,7 @@ func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // @Success 200 {object} handler.APIResponse{data=[]friend.FriendRequestOutput} "List of friend requests"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /friends/requests [get]
+// @Router /api/v1/friends/requests [get]
 func GetFriendRequestList(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	userId, exists := c.Get("userId")
 	if !exists {
@@ -136,7 +136,7 @@ func GetFriendRequestList(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 404 {object} handler.APIResponse "Friend request not found"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /friends/requests/{requestID}/accept [post]
+// @Router /api/v1/friends/requests/{requestID}/accept [post]
 func AcceptFriendRequest(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	requestID := c.Param("requestID")
 	if requestID == "" {
@@ -178,7 +178,7 @@ func AcceptFriendRequest(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 404 {object} handler.APIResponse "Friend request not found"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /friends/requests/{requestID}/reject [post]
+// @Router /api/v1/friends/requests/{requestID}/reject [post]
 func RejectFriendRequest(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	requestID := c.Param("requestID")
 	if requestID == "" {
@@ -220,7 +220,7 @@ func RejectFriendRequest(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 404 {object} handler.APIResponse "Friend not found"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /friends/{friendID} [delete]
+// @Router /api/v1/friends/{friendID} [delete]
 func DeleteFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	friendID := c.Param("friendID")
 	if friendID == "" {

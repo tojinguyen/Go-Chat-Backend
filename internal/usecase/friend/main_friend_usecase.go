@@ -3,9 +3,19 @@ package friend
 import "context"
 
 type FriendOutput struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Email     string `json:"email"`
+	AvatarURL string `json:"avatar_url"`
 }
 
 type FriendRequestOutput struct {
+	ID            string `json:"id"`
+	RequesterID   string `json:"requester_id"`
+	RequesterName string `json:"requester_name"`
+	AvatarURL     string `json:"avatar_url"`
+	CreatedAt     string `json:"created_at"`
+	Status        string `json:"status"`
 }
 
 type FriendUseCase interface {
