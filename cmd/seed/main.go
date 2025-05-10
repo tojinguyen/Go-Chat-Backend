@@ -91,7 +91,7 @@ func insertBatch(db *sql.DB, accounts []Account) error {
 
 func main() {
 	// Khởi tạo seed cho random để các avatar có thể xuất hiện đều nhau
-	rand.Seed(time.Now().UnixNano())
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	err := godotenv.Load()
 	if err != nil {

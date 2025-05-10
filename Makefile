@@ -4,7 +4,10 @@ ifneq (,$(wildcard ./.env))
 endif
 
 dev:
-	go run ./cmd/main.go
+	go run ./cmd/server/main.go
+
+rand-user:
+	go run ./cmd/seed/main.go
 
 lint:
 	golangci-lint run

@@ -57,13 +57,20 @@ func (d *Database) ExecuteTransaction(txFunc func(*sql.Tx) error) error {
 
 	defer func() {
 		if p := recover(); p != nil {
-			tx.Rollback()
+			if rbErr := tx.Rollback(); rbErr != nil {
+				// Thông thường bạn sẽ muốn log lỗi này thay vì trả về
+				// vì chúng ta đang trong khối recover và đang chuẩn bị rethrow panic
+				fmt.Printf("Rollback failed: %v\n", rbErr)
+			}
 			panic(p) // re-throw panic after Rollback
 		}
 	}()
 
 	if err := txFunc(tx); err != nil {
-		tx.Rollback()
+		if rbErr := tx.Rollback(); rbErr != nil {
+			// Kết hợp cả lỗi gốc và lỗi rollback
+			return fmt.Errorf("tx failed: %v, rollback failed: %v", err, rbErr)
+		}
 		return err
 	}
 
