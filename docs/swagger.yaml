@@ -29,8 +29,30 @@ definitions:
         type: string
     type: object
   friend.FriendOutput:
+    properties:
+      avatar_url:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
     type: object
   friend.FriendRequestOutput:
+    properties:
+      avatar_url:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      requester_id:
+        type: string
+      requester_name:
+        type: string
+      status:
+        type: string
     type: object
   handler.APIResponse:
     properties:
@@ -111,6 +133,231 @@ info:
   title: GoChat Backend API
   version: "1.0"
 paths:
+  /api/v1/friends:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of all friends for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of friends
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/friend.FriendOutput'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user's friends list
+      tags:
+      - friends
+  /api/v1/friends/{friendID}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a user from the authenticated user's friends list
+      parameters:
+      - description: ID of friend to remove
+        in: path
+        name: friendID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Friend removed successfully
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "404":
+          description: Friend not found
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove a friend
+      tags:
+      - friends
+  /api/v1/friends/requests:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a list of pending friend requests for the authenticated
+        user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of friend requests
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/friend.FriendRequestOutput'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get list of friend requests
+      tags:
+      - friends
+  /api/v1/friends/requests/{friendId}:
+    post:
+      consumes:
+      - application/json
+      description: Send a friend request to another user
+      parameters:
+      - description: ID of user to add as friend
+        in: path
+        name: friendId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Friend request sent successfully
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "409":
+          description: Friend request already sent
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Send friend request
+      tags:
+      - friends
+  /api/v1/friends/requests/{requestID}/accept:
+    post:
+      consumes:
+      - application/json
+      description: Accept a pending friend request from another user
+      parameters:
+      - description: Friend request ID to accept
+        in: path
+        name: requestID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Friend request accepted successfully
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "404":
+          description: Friend request not found
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Accept a friend request
+      tags:
+      - friends
+  /api/v1/friends/requests/{requestID}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Reject a pending friend request from another user
+      parameters:
+      - description: Friend request ID to reject
+        in: path
+        name: requestID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Friend request rejected successfully
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "400":
+          description: Invalid request
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "404":
+          description: Friend request not found
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Reject a friend request
+      tags:
+      - friends
   /auth/login:
     post:
       consumes:
@@ -277,231 +524,6 @@ paths:
       summary: Verify user registration code
       tags:
       - Auth
-  /friends:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of all friends for the authenticated user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of friends
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.APIResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/friend.FriendOutput'
-                  type: array
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Get user's friends list
-      tags:
-      - friends
-  /friends/{friendID}:
-    delete:
-      consumes:
-      - application/json
-      description: Remove a user from the authenticated user's friends list
-      parameters:
-      - description: ID of friend to remove
-        in: path
-        name: friendID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Friend removed successfully
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "404":
-          description: Friend not found
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Remove a friend
-      tags:
-      - friends
-  /friends/requests:
-    get:
-      consumes:
-      - application/json
-      description: Retrieves a list of pending friend requests for the authenticated
-        user
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: List of friend requests
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.APIResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/friend.FriendRequestOutput'
-                  type: array
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Get list of friend requests
-      tags:
-      - friends
-    post:
-      consumes:
-      - application/json
-      description: Send a friend request to another user
-      parameters:
-      - description: ID of user to add as friend
-        in: body
-        name: friendID
-        required: true
-        schema:
-          type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Friend request sent successfully
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "404":
-          description: User not found
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "409":
-          description: Friend request already sent
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Send friend request
-      tags:
-      - friends
-  /friends/requests/{requestID}/accept:
-    post:
-      consumes:
-      - application/json
-      description: Accept a pending friend request from another user
-      parameters:
-      - description: Friend request ID to accept
-        in: path
-        name: requestID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Friend request accepted successfully
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "404":
-          description: Friend request not found
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Accept a friend request
-      tags:
-      - friends
-  /friends/requests/{requestID}/reject:
-    post:
-      consumes:
-      - application/json
-      description: Reject a pending friend request from another user
-      parameters:
-      - description: Friend request ID to reject
-        in: path
-        name: requestID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Friend request rejected successfully
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "400":
-          description: Invalid request
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "404":
-          description: Friend request not found
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Reject a friend request
-      tags:
-      - friends
   /profile/users:
     get:
       consumes:

@@ -7,6 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+type AddFriendRequest struct {
+	FriendID string `json:"friendId" binding:"required"`
+}
+
 type AcceptFriendRequestRequest struct {
 	RequestID string `json:"requestId" binding:"required"`
 }
@@ -61,9 +65,9 @@ func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // @Failure 500 {object} handler.APIResponse "Internal server error"
 // @Router /api/v1/friends/requests/{friendId} [post]
 func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
-	friendId := c.Param("friendId")
-	if friendId == "" {
-		handler.SendErrorResponse(c, 400, "Friend ID is required")
+	var req AddFriendRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		handler.SendErrorResponse(c, 400, "Invalid request: "+err.Error())
 		return
 	}
 
@@ -79,7 +83,7 @@ func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
 		return
 	}
 
-	err := friendUseCase.AddFriend(c, userIdStr, friendId)
+	err := friendUseCase.AddFriend(c, userIdStr, req.FriendID)
 
 	if err != nil {
 		handler.SendErrorResponse(c, 500, "Failed to send friend request")
