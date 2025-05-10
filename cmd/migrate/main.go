@@ -26,7 +26,7 @@ func main() {
 		action = os.Args[1]
 
 		// Nếu có tham số thứ hai (số phiên bản), đọc nó
-		if len(os.Args) > 2 && (action == "force" || action == "goto") {
+		if len(os.Args) > 2 && (action == "force" || action == "goto" || action == "down") {
 			v, err := strconv.Atoi(os.Args[2])
 			if err == nil {
 				version = v
