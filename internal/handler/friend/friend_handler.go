@@ -56,14 +56,14 @@ func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param friendId path string true "ID of user to add as friend"
+// @Param request body handler.AddFriendRequest true "Friend request data"
 // @Success 200 {object} handler.APIResponse "Friend request sent successfully"
 // @Failure 400 {object} handler.APIResponse "Invalid request"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 404 {object} handler.APIResponse "User not found"
 // @Failure 409 {object} handler.APIResponse "Friend request already sent"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /api/v1/friends/requests/{friendId} [post]
+// @Router /api/v1/friends/requests [post]
 func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	var req AddFriendRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
