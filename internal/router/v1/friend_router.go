@@ -20,7 +20,8 @@ func InitFriendRouter(
 	})
 
 	// Request to add a friend
-	router.POST("/requests", middleware.Authentication, func(c *gin.Context) {
+	router.POST("/requests/:friendId", middleware.Authentication, func(c *gin.Context) {
+		// Would need to modify handler to use c.Param("friendId")
 		friendHandler.AddFriend(c, friendUseCase)
 	})
 
