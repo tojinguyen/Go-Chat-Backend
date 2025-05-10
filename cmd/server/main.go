@@ -29,6 +29,7 @@ import (
 	"gochat-backend/pkg/verification"
 	"log"
 	"os"
+	"os/exec"
 	"os/signal"
 	"reflect"
 	"syscall"
@@ -70,6 +71,13 @@ func main() {
 	gin.SetMode(cfg.RunMode)
 
 	loggerStartServer.Infof("System is running with %s mode", cfg.RunMode)
+
+	if cfg.RunMode != "release" {
+		if err := generateSwaggerDocs(loggerStartServer); err != nil {
+			loggerStartServer.Warnf("Failed to generate Swagger documentation: %v", err)
+			// Continue execution even if swagger generation fails
+		}
+	}
 
 	// Initialize Database Connection
 	db, err := InitDatabase(cfg)
@@ -271,4 +279,26 @@ func loadEnvironment() *config.Environment {
 	fmt.Println("======================================================")
 
 	return cfg
+}
+
+func generateSwaggerDocs(logger *logrus.Entry) error {
+	logger.Info("Generating Swagger documentation...")
+
+	// Check if swag is installed
+	_, err := exec.LookPath("swag")
+	if err != nil {
+		return fmt.Errorf("swag command not found. Please install it with: go install github.com/swaggo/swag/cmd/swag@latest")
+	}
+
+	// Generate Swagger documentation
+	cmd := exec.Command("swag", "init", "-g", "cmd/server/main.go", "-d", "./")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("failed to generate Swagger documentation: %v", err)
+	}
+
+	logger.Info("Swagger documentation generated successfully!")
+	return nil
 }
