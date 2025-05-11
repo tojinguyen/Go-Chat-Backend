@@ -144,7 +144,19 @@ paths:
     get:
       consumes:
       - application/json
-      description: Retrieves a list of all friends for the authenticated user
+      description: Retrieves a list of all friends for the authenticated user with
+        pagination
+      parameters:
+      - description: Page number (must be a positive integer)
+        in: query
+        name: page
+        required: true
+        type: integer
+      - description: Number of items per page (must be a positive integer)
+        in: query
+        name: limit
+        required: true
+        type: integer
       produces:
       - application/json
       responses:
@@ -159,6 +171,10 @@ paths:
                     $ref: '#/definitions/friend.FriendOutput'
                   type: array
               type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
         "401":
           description: Unauthorized
           schema:

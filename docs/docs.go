@@ -31,7 +31,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves a list of all friends for the authenticated user",
+                "description": "Retrieves a list of all friends for the authenticated user with pagination",
                 "consumes": [
                     "application/json"
                 ],
@@ -42,6 +42,22 @@ const docTemplate = `{
                     "Friends"
                 ],
                 "summary": "Get user's friends list",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (must be a positive integer)",
+                        "name": "page",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items per page (must be a positive integer)",
+                        "name": "limit",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of friends",
@@ -62,6 +78,12 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIResponse"
                         }
                     },
                     "401": {

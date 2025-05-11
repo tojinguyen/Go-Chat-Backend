@@ -23,8 +23,8 @@ type AcceptFriendRequestRequest struct {
 // @Accept json
 // @Produce json
 // @Security BearerAuth
-// @Param page query int false "Page number (default: 1)"
-// @Param limit query int false "Number of items per page (default: 100)"
+// @Param page query int true "Page number (must be a positive integer)"
+// @Param limit query int true "Number of items per page (must be a positive integer)"
 // @Success 200 {object} handler.APIResponse{data=[]friend.FriendOutput} "List of friends"
 // @Failure 400 {object} handler.APIResponse "Bad request"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
@@ -42,27 +42,31 @@ func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 		handler.SendErrorResponse(c, 500, "Failed to process user identity")
 		return
 	}
-
 	// Extract pagination parameters
-	page := 1    // Default page
-	limit := 100 // Default limit
-
-	if pageQuery := c.Query("page"); pageQuery != "" {
-		if parsedPage, err := strconv.Atoi(pageQuery); err == nil && parsedPage > 0 {
-			page = parsedPage
-		} else if err != nil {
-			handler.SendErrorResponse(c, 400, "Invalid page parameter")
-			return
-		}
+	pageQuery := c.Query("page")
+	if pageQuery == "" {
+		handler.SendErrorResponse(c, 400, "Page parameter is required")
+		return
 	}
 
-	if limitQuery := c.Query("limit"); limitQuery != "" {
-		if parsedLimit, err := strconv.Atoi(limitQuery); err == nil && parsedLimit > 0 {
-			limit = parsedLimit
-		} else if err != nil {
-			handler.SendErrorResponse(c, 400, "Invalid limit parameter")
-			return
-		}
+	limitQuery := c.Query("limit")
+	if limitQuery == "" {
+		handler.SendErrorResponse(c, 400, "Limit parameter is required")
+		return
+	}
+
+	// Parse page parameter
+	page, err := strconv.Atoi(pageQuery)
+	if err != nil || page <= 0 {
+		handler.SendErrorResponse(c, 400, "Invalid page parameter: must be a positive integer")
+		return
+	}
+
+	// Parse limit parameter
+	limit, err := strconv.Atoi(limitQuery)
+	if err != nil || limit <= 0 {
+		handler.SendErrorResponse(c, 400, "Invalid limit parameter: must be a positive integer")
+		return
 	}
 
 	friends, err := friendUseCase.GetFriendList(c, userIdStr, page, limit)
