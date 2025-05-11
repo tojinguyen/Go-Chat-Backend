@@ -94,14 +94,12 @@ func (a *authUseCase) Register(ctx context.Context, input RegisterInput) (*Regis
 
 	verificationRecord := &domain.RegistrationVerificationCode{
 		ID:             uuid.New().String(),
-		UserID:         userID,
 		Email:          input.Email,
 		Name:           input.Name,
 		HashedPassword: string(hashedPassword),
 		Avatar:         avatarURL,
 		Code:           verificationCode,
 		Type:           verification.VerificationCodeTypeRegister,
-		Verified:       false,
 		ExpiresAt:      expiresAt,
 		CreatedAt:      time.Now(),
 	}
@@ -140,11 +138,6 @@ func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegist
 		return nil, errors.New("verification code has expired")
 	}
 
-	// Check if code is already verified
-	if verificationRecord.Verified {
-		return nil, errors.New("email already verified")
-	}
-
 	// Verify the code
 	if verificationRecord.Code != input.Code {
 		return nil, errors.New("invalid verification code")
@@ -152,7 +145,7 @@ func (a *authUseCase) VerifyRegistration(ctx context.Context, input VerifyRegist
 
 	// Create user account
 	account := &domain.Account{
-		Id:        verificationRecord.UserID,
+		Id:        uuid.NewString(),
 		Name:      verificationRecord.Name,
 		Email:     verificationRecord.Email,
 		Password:  verificationRecord.HashedPassword,

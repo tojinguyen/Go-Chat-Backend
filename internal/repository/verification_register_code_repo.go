@@ -38,7 +38,7 @@ func (r *registerVerificationRepo) CreateVerificationCode(ctx context.Context, c
 	}
 
 	query := `
-        INSERT INTO verification_codes (id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at)
+        INSERT INTO verification_codes (id, email, name, hashed_password, avatar, code, type, expires_at, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
@@ -46,14 +46,12 @@ func (r *registerVerificationRepo) CreateVerificationCode(ctx context.Context, c
 			ctx,
 			query,
 			code.ID,
-			code.UserID,
 			code.Email,
 			code.Name,
 			code.HashedPassword,
 			code.Avatar,
 			code.Code,
 			code.Type,
-			code.Verified,
 			code.ExpiresAt,
 			code.CreatedAt,
 		)
@@ -64,7 +62,7 @@ func (r *registerVerificationRepo) CreateVerificationCode(ctx context.Context, c
 
 func (r *registerVerificationRepo) GetVerificationCodeByID(ctx context.Context, id string) (*domain.RegistrationVerificationCode, error) {
 	query := `
-        SELECT id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at 
+        SELECT id, email, name, hashed_password, avatar, code, type, expires_at, created_at 
         FROM verification_codes 
         WHERE id = ? AND type = 'register'
     `
@@ -73,14 +71,12 @@ func (r *registerVerificationRepo) GetVerificationCodeByID(ctx context.Context, 
 
 	err := r.database.DB.QueryRowContext(ctx, query, id).Scan(
 		&code.ID,
-		&code.UserID,
 		&code.Email,
 		&code.Name,
 		&code.HashedPassword,
 		&code.Avatar,
 		&code.Code,
 		&code.Type,
-		&code.Verified,
 		&code.ExpiresAt,
 		&code.CreatedAt,
 	)
@@ -97,7 +93,7 @@ func (r *registerVerificationRepo) GetVerificationCodeByID(ctx context.Context, 
 
 func (r *registerVerificationRepo) GetVerificationCodeByEmail(ctx context.Context, email string) (*domain.RegistrationVerificationCode, error) {
 	query := `
-        SELECT id, user_id, email, name, hashed_password, avatar, code, type, verified, expires_at, created_at 
+        SELECT id, email, name, hashed_password, avatar, code, type, expires_at, created_at 
         FROM verification_codes 
         WHERE email = ? AND type = 'register'
         ORDER BY created_at DESC LIMIT 1
@@ -107,14 +103,12 @@ func (r *registerVerificationRepo) GetVerificationCodeByEmail(ctx context.Contex
 
 	err := r.database.DB.QueryRowContext(ctx, query, email).Scan(
 		&code.ID,
-		&code.UserID,
 		&code.Email,
 		&code.Name,
 		&code.HashedPassword,
 		&code.Avatar,
 		&code.Code,
 		&code.Type,
-		&code.Verified,
 		&code.ExpiresAt,
 		&code.CreatedAt,
 	)
