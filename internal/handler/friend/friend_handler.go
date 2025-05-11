@@ -3,6 +3,7 @@ package handler
 import (
 	"gochat-backend/internal/handler"
 	"gochat-backend/internal/usecase/friend"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,12 +18,15 @@ type AcceptFriendRequestRequest struct {
 
 // GetFriends godoc
 // @Summary Get user's friends list
-// @Description Retrieves a list of all friends for the authenticated user
+// @Description Retrieves a list of all friends for the authenticated user with pagination
 // @Tags Friends
 // @Accept json
 // @Produce json
 // @Security BearerAuth
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Number of items per page (default: 100)"
 // @Success 200 {object} handler.APIResponse{data=[]friend.FriendOutput} "List of friends"
+// @Failure 400 {object} handler.APIResponse "Bad request"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
 // @Router /api/v1/friends [get]
@@ -39,7 +43,29 @@ func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 		return
 	}
 
-	friends, err := friendUseCase.GetFriendList(c, userIdStr)
+	// Extract pagination parameters
+	page := 1    // Default page
+	limit := 100 // Default limit
+
+	if pageQuery := c.Query("page"); pageQuery != "" {
+		if parsedPage, err := strconv.Atoi(pageQuery); err == nil && parsedPage > 0 {
+			page = parsedPage
+		} else if err != nil {
+			handler.SendErrorResponse(c, 400, "Invalid page parameter")
+			return
+		}
+	}
+
+	if limitQuery := c.Query("limit"); limitQuery != "" {
+		if parsedLimit, err := strconv.Atoi(limitQuery); err == nil && parsedLimit > 0 {
+			limit = parsedLimit
+		} else if err != nil {
+			handler.SendErrorResponse(c, 400, "Invalid limit parameter")
+			return
+		}
+	}
+
+	friends, err := friendUseCase.GetFriendList(c, userIdStr, page, limit)
 
 	if err != nil {
 		handler.SendErrorResponse(c, 500, "Failed to get friends list")

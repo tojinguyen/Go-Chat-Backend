@@ -22,7 +22,7 @@ type FriendRequestOutput struct {
 }
 
 type FriendUseCase interface {
-	GetFriendList(ctx context.Context, userID string) ([]*FriendOutput, error)
+	GetFriendList(ctx context.Context, userID string, page int, limit int) ([]*FriendOutput, error)
 	AddFriend(ctx context.Context, userID, friendID string) error
 	DeleteFriend(ctx context.Context, userID, friendID string) error
 	GetFriendRequestList(ctx context.Context, userID string) ([]*FriendRequestOutput, error)
