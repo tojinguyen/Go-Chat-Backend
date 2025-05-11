@@ -673,7 +673,7 @@
                 }
             }
         },
-        "/user": {
+        "/users": {
             "get": {
                 "security": [
                     {
@@ -760,7 +760,7 @@
                 }
             }
         },
-        "/user/{id}": {
+        "/users/{id}": {
             "get": {
                 "security": [
                     {

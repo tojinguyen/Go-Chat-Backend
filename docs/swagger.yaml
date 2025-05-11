@@ -547,7 +547,7 @@ paths:
       summary: Verify user registration code
       tags:
       - Auth
-  /user:
+  /users:
     get:
       consumes:
       - application/json
@@ -603,7 +603,7 @@ paths:
       summary: Search users by name
       tags:
       - User
-  /user/{id}:
+  /users/{id}:
     get:
       consumes:
       - application/json

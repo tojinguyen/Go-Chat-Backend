@@ -143,7 +143,9 @@ func main() {
 		Handler: router,
 	}
 
-	setupSwagger()
+	if cfg.RunMode != "release" {
+		setupSwagger()
+	}
 
 	done := make(chan bool)
 
