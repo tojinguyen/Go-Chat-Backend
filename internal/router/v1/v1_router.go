@@ -25,7 +25,7 @@ func InitV1Router(
 	}
 
 	{
-		InitUserRouter(r.Group("/user"), middleware, useCaseContainer.Profile)
+		InitUserRouter(r.Group("/users"), middleware, useCaseContainer.Profile)
 	}
 
 	{

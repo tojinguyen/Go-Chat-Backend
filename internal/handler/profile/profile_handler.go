@@ -22,7 +22,7 @@ import (
 // @Failure 404 {object} handler.APIResponse "User not found"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
 // @Security BearerAuth
-// @Router /user/{id} [get]
+// @Router /users/{id} [get]
 func GetUserProfile(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 	userID := c.Param("id")
 	profile, err := profileUseCase.GetUserProfile(c.Request.Context(), userID)
@@ -49,7 +49,7 @@ func GetUserProfile(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 // @Failure 401 {object} handler.APIResponse "Unauthorized access"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
 // @Security BearerAuth
-// @Router /user [get]
+// @Router /users [get]
 func SearchUsersByName(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 	name := c.Query("name")
 	if name == "" {
