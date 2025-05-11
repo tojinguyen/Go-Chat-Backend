@@ -547,25 +547,28 @@ paths:
       summary: Verify user registration code
       tags:
       - Auth
-  /profile/users:
+  /user:
     get:
       consumes:
       - application/json
-      description: Search for users with pagination by their name
+      description: Search for users by their name with pagination support
       parameters:
-      - description: Name to search for
+      - description: Name or partial name to search for
+        example: '"john"'
         in: query
         name: name
         required: true
         type: string
       - default: 1
-        description: 'Page number (default: 1)'
+        description: Page number for pagination results
+        example: 1
         in: query
         minimum: 1
         name: page
         type: integer
       - default: 10
-        description: 'Number of items per page (default: 10, max: 100)'
+        description: Number of results per page
+        example: 20
         in: query
         maximum: 100
         minimum: 1
@@ -575,7 +578,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: List of users matching search criteria
           schema:
             allOf:
             - $ref: '#/definitions/handler.APIResponse'
@@ -584,25 +587,31 @@ paths:
                   $ref: '#/definitions/profile.SearchUsersOutput'
               type: object
         "400":
-          description: Name parameter is required
+          description: Missing required parameters or invalid pagination values
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "401":
+          description: Unauthorized access
           schema:
             $ref: '#/definitions/handler.APIResponse'
         "500":
-          description: Failed to search users
+          description: Internal server error
           schema:
             $ref: '#/definitions/handler.APIResponse'
       security:
       - BearerAuth: []
       summary: Search users by name
       tags:
-      - Profile
-  /profile/users/{id}:
+      - User
+  /user/{id}:
     get:
       consumes:
       - application/json
-      description: Fetch a user's profile information by their ID
+      description: Retrieves detailed profile information for a specific user by their
+        ID
       parameters:
       - description: User ID
+        example: '"123e4567-e89b-12d3-a456-426614174000"'
         in: path
         name: id
         required: true
@@ -611,20 +620,24 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully retrieved user profile
           schema:
             $ref: '#/definitions/profile.ProfileOutput'
+        "400":
+          description: Invalid user ID format
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
         "404":
           description: User not found
           schema:
             $ref: '#/definitions/handler.APIResponse'
         "500":
-          description: Server error
+          description: Internal server error
           schema:
             $ref: '#/definitions/handler.APIResponse'
       security:
       - BearerAuth: []
       summary: Get user profile details
       tags:
-      - Profile
+      - User
 swagger: "2.0"

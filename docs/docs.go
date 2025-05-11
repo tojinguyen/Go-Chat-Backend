@@ -679,14 +679,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/users": {
+        "/user": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Search for users with pagination by their name",
+                "description": "Search for users by their name with pagination support",
                 "consumes": [
                     "application/json"
                 ],
@@ -694,13 +694,14 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Profile"
+                    "User"
                 ],
                 "summary": "Search users by name",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Name to search for",
+                        "example": "\"john\"",
+                        "description": "Name or partial name to search for",
                         "name": "name",
                         "in": "query",
                         "required": true
@@ -709,7 +710,8 @@ const docTemplate = `{
                         "minimum": 1,
                         "type": "integer",
                         "default": 1,
-                        "description": "Page number (default: 1)",
+                        "example": 1,
+                        "description": "Page number for pagination results",
                         "name": "page",
                         "in": "query"
                     },
@@ -718,14 +720,15 @@ const docTemplate = `{
                         "minimum": 1,
                         "type": "integer",
                         "default": 10,
-                        "description": "Number of items per page (default: 10, max: 100)",
+                        "example": 20,
+                        "description": "Number of results per page",
                         "name": "limit",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "List of users matching search criteria",
                         "schema": {
                             "allOf": [
                                 {
@@ -743,13 +746,19 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Name parameter is required",
+                        "description": "Missing required parameters or invalid pagination values",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized access",
                         "schema": {
                             "$ref": "#/definitions/handler.APIResponse"
                         }
                     },
                     "500": {
-                        "description": "Failed to search users",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/handler.APIResponse"
                         }
@@ -757,14 +766,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/users/{id}": {
+        "/user/{id}": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Fetch a user's profile information by their ID",
+                "description": "Retrieves detailed profile information for a specific user by their ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -772,12 +781,13 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "Profile"
+                    "User"
                 ],
                 "summary": "Get user profile details",
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "\"123e4567-e89b-12d3-a456-426614174000\"",
                         "description": "User ID",
                         "name": "id",
                         "in": "path",
@@ -786,9 +796,15 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Successfully retrieved user profile",
                         "schema": {
                             "$ref": "#/definitions/profile.ProfileOutput"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid user ID format",
+                        "schema": {
+                            "$ref": "#/definitions/handler.APIResponse"
                         }
                     },
                     "404": {
@@ -798,7 +814,7 @@ const docTemplate = `{
                         }
                     },
                     "500": {
-                        "description": "Server error",
+                        "description": "Internal server error",
                         "schema": {
                             "$ref": "#/definitions/handler.APIResponse"
                         }

@@ -12,16 +12,17 @@ import (
 
 // GetUserProfile godoc
 // @Summary Get user profile details
-// @Description Fetch a user's profile information by their ID
-// @Tags Profile
+// @Description Retrieves detailed profile information for a specific user by their ID
+// @Tags User
 // @Accept json
 // @Produce json
-// @Param id path string true "User ID"
-// @Success 200 {object} profile.ProfileOutput
+// @Param id path string true "User ID" example("123e4567-e89b-12d3-a456-426614174000")
+// @Success 200 {object} profile.ProfileOutput "Successfully retrieved user profile"
+// @Failure 400 {object} handler.APIResponse "Invalid user ID format"
 // @Failure 404 {object} handler.APIResponse "User not found"
-// @Failure 500 {object} handler.APIResponse "Server error"
+// @Failure 500 {object} handler.APIResponse "Internal server error"
 // @Security BearerAuth
-// @Router /profile/users/{id} [get]
+// @Router /user/{id} [get]
 func GetUserProfile(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 	userID := c.Param("id")
 	profile, err := profileUseCase.GetUserProfile(c.Request.Context(), userID)
@@ -36,18 +37,19 @@ func GetUserProfile(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 
 // SearchUsersByName godoc
 // @Summary Search users by name
-// @Description Search for users with pagination by their name
-// @Tags Profile
+// @Description Search for users by their name with pagination support
+// @Tags User
 // @Accept json
 // @Produce json
-// @Param name query string true "Name to search for"
-// @Param page query int false "Page number (default: 1)" default(1) minimum(1)
-// @Param limit query int false "Number of items per page (default: 10, max: 100)" default(10) minimum(1) maximum(100)
-// @Success 200 {object} handler.APIResponse{data=profile.SearchUsersOutput}
-// @Failure 400 {object} handler.APIResponse "Name parameter is required"
-// @Failure 500 {object} handler.APIResponse "Failed to search users"
+// @Param name query string true "Name or partial name to search for" example("john")
+// @Param page query int false "Page number for pagination results" default(1) minimum(1) example(1)
+// @Param limit query int false "Number of results per page" default(10) minimum(1) maximum(100) example(20)
+// @Success 200 {object} handler.APIResponse{data=profile.SearchUsersOutput} "List of users matching search criteria"
+// @Failure 400 {object} handler.APIResponse "Missing required parameters or invalid pagination values"
+// @Failure 401 {object} handler.APIResponse "Unauthorized access"
+// @Failure 500 {object} handler.APIResponse "Internal server error"
 // @Security BearerAuth
-// @Router /profile/users [get]
+// @Router /user [get]
 func SearchUsersByName(c *gin.Context, profileUseCase profile.ProfileUseCase) {
 	name := c.Query("name")
 	if name == "" {
