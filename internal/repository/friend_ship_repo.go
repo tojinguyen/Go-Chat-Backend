@@ -25,7 +25,7 @@ func NewFriendShipRepo(db *mysqlinfra.Database) FriendShipRepository {
 }
 
 func (r *friendShipRepo) CreateFriendShip(ctx context.Context, friendShip *domainFriendShip.FriendShip) error {
-	query := `INSERT INTO friend_ships (user_id_a, user_id_b, created_at) VALUES (?, ?, ?)`
+	query := `INSERT INTO friendships (user_id_a, user_id_b, created_at) VALUES (?, ?, ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(
@@ -40,7 +40,7 @@ func (r *friendShipRepo) CreateFriendShip(ctx context.Context, friendShip *domai
 }
 
 func (r *friendShipRepo) HasFriendShip(ctx context.Context, userId, friendId string) (bool, error) {
-	query := `SELECT COUNT(*) FROM friend_ships WHERE (user_id_a = ? AND user_id_b = ?) OR (user_id_a = ? AND user_id_b = ?)`
+	query := `SELECT COUNT(*) FROM friendships WHERE (user_id_a = ? AND user_id_b = ?) OR (user_id_a = ? AND user_id_b = ?)`
 
 	var count int
 	err := r.database.DB.QueryRowContext(ctx, query, userId, friendId, friendId, userId).Scan(&count)
@@ -54,7 +54,7 @@ func (r *friendShipRepo) FindFriendsByUserId(ctx context.Context, userId string,
 	query := `
 		SELECT u.id, u.name, u.email, u.avatar_url, u.created_at, u.updated_at 
 		FROM users AS u 
-		JOIN friend_ships AS fs ON (u.id = fs.user_id_a OR u.id = fs.user_id_b) 
+		JOIN friendships AS fs ON (u.id = fs.user_id_a OR u.id = fs.user_id_b) 
 		WHERE (fs.user_id_a = ? OR fs.user_id_b = ?) AND u.id != ? 
 		LIMIT ? OFFSET ?`
 
@@ -80,7 +80,7 @@ func (r *friendShipRepo) CountFriendsByUserId(ctx context.Context, userId string
 	query := `
 		SELECT COUNT(*) 
 		FROM users AS u 
-		JOIN friend_ships AS fs ON (u.id = fs.user_id_a OR u.id = fs.user_id_b) 
+		JOIN friendships AS fs ON (u.id = fs.user_id_a OR u.id = fs.user_id_b) 
 		WHERE (fs.user_id_a = ? OR fs.user_id_b = ?) AND u.id != ?`
 
 	var count int
@@ -92,7 +92,7 @@ func (r *friendShipRepo) CountFriendsByUserId(ctx context.Context, userId string
 }
 
 func (r *friendShipRepo) RemoveFriendShip(ctx context.Context, userId, friendId string) error {
-	query := `DELETE FROM friend_ships WHERE (user_id_a = ? AND user_id_b = ?) OR (user_id_a = ? AND user_id_b = ?)`
+	query := `DELETE FROM friendships WHERE (user_id_a = ? AND user_id_b = ?) OR (user_id_a = ? AND user_id_b = ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(ctx, query, userId, friendId, friendId, userId)

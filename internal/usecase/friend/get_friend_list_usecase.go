@@ -3,11 +3,13 @@ package friend
 import (
 	"context"
 	"fmt"
+	"log"
 )
 
 func (f *friendUseCase) GetFriendList(ctx context.Context, userID string, page int, limit int) ([]*FriendOutput, error) {
 	// Check if user ID is provided
 	if userID == "" {
+		log.Println("User ID is required")
 		return nil, fmt.Errorf("user ID is required")
 	}
 
@@ -25,6 +27,7 @@ func (f *friendUseCase) GetFriendList(ctx context.Context, userID string, page i
 	// Fetch friends from repository with pagination
 	friends, err := f.friendShipRepo.FindFriendsByUserId(ctx, userID, limit, offset)
 	if err != nil {
+		log.Printf("Error fetching friends for user %s: %v", userID, err)
 		return nil, fmt.Errorf("failed to fetch friends: %w", err)
 	}
 

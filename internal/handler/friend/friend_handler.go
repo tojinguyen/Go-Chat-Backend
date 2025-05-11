@@ -3,6 +3,7 @@ package handler
 import (
 	"gochat-backend/internal/handler"
 	"gochat-backend/internal/usecase/friend"
+	"log"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -72,6 +73,7 @@ func GetFriends(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	friends, err := friendUseCase.GetFriendList(c, userIdStr, page, limit)
 
 	if err != nil {
+		log.Printf("Error fetching friends for user %s: %v", userIdStr, err)
 		handler.SendErrorResponse(c, 500, "Failed to get friends list")
 		return
 	}

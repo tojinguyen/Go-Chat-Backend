@@ -2,6 +2,7 @@ package jwt
 
 import (
 	"gochat-backend/config"
+	"log"
 	"time"
 
 	errorConstants "gochat-backend/error"
@@ -81,9 +82,11 @@ func (s *jwtService) ValidateAccessToken(tokenString string) (*CustomJwtClaims, 
 	})
 
 	if err != nil {
+		log.Println("Error parsing token:", err)
 		v, _ := err.(*jwt.ValidationError)
 
 		if v.Errors == jwt.ValidationErrorExpired {
+			log.Println("Token expired")
 			return nil, errorConstants.ErrTokenExpired
 		}
 
@@ -91,6 +94,7 @@ func (s *jwtService) ValidateAccessToken(tokenString string) (*CustomJwtClaims, 
 	}
 
 	if !token.Valid {
+		log.Println("Token is not valid")
 		return nil, errorConstants.ErrTokenInvalid
 	}
 
