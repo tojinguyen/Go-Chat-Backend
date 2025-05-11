@@ -18,7 +18,7 @@ type Environment struct {
 	Port    int    `env:"PORT,default=8080"`
 
 	// Cors Config
-	CorsAllowOrigins string `env:"CORS_ALLOW_ORIGIN,default=*"`
+	CorsAllowOrigins string `env:"CORS_ALLOW_ORIGIN,default=http://localhost:3000"`
 
 	// Mysql DB Config
 	MysqlHost            string `env:"MYSQL_HOST,required=true"`
