@@ -6,6 +6,8 @@ import (
 	domainAuth "gochat-backend/internal/domain/auth"
 	domainFriendShip "gochat-backend/internal/domain/friend"
 	"gochat-backend/internal/infra/mysqlinfra"
+
+	"github.com/google/uuid"
 )
 
 type FriendShipRepository interface {
@@ -25,12 +27,18 @@ func NewFriendShipRepo(db *mysqlinfra.Database) FriendShipRepository {
 }
 
 func (r *friendShipRepo) CreateFriendShip(ctx context.Context, friendShip *domainFriendShip.FriendShip) error {
-	query := `INSERT INTO friendships (user_id_a, user_id_b, created_at) VALUES (?, ?, ?)`
+	// Generate UUID for friendship if not provided
+	if friendShip.Id == "" {
+		friendShip.Id = uuid.New().String()
+	}
+
+	query := `INSERT INTO friendships (id, user_id_a, user_id_b, created_at) VALUES (?, ?, ?, ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(
 			ctx,
 			query,
+			friendShip.Id,
 			friendShip.UserIdA,
 			friendShip.UserIdB,
 			friendShip.CreatedAt,

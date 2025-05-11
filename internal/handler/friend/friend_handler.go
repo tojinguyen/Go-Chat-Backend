@@ -118,6 +118,7 @@ func AddFriend(c *gin.Context, friendUseCase friend.FriendUseCase) {
 	err := friendUseCase.AddFriend(c, userIdStr, req.FriendID)
 
 	if err != nil {
+		log.Printf("Error sending friend request from user %s to %s: %v", userIdStr, req.FriendID, err)
 		handler.SendErrorResponse(c, 500, "Failed to send friend request")
 		return
 	}
