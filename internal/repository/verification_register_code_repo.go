@@ -39,7 +39,7 @@ func (r *registerVerificationRepo) CreateVerificationCode(ctx context.Context, c
 
 	query := `
         INSERT INTO verification_codes (id, email, name, hashed_password, avatar, code, type, expires_at, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(

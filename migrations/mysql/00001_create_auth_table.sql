@@ -13,12 +13,12 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS verification_codes (
-    id VARCHAR(36) PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     email VARCHAR(255) NOT NULL,
     name VARCHAR(255),
     hashed_password VARCHAR(255),
     avatar VARCHAR(255),
-    code VARCHAR(8) NOT NULL,
+    code VARCHAR(6) NOT NULL,
     type ENUM('REGISTER', 'PASSWORD_RESET', 'DELETE_ACCOUNT') NOT NULL,
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
