@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS verification_codes (
     expires_at TIMESTAMP NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_id (user_id),
+    INDEX idx_email (email),
     INDEX idx_code_type (code, type)
 );
 -- +goose StatementEnd
