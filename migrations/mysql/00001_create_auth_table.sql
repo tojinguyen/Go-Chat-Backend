@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS verification_codes (
     id VARCHAR(36) PRIMARY KEY,
-    user_id VARCHAR(36) NOT NULL,
+    email VARCHAR(36) NOT NULL,
     code VARCHAR(8) NOT NULL,
     type ENUM('REGISTER', 'PASSWORD_RESET', 'DELETE_ACCOUNT') NOT NULL,
     expires_at TIMESTAMP NOT NULL,
