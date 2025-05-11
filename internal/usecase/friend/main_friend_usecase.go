@@ -1,6 +1,9 @@
 package friend
 
-import "context"
+import (
+	"context"
+	"gochat-backend/internal/repository"
+)
 
 type FriendOutput struct {
 	ID        string `json:"id"`
@@ -28,8 +31,11 @@ type FriendUseCase interface {
 }
 
 type friendUseCase struct {
+	friendShipRepo repository.FriendShipRepository
 }
 
-func NewFriendUseCase() FriendUseCase {
-	return &friendUseCase{}
+func NewFriendUseCase(friendShipRepo repository.FriendShipRepository) FriendUseCase {
+	return &friendUseCase{
+		friendShipRepo: friendShipRepo,
+	}
 }
