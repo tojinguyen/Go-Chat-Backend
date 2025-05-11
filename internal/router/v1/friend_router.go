@@ -15,7 +15,7 @@ func InitFriendRouter(
 	friendUseCase friend.FriendUseCase,
 ) {
 	// Get all friends with optional pagination (page and limit)
-	router.GET("/", middleware.Authentication, func(c *gin.Context) {
+	router.GET("", middleware.Authentication, func(c *gin.Context) {
 		friendHandler.GetFriends(c, friendUseCase)
 	})
 

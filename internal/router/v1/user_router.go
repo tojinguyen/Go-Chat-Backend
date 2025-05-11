@@ -18,7 +18,7 @@ func InitUserRouter(
 		profileHandler.GetUserProfile(c, profileUseCase)
 	})
 
-	router.GET("/", middleware.Authentication, func(c *gin.Context) {
+	router.GET("", middleware.Authentication, func(c *gin.Context) {
 		profileHandler.SearchUsersByName(c, profileUseCase)
 	})
 }
