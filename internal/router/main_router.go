@@ -5,7 +5,6 @@ import (
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/usecase"
 	"gochat-backend/internal/validations"
-	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -26,13 +25,14 @@ func InitRouter(
 ) *gin.Engine {
 	router := gin.New()
 	router.Use(cors.New(cors.Config{
-		AllowOrigins: strings.Split(config.CorsAllowOrigins, ","),
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD"},
+		AllowOrigins: []string{"http://localhost:3000"},
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
 		AllowHeaders: []string{
 			"Origin",
 			"Content-Length",
 			"Content-Type",
 			"Access-Control-Allow-Headers",
+			"Access-Control-Allow-Origin",
 			"Authorization",
 			"X-XSRF-TOKEN",
 			"screenId",
