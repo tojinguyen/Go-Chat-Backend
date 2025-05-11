@@ -25,6 +25,7 @@ type SharedDependencies struct {
 	AccountRepo              repository.AccountRepository
 	VerificationRegisterRepo repository.VerificationRegisterCodeRepository
 	FriendShipRepo           repository.FriendShipRepository
+	FriendRequestRepo        repository.FriendRequestRepository
 
 	// Cloud Storage
 	CloudStorage cloudinaryinfra.CloudinaryService
@@ -53,9 +54,9 @@ func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
 		),
 		Profile: profile.NewProfileUseCase(
 			deps.AccountRepo,
-		),
-		Friend: friend.NewFriendUseCase(
+		), Friend: friend.NewFriendUseCase(
 			deps.FriendShipRepo,
+			deps.FriendRequestRepo,
 		),
 	}
 }

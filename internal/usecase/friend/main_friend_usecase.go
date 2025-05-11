@@ -31,11 +31,16 @@ type FriendUseCase interface {
 }
 
 type friendUseCase struct {
-	friendShipRepo repository.FriendShipRepository
+	friendShipRepo    repository.FriendShipRepository
+	friendRequestRepo repository.FriendRequestRepository
 }
 
-func NewFriendUseCase(friendShipRepo repository.FriendShipRepository) FriendUseCase {
+func NewFriendUseCase(
+	friendShipRepo repository.FriendShipRepository,
+	friendRequestRepo repository.FriendRequestRepository,
+) FriendUseCase {
 	return &friendUseCase{
-		friendShipRepo: friendShipRepo,
+		friendShipRepo:    friendShipRepo,
+		friendRequestRepo: friendRequestRepo,
 	}
 }

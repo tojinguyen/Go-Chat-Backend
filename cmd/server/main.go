@@ -112,6 +112,8 @@ func main() {
 	// Initialize Repositories
 	accountRepo := repository.NewAccountRepo(db)
 	verificationRepo := repository.NewVerificationRepo(db)
+	friendShipRepo := repository.NewFriendShipRepo(db)
+	friendRequestRepo := repository.NewFriendRequestRepo(db)
 
 	deps := &usecase.SharedDependencies{
 		Config:                   cfg,
@@ -120,6 +122,8 @@ func main() {
 		VerificationService:      verificationService,
 		AccountRepo:              accountRepo,
 		VerificationRegisterRepo: verificationRepo,
+		FriendShipRepo:           friendShipRepo,
+		FriendRequestRepo:        friendRequestRepo,
 		CloudStorage:             cldService,
 		RedisService:             redisService,
 	}
