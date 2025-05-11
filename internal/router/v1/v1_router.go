@@ -12,8 +12,6 @@ func InitV1Router(
 	middleware middleware.Middleware,
 	useCaseContainer *usecase.UseCaseContainer,
 ) {
-	r.Use()
-
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
