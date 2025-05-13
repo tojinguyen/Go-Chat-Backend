@@ -5,6 +5,7 @@ import (
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/usecase"
 	"gochat-backend/internal/validations"
+	"gochat-backend/pkg/jwt"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -22,6 +23,7 @@ func InitRouter(
 	config *config.Environment,
 	middleWare middleware.Middleware,
 	useCaseContainer *usecase.UseCaseContainer,
+	jwtService jwt.JwtService,
 ) *gin.Engine {
 	router := gin.New()
 	router.Use(cors.New(cors.Config{
@@ -71,6 +73,7 @@ func InitRouter(
 		apiRouter.Group("/v1", middleWare.RestLogger),
 		middleWare,
 		useCaseContainer,
+		jwtService,
 	)
 
 	return router

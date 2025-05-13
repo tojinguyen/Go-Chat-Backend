@@ -2,7 +2,9 @@ package v1
 
 import (
 	"gochat-backend/internal/middleware"
+	"gochat-backend/internal/socket"
 	"gochat-backend/internal/usecase"
+	"gochat-backend/pkg/jwt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -11,6 +13,7 @@ func InitV1Router(
 	r *gin.RouterGroup,
 	middleware middleware.Middleware,
 	useCaseContainer *usecase.UseCaseContainer,
+	jwtService jwt.JwtService,
 ) {
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -28,5 +31,10 @@ func InitV1Router(
 
 	{
 		InitFriendRouter(r.Group("/friends"), middleware, useCaseContainer.Friend)
+	}
+
+	{
+		socketManager := socket.NewSocketManager()
+		InitWebSocketRouter(r, middleware, socketManager, jwtService)
 	}
 }

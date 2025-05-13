@@ -136,7 +136,7 @@ func main() {
 		*app.config,
 	)
 
-	router := router.InitRouter(app.config, middleware, useCaseContainer)
+	router := router.InitRouter(app.config, middleware, useCaseContainer, jwtService)
 
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", app.config.Port),
