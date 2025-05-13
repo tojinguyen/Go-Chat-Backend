@@ -18,6 +18,7 @@ type Message struct {
 	MimeType   string      `json:"mime_type,omitempty"`
 	Content    string      `json:"content"`
 	CreatedAt  string      `json:"created_at"`
+	ChatRoomId string      `json:"chat_room_id"`
 }
 
 type ChatRoom struct {
@@ -26,4 +27,10 @@ type ChatRoom struct {
 	Type        string   `json:"type"` // "GROUP" or "PRIVATE"
 	CreatedAt   string   `json:"created_at"`
 	LastMessage *Message `json:"last_message"`
+}
+
+type ChatRoomMember struct {
+	ChatRoomId string `json:"chat_room_id"`
+	UserId     string `json:"user_id"`
+	JoinedAt   string `json:"joined_at"`
 }
