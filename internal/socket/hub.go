@@ -44,21 +44,25 @@ type ChatRoomSocket struct {
 
 // Hub quản lý các phòng chat và kết nối
 type Hub struct {
-	ChatRooms  map[string]*ChatRoomSocket
-	Clients    map[string]*Client // Map clientID -> client
-	Register   chan *Client
-	Unregister chan *Client
-	mutex      sync.RWMutex
+	ChatRooms      map[string]*ChatRoomSocket
+	Clients        map[string]*Client // Map clientID -> client
+	Register       chan *Client
+	Unregister     chan *Client
+	mutex          sync.RWMutex
+	MessageHandler *MessageHandler
 }
 
 // NewHub khởi tạo Hub mới
 func NewHub() *Hub {
-	return &Hub{
+	hub := &Hub{
 		ChatRooms:  make(map[string]*ChatRoomSocket),
 		Clients:    make(map[string]*Client),
 		Register:   make(chan *Client),
 		Unregister: make(chan *Client),
 	}
+
+	hub.MessageHandler = NewMessageHandler(hub)
+	return hub
 }
 
 // Run khởi chạy Hub
@@ -87,83 +91,7 @@ func (h *Hub) Run() {
 // HandleMessage xử lý tin nhắn từ client
 // HandleMessage xử lý tin nhắn từ client
 func (h *Hub) HandleMessage(client *Client, data []byte) {
-	var socketMsg SocketMessage
-	if err := json.Unmarshal(data, &socketMsg); err != nil {
-		h.sendErrorToClient(client, "Tin nhắn không hợp lệ")
-		log.Printf("Error parsing message: %v", err)
-		return
-	}
-
-	// Đảm bảo gán người gửi từ client
-	socketMsg.SenderID = client.ID
-	socketMsg.Timestamp = time.Now().UnixMilli()
-
-	switch socketMsg.Type {
-	case SocketMessageTypeChat:
-		// Kiểm tra client đã join phòng này chưa
-		if !h.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
-			h.sendErrorToClient(client, "Bạn chưa tham gia phòng chat này")
-			return
-		}
-		h.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
-
-	case SocketMessageTypeJoin:
-		// Kiểm tra xem có ChatRoomID không
-		if socketMsg.ChatRoomID == "" {
-			h.sendErrorToClient(client, "Thiếu thông tin phòng chat")
-			return
-		}
-
-		// Kiểm tra quyền tham gia phòng (có thể thêm logic ở đây)
-		// ...
-
-		// Tham gia phòng
-		h.JoinRoomWithResponse(socketMsg.ChatRoomID, client)
-
-	case SocketMessageTypeLeave:
-		if socketMsg.ChatRoomID == "" {
-			h.sendErrorToClient(client, "Thiếu thông tin phòng chat")
-			return
-		}
-		h.LeaveRoom(socketMsg.ChatRoomID, client)
-
-	case SocketMessageTypeTyping:
-		if !h.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
-			return // Bỏ qua nếu không ở trong phòng
-		}
-		h.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
-
-	case SocketMessageTypeReadReceipt:
-		if !h.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
-			return
-		}
-		h.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
-
-	default:
-		h.sendErrorToClient(client, "Loại tin nhắn không được hỗ trợ")
-	}
-}
-
-// Thêm phương thức mới để gửi lỗi cho client
-func (h *Hub) sendErrorToClient(client *Client, errorMsg string) {
-	msg := SocketMessage{
-		Type:      SocketMessageTypeError,
-		SenderID:  "system",
-		Timestamp: time.Now().UnixMilli(),
-	}
-
-	// Chuyển errorMsg thành JSON và gán vào Data
-	data, _ := json.Marshal(map[string]string{"message": errorMsg})
-	msg.Data = data
-
-	messageJSON, _ := json.Marshal(msg)
-	select {
-	case client.Send <- messageJSON:
-		// Gửi thành công
-	default:
-		// Không thể gửi
-		log.Printf("Failed to send error message to client %s", client.ID)
-	}
+	h.MessageHandler.HandleMessage(client, data)
 }
 
 // JoinRoomWithResponse là phiên bản mở rộng của JoinRoom với phản hồi JOIN_SUCCESS
@@ -223,37 +151,7 @@ func (h *Hub) JoinRoomWithResponse(chatRoomID string, client *Client) {
 	h.BroadcastToRoom(chatRoomID, joinMsg)
 
 	// Gửi danh sách người dùng cho tất cả
-	h.SendUserList(chatRoomID)
-
-	log.Printf("Client %s joined chat room %s", client.ID, chatRoomID)
-}
-
-// JoinRoom thêm client vào phòng
-func (h *Hub) JoinRoom(chatRoomID string, client *Client) {
-	h.mutex.Lock()
-	if _, exists := h.ChatRooms[chatRoomID]; !exists {
-		h.ChatRooms[chatRoomID] = &ChatRoomSocket{
-			ID:      chatRoomID,
-			Clients: make(map[string]*Client),
-		}
-	}
-	h.mutex.Unlock()
-
-	room := h.ChatRooms[chatRoomID]
-	room.mutex.Lock()
-	room.Clients[client.ID] = client
-	room.mutex.Unlock()
-
-	// Thông báo người dùng mới tham gia
-	joinMsg := SocketMessage{
-		Type:       SocketMessageTypeJoin,
-		ChatRoomID: chatRoomID,
-		SenderID:   client.ID,
-		Timestamp:  time.Now().UnixMilli(),
-	}
-
-	h.BroadcastToRoom(chatRoomID, joinMsg)
-	h.SendUserList(chatRoomID)
+	h.sendUserList(chatRoomID)
 
 	log.Printf("Client %s joined chat room %s", client.ID, chatRoomID)
 }
@@ -290,7 +188,7 @@ func (h *Hub) LeaveRoom(chatRoomID string, client *Client) {
 		h.mutex.Unlock()
 		log.Printf("Chat room %s deleted (empty)", chatRoomID)
 	} else {
-		h.SendUserList(chatRoomID)
+		h.sendUserList(chatRoomID)
 	}
 
 	log.Printf("Client %s left chat room %s", client.ID, chatRoomID)
@@ -333,61 +231,6 @@ func (h *Hub) BroadcastToRoom(chatRoomID string, message SocketMessage) {
 	for _, client := range failedClients {
 		h.removeClientFromAllRooms(client)
 	}
-}
-
-// SendDirectMessage gửi tin nhắn riêng tư cho một client cụ thể
-func (h *Hub) SendDirectMessage(targetClientID string, message SocketMessage) bool {
-	h.mutex.RLock()
-	client, exists := h.Clients[targetClientID]
-	h.mutex.RUnlock()
-
-	if !exists {
-		return false
-	}
-
-	messageJSON, err := json.Marshal(message)
-	if err != nil {
-		log.Printf("Error marshalling message: %v", err)
-		return false
-	}
-
-	select {
-	case client.Send <- messageJSON:
-		return true
-	default:
-		h.removeClientFromAllRooms(client)
-		return false
-	}
-}
-
-// SendUserList gửi danh sách người dùng trong phòng
-func (h *Hub) SendUserList(chatRoomID string) {
-	h.mutex.RLock()
-	room, exists := h.ChatRooms[chatRoomID]
-	h.mutex.RUnlock()
-
-	if !exists {
-		return
-	}
-
-	room.mutex.RLock()
-	userIDs := make([]string, 0, len(room.Clients))
-	for userID := range room.Clients {
-		userIDs = append(userIDs, userID)
-	}
-	room.mutex.RUnlock()
-
-	userListJSON, _ := json.Marshal(userIDs)
-
-	usersMsg := SocketMessage{
-		Type:       SocketMessageTypeUsers,
-		ChatRoomID: chatRoomID,
-		SenderID:   "system",
-		Timestamp:  time.Now().UnixMilli(),
-		Data:       userListJSON,
-	}
-
-	h.BroadcastToRoom(chatRoomID, usersMsg)
 }
 
 // GetClientCount trả về số lượng client trong một phòng
@@ -461,10 +304,40 @@ func (h *Hub) removeClientFromAllRooms(client *Client) {
 				h.mutex.Unlock()
 				log.Printf("Chat room %s deleted (empty)", roomID)
 			} else {
-				h.SendUserList(roomID)
+				h.sendUserList(roomID)
 			}
 		} else {
 			room.mutex.Unlock()
 		}
 	}
+}
+
+// sendUserList gửi danh sách người dùng trong phòng
+func (h *Hub) sendUserList(chatRoomID string) {
+	h.mutex.RLock()
+	room, exists := h.ChatRooms[chatRoomID]
+	h.mutex.RUnlock()
+
+	if !exists {
+		return
+	}
+
+	room.mutex.RLock()
+	userIDs := make([]string, 0, len(room.Clients))
+	for userID := range room.Clients {
+		userIDs = append(userIDs, userID)
+	}
+	room.mutex.RUnlock()
+
+	userListJSON, _ := json.Marshal(userIDs)
+
+	usersMsg := SocketMessage{
+		Type:       SocketMessageTypeUsers,
+		ChatRoomID: chatRoomID,
+		SenderID:   "system",
+		Timestamp:  time.Now().UnixMilli(),
+		Data:       userListJSON,
+	}
+
+	h.BroadcastToRoom(chatRoomID, usersMsg)
 }
