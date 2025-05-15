@@ -4,8 +4,6 @@ import (
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/socket"
 
-	"gochat-backend/pkg/jwt"
-
 	wsHandler "gochat-backend/internal/handler/websocket"
 
 	"github.com/gin-gonic/gin"
@@ -15,11 +13,10 @@ func InitWebSocketRouter(
 	router gin.IRouter,
 	middleware middleware.Middleware,
 	socketManager *socket.SocketManager,
-	jwtService jwt.JwtService,
 ) {
 	// Route chính để kết nối WebSocket
-	router.GET("/ws", func(c *gin.Context) {
-		wsHandler.HandleWebSocketConnection(c, socketManager, jwtService)
+	router.GET("/ws", middleware.Authentication, func(c *gin.Context) {
+		wsHandler.HandleWebSocketConnection(c, socketManager)
 	})
 
 	authorized := router.Group("/")

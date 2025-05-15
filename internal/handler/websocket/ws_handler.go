@@ -3,7 +3,6 @@ package handler
 import (
 	"gochat-backend/internal/handler"
 	"gochat-backend/internal/socket"
-	"gochat-backend/pkg/jwt"
 	"log"
 	"net/http"
 
@@ -11,54 +10,15 @@ import (
 )
 
 // Tạo kết nối WebSocket từ client
-func HandleWebSocketConnection(c *gin.Context, socketManager *socket.SocketManager, jwtService jwt.JwtService) {
-	// Lấy token từ query parameter hoặc header
-	token := c.Query("token")
-	if token == "" {
-		token = c.GetHeader("Authorization")
-		// Xóa tiền tố "Bearer " nếu có
-		if len(token) > 7 && token[:7] == "Bearer " {
-			token = token[7:]
-		}
-	}
+func HandleWebSocketConnection(c *gin.Context, socketManager *socket.SocketManager) {
+	// Get userID from Context
+	userID := c.GetString("user_id")
 
-	// Xác thực token
-	claims, err := jwtService.ValidateAccessToken(token)
-	if err != nil {
-		log.Printf("Unauthorized WebSocket connection: %v", err)
-		c.JSON(http.StatusUnauthorized, handler.APIResponse{
-			Success: false,
-			Message: "Unauthorized",
-			Data:    nil,
-		})
-		return
-	}
-
-	// Lấy userID từ claims
-	userID := claims.UserId
-
-	// Nếu client_id được cung cấp, kiểm tra xem nó có khớp với userID trong token không
-	clientID := c.Query("client_id")
-	if clientID != "" && clientID != userID {
-		log.Printf("Client ID mismatch: %s vs %s", clientID, userID)
-		c.JSON(http.StatusForbidden, handler.APIResponse{
-			Success: false,
-			Message: "Client ID mismatch",
-			Data:    nil,
-		})
-		return
-	}
-
-	// Sử dụng userID từ token nếu không có client_id
-	if clientID == "" {
-		clientID = userID
-	}
-
-	log.Printf("Establishing WebSocket connection for user: %s", clientID)
+	log.Printf("Establishing WebSocket connection for user: %s", userID)
 
 	// Chuyển từ gin context sang http context
 	// Vì gin.Context.Writer và gin.Context.Request là http.ResponseWriter và *http.Request
-	socketManager.ServeWS(c.Writer, c.Request, clientID)
+	socketManager.ServeWS(c.Writer, c.Request, userID)
 }
 
 // JoinChatRoom godoc

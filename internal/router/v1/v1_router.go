@@ -35,6 +35,6 @@ func InitV1Router(
 
 	{
 		socketManager := socket.NewSocketManager()
-		InitWebSocketRouter(r, middleware, socketManager, jwtService)
+		InitWebSocketRouter(r, middleware, socketManager)
 	}
 }
