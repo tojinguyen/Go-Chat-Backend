@@ -15,16 +15,7 @@ func InitWebSocketRouter(
 	socketManager *socket.SocketManager,
 ) {
 	// Route chính để kết nối WebSocket
-	router.GET("/ws", middleware.Authentication, func(c *gin.Context) {
+	router.GET("", middleware.Authentication, func(c *gin.Context) {
 		wsHandler.HandleWebSocketConnection(c, socketManager)
 	})
-
-	authorized := router.Group("/")
-	authorized.Use(middleware.Authentication)
-	{
-		// API endpoints đi kèm với WebSocket
-		authorized.GET("/rooms/:chat_room_id/join", func(c *gin.Context) {
-			wsHandler.JoinChatRoom(c, socketManager)
-		})
-	}
 }

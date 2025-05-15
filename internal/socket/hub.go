@@ -11,12 +11,20 @@ import (
 type SocketMessageType string
 
 const (
-	SocketMessageTypeChat        SocketMessageType = "CHAT"
-	SocketMessageTypeJoin        SocketMessageType = "JOIN"
-	SocketMessageTypeLeave       SocketMessageType = "LEAVE"
-	SocketMessageTypeUsers       SocketMessageType = "USERS"
-	SocketMessageTypeTyping      SocketMessageType = "TYPING"
-	SocketMessageTypeReadReceipt SocketMessageType = "READ_RECEIPT"
+	// Tin nhắn từ client
+	SocketMessageTypeChat        SocketMessageType = "CHAT"         // Gửi tin nhắn chat
+	SocketMessageTypeJoin        SocketMessageType = "JOIN"         // Tham gia phòng chat
+	SocketMessageTypeLeave       SocketMessageType = "LEAVE"        // Rời phòng chat
+	SocketMessageTypeTyping      SocketMessageType = "TYPING"       // Đang nhập
+	SocketMessageTypeReadReceipt SocketMessageType = "READ_RECEIPT" // Đánh dấu đã đọc
+
+	// Tin nhắn từ server
+	SocketMessageTypeUsers       SocketMessageType = "USERS"        // Danh sách người dùng
+	SocketMessageTypeJoinSuccess SocketMessageType = "JOIN_SUCCESS" // Tham gia phòng thành công
+	SocketMessageTypeJoinError   SocketMessageType = "JOIN_ERROR"   // Lỗi khi tham gia phòng
+	SocketMessageTypeUserJoined  SocketMessageType = "USER_JOINED"  // Thông báo người dùng khác tham gia
+	SocketMessageTypeUserLeft    SocketMessageType = "USER_LEFT"    // Thông báo người dùng khác rời đi
+	SocketMessageTypeError       SocketMessageType = "ERROR"        // Thông báo lỗi
 )
 
 type SocketMessage struct {
@@ -77,9 +85,11 @@ func (h *Hub) Run() {
 }
 
 // HandleMessage xử lý tin nhắn từ client
+// HandleMessage xử lý tin nhắn từ client
 func (h *Hub) HandleMessage(client *Client, data []byte) {
 	var socketMsg SocketMessage
 	if err := json.Unmarshal(data, &socketMsg); err != nil {
+		h.sendErrorToClient(client, "Tin nhắn không hợp lệ")
 		log.Printf("Error parsing message: %v", err)
 		return
 	}
@@ -90,20 +100,132 @@ func (h *Hub) HandleMessage(client *Client, data []byte) {
 
 	switch socketMsg.Type {
 	case SocketMessageTypeChat:
+		// Kiểm tra client đã join phòng này chưa
+		if !h.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
+			h.sendErrorToClient(client, "Bạn chưa tham gia phòng chat này")
+			return
+		}
 		h.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 
 	case SocketMessageTypeJoin:
-		h.JoinRoom(socketMsg.ChatRoomID, client)
+		// Kiểm tra xem có ChatRoomID không
+		if socketMsg.ChatRoomID == "" {
+			h.sendErrorToClient(client, "Thiếu thông tin phòng chat")
+			return
+		}
+
+		// Kiểm tra quyền tham gia phòng (có thể thêm logic ở đây)
+		// ...
+
+		// Tham gia phòng
+		h.JoinRoomWithResponse(socketMsg.ChatRoomID, client)
 
 	case SocketMessageTypeLeave:
+		if socketMsg.ChatRoomID == "" {
+			h.sendErrorToClient(client, "Thiếu thông tin phòng chat")
+			return
+		}
 		h.LeaveRoom(socketMsg.ChatRoomID, client)
 
 	case SocketMessageTypeTyping:
+		if !h.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
+			return // Bỏ qua nếu không ở trong phòng
+		}
 		h.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 
 	case SocketMessageTypeReadReceipt:
+		if !h.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
+			return
+		}
 		h.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
+
+	default:
+		h.sendErrorToClient(client, "Loại tin nhắn không được hỗ trợ")
 	}
+}
+
+// Thêm phương thức mới để gửi lỗi cho client
+func (h *Hub) sendErrorToClient(client *Client, errorMsg string) {
+	msg := SocketMessage{
+		Type:      SocketMessageTypeError,
+		SenderID:  "system",
+		Timestamp: time.Now().UnixMilli(),
+	}
+
+	// Chuyển errorMsg thành JSON và gán vào Data
+	data, _ := json.Marshal(map[string]string{"message": errorMsg})
+	msg.Data = data
+
+	messageJSON, _ := json.Marshal(msg)
+	select {
+	case client.Send <- messageJSON:
+		// Gửi thành công
+	default:
+		// Không thể gửi
+		log.Printf("Failed to send error message to client %s", client.ID)
+	}
+}
+
+// JoinRoomWithResponse là phiên bản mở rộng của JoinRoom với phản hồi JOIN_SUCCESS
+func (h *Hub) JoinRoomWithResponse(chatRoomID string, client *Client) {
+	h.mutex.Lock()
+	if _, exists := h.ChatRooms[chatRoomID]; !exists {
+		h.ChatRooms[chatRoomID] = &ChatRoomSocket{
+			ID:      chatRoomID,
+			Clients: make(map[string]*Client),
+		}
+	}
+	h.mutex.Unlock()
+
+	room := h.ChatRooms[chatRoomID]
+	room.mutex.Lock()
+	// Nếu client đã ở trong phòng này rồi, không cần thông báo lại
+	alreadyJoined := false
+	if _, exists := room.Clients[client.ID]; exists {
+		alreadyJoined = true
+	} else {
+		room.Clients[client.ID] = client
+	}
+	room.mutex.Unlock()
+
+	// Gửi phản hồi thành công cho client
+	joinSuccessMsg := SocketMessage{
+		Type:       SocketMessageTypeJoinSuccess,
+		ChatRoomID: chatRoomID,
+		SenderID:   "system",
+		Timestamp:  time.Now().UnixMilli(),
+	}
+
+	// Thêm thông tin vào Data
+	successData, _ := json.Marshal(map[string]string{
+		"room_id": chatRoomID,
+		"status":  "joined",
+	})
+	joinSuccessMsg.Data = successData
+
+	messageJSON, _ := json.Marshal(joinSuccessMsg)
+	client.Send <- messageJSON
+
+	// Nếu đã tham gia rồi, không cần thông báo và cập nhật danh sách
+	if alreadyJoined {
+		return
+	}
+
+	// Thông báo người dùng mới tham gia cho các client khác
+	joinMsg := SocketMessage{
+		Type:       SocketMessageTypeUserJoined,
+		ChatRoomID: chatRoomID,
+		SenderID:   client.ID,
+		Timestamp:  time.Now().UnixMilli(),
+	}
+
+	// Broadcast cho tất cả người dùng khác trong phòng
+	h.BroadcastToRoom(chatRoomID, joinMsg)
+
+	// Gửi danh sách người dùng cho tất cả
+	h.SendUserList(chatRoomID)
+
+	log.Printf("Client %s joined chat room %s", client.ID, chatRoomID)
 }
 
 // JoinRoom thêm client vào phòng
