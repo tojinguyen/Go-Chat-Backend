@@ -34,6 +34,10 @@ func InitV1Router(
 	}
 
 	{
+		InitChatRoomRouter(r.Group("/chat-rooms"), middleware, useCaseContainer.Chat)
+	}
+
+	{
 		socketManager := socket.NewSocketManager()
 		InitWebSocketRouter(r.Group("/ws"), middleware, socketManager)
 	}

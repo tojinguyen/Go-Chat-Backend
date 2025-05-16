@@ -6,6 +6,7 @@ import (
 	"gochat-backend/internal/infra/redisinfra"
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase/auth"
+	"gochat-backend/internal/usecase/chat"
 	"gochat-backend/internal/usecase/friend"
 	"gochat-backend/internal/usecase/profile"
 	"gochat-backend/pkg/email"
@@ -26,6 +27,8 @@ type SharedDependencies struct {
 	VerificationRegisterRepo repository.VerificationRegisterCodeRepository
 	FriendShipRepo           repository.FriendShipRepository
 	FriendRequestRepo        repository.FriendRequestRepository
+	ChatRoomRepo             repository.ChatRoomRepository
+	MessageRepo              repository.MessageRepository
 
 	// Cloud Storage
 	CloudStorage cloudinaryinfra.CloudinaryService
@@ -38,6 +41,7 @@ type UseCaseContainer struct {
 	Auth    auth.AuthUseCase
 	Profile profile.ProfileUseCase
 	Friend  friend.FriendUseCase
+	Chat    chat.ChatUseCase
 }
 
 func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
@@ -54,9 +58,15 @@ func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
 		),
 		Profile: profile.NewProfileUseCase(
 			deps.AccountRepo,
-		), Friend: friend.NewFriendUseCase(
+		),
+		Friend: friend.NewFriendUseCase(
 			deps.FriendShipRepo,
 			deps.FriendRequestRepo,
+		),
+		Chat: chat.NewChatUseCase(
+			deps.ChatRoomRepo,
+			deps.MessageRepo,
+			deps.AccountRepo,
 		),
 	}
 }
