@@ -26,6 +26,10 @@ type ChatRoomOutput struct {
 	LastMessage *MessageOutput     `json:"last_message,omitempty"`
 }
 
+type ChatRoomMembersInput struct {
+	Members []string `json:"members"`
+}
+
 type ChatMemberOutput struct {
 	UserID    string `json:"user_id"`
 	Name      string `json:"name"`
