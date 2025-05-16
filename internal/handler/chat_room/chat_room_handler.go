@@ -13,7 +13,7 @@ import (
 // CreateChatRoom handles the creation of a new chat room
 // @Summary Create a new chat room
 // @Description Creates a new chat room with the authenticated user as owner
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -51,7 +51,7 @@ func CreateChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // GetChatRooms retrieves all chat rooms for the current user
 // @Summary Get all user's chat rooms
 // @Description Retrieves all chat rooms the authenticated user belongs to
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Produce json
 // @Security BearerAuth
 // @Success 200 {object} handler.APIResponse{data=[]chat.ChatRoomOutput} "Chat rooms retrieved successfully"
@@ -79,7 +79,7 @@ func GetChatRooms(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // GetChatRoomByID retrieves a specific chat room by ID
 // @Summary Get chat room by ID
 // @Description Retrieves a specific chat room by its ID if user is a member
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Chat Room ID"
@@ -117,7 +117,7 @@ func GetChatRoomByID(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // AddChatRoomMembers adds members to a chat room
 // @Summary Add members to chat room
 // @Description Adds new members to an existing chat room
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -170,7 +170,7 @@ func AddChatRoomMembers(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // RemoveChatRoomMember removes a member from a chat room
 // @Summary Remove member from chat room
 // @Description Removes a specific member from a chat room
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Chat Room ID"
@@ -216,7 +216,7 @@ func RemoveChatRoomMember(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // GetChatRoomMessages retrieves messages from a chat room with pagination
 // @Summary Get chat room messages
 // @Description Retrieves messages from a chat room with pagination
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Chat Room ID"
@@ -271,7 +271,7 @@ func GetChatRoomMessages(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // SendMessage sends a message to a chat room
 // @Summary Send message to chat room
 // @Description Sends a new message to a chat room
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Accept json
 // @Produce json
 // @Security BearerAuth
@@ -319,7 +319,7 @@ func SendMessage(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // LeaveChatRoom allows a user to leave a chat room
 // @Summary Leave chat room
 // @Description Allows the authenticated user to leave a chat room
-// @Tags chat-rooms
+// @Tags Chat Room
 // @Produce json
 // @Security BearerAuth
 // @Param id path string true "Chat Room ID"
