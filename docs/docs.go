@@ -691,7 +691,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Get all user's chat rooms",
                 "responses": {
@@ -744,7 +744,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Create a new chat room",
                 "parameters": [
@@ -810,7 +810,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Get chat room by ID",
                 "parameters": [
@@ -880,7 +880,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Leave chat room",
                 "parameters": [
@@ -941,7 +941,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Add members to chat room",
                 "parameters": [
@@ -1014,7 +1014,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Remove member from chat room",
                 "parameters": [
@@ -1085,7 +1085,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Get chat room messages",
                 "parameters": [
@@ -1177,7 +1177,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "chat-rooms"
+                    "Chat Room"
                 ],
                 "summary": "Send message to chat room",
                 "parameters": [

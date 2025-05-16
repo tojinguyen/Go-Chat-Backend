@@ -669,7 +669,7 @@ paths:
       - BearerAuth: []
       summary: Get all user's chat rooms
       tags:
-      - chat-rooms
+      - Chat Room
     post:
       consumes:
       - application/json
@@ -709,7 +709,7 @@ paths:
       - BearerAuth: []
       summary: Create a new chat room
       tags:
-      - chat-rooms
+      - Chat Room
   /chat-rooms/{id}:
     get:
       description: Retrieves a specific chat room by its ID if user is a member
@@ -751,7 +751,7 @@ paths:
       - BearerAuth: []
       summary: Get chat room by ID
       tags:
-      - chat-rooms
+      - Chat Room
   /chat-rooms/{id}/leave:
     post:
       description: Allows the authenticated user to leave a chat room
@@ -788,7 +788,7 @@ paths:
       - BearerAuth: []
       summary: Leave chat room
       tags:
-      - chat-rooms
+      - Chat Room
   /chat-rooms/{id}/members:
     post:
       consumes:
@@ -837,7 +837,7 @@ paths:
       - BearerAuth: []
       summary: Add members to chat room
       tags:
-      - chat-rooms
+      - Chat Room
   /chat-rooms/{id}/members/{userID}:
     delete:
       description: Removes a specific member from a chat room
@@ -883,7 +883,7 @@ paths:
       - BearerAuth: []
       summary: Remove member from chat room
       tags:
-      - chat-rooms
+      - Chat Room
   /chat-rooms/{id}/messages:
     get:
       description: Retrieves messages from a chat room with pagination
@@ -939,7 +939,7 @@ paths:
       - BearerAuth: []
       summary: Get chat room messages
       tags:
-      - chat-rooms
+      - Chat Room
     post:
       consumes:
       - application/json
@@ -992,7 +992,7 @@ paths:
       - BearerAuth: []
       summary: Send message to chat room
       tags:
-      - chat-rooms
+      - Chat Room
   /users:
     get:
       consumes:
