@@ -11,6 +11,18 @@ import (
 )
 
 // CreateChatRoom handles the creation of a new chat room
+// @Summary Create a new chat room
+// @Description Creates a new chat room with the authenticated user as owner
+// @Tags chat-rooms
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body chat.ChatRoomCreateInput true "Chat room creation data"
+// @Success 201 {object} handler.ResponseModel{data=chat.ChatRoom} "Chat room created successfully"
+// @Failure 400 {object} handler.ErrorResponse "Invalid request format"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms [post]
 func CreateChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
@@ -37,6 +49,15 @@ func CreateChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 }
 
 // GetChatRooms retrieves all chat rooms for the current user
+// @Summary Get all user's chat rooms
+// @Description Retrieves all chat rooms the authenticated user belongs to
+// @Tags chat-rooms
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} handler.ResponseModel{data=[]chat.ChatRoom} "Chat rooms retrieved successfully"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms [get]
 func GetChatRooms(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
@@ -56,6 +77,17 @@ func GetChatRooms(c *gin.Context, chatUseCase chat.ChatUseCase) {
 }
 
 // GetChatRoomByID retrieves a specific chat room by ID
+// @Summary Get chat room by ID
+// @Description Retrieves a specific chat room by its ID if user is a member
+// @Tags chat-rooms
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Chat Room ID"
+// @Success 200 {object} handler.ResponseModel{data=chat.ChatRoom} "Chat room retrieved successfully"
+// @Failure 400 {object} handler.ErrorResponse "Chat room ID is required"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms/{id} [get]
 func GetChatRoomByID(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
@@ -82,6 +114,19 @@ func GetChatRoomByID(c *gin.Context, chatUseCase chat.ChatUseCase) {
 }
 
 // AddChatRoomMembers adds members to a chat room
+// @Summary Add members to chat room
+// @Description Adds new members to an existing chat room
+// @Tags chat-rooms
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Chat Room ID"
+// @Param request body struct{Members []string} true "Members to add"
+// @Success 200 {object} handler.ResponseModel "Members added successfully"
+// @Failure 400 {object} handler.ErrorResponse "Invalid request format or no members specified"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms/{id}/members [post]
 func AddChatRoomMembers(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
@@ -122,6 +167,18 @@ func AddChatRoomMembers(c *gin.Context, chatUseCase chat.ChatUseCase) {
 }
 
 // RemoveChatRoomMember removes a member from a chat room
+// @Summary Remove member from chat room
+// @Description Removes a specific member from a chat room
+// @Tags chat-rooms
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Chat Room ID"
+// @Param userID path string true "User ID to remove"
+// @Success 200 {object} handler.ResponseModel "Member removed successfully"
+// @Failure 400 {object} handler.ErrorResponse "Chat room ID or Member ID is required"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms/{id}/members/{userID} [delete]
 func RemoveChatRoomMember(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
@@ -154,6 +211,19 @@ func RemoveChatRoomMember(c *gin.Context, chatUseCase chat.ChatUseCase) {
 }
 
 // GetChatRoomMessages retrieves messages from a chat room with pagination
+// @Summary Get chat room messages
+// @Description Retrieves messages from a chat room with pagination
+// @Tags chat-rooms
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Chat Room ID"
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Items per page (default: 20)"
+// @Success 200 {object} handler.ResponseModel{data=[]chat.Message} "Messages retrieved successfully"
+// @Failure 400 {object} handler.ErrorResponse "Chat room ID is required"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms/{id}/messages [get]
 func GetChatRoomMessages(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
@@ -194,6 +264,19 @@ func GetChatRoomMessages(c *gin.Context, chatUseCase chat.ChatUseCase) {
 }
 
 // SendMessage sends a message to a chat room
+// @Summary Send message to chat room
+// @Description Sends a new message to a chat room
+// @Tags chat-rooms
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Chat Room ID"
+// @Param request body chat.MessageInput true "Message data"
+// @Success 201 {object} handler.ResponseModel{data=chat.Message} "Message sent successfully"
+// @Failure 400 {object} handler.ErrorResponse "Invalid request format or chat room ID is required"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms/{id}/messages [post]
 func SendMessage(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
@@ -227,6 +310,17 @@ func SendMessage(c *gin.Context, chatUseCase chat.ChatUseCase) {
 }
 
 // LeaveChatRoom allows a user to leave a chat room
+// @Summary Leave chat room
+// @Description Allows the authenticated user to leave a chat room
+// @Tags chat-rooms
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Chat Room ID"
+// @Success 200 {object} handler.ResponseModel "Left chat room successfully"
+// @Failure 400 {object} handler.ErrorResponse "Chat room ID is required"
+// @Failure 401 {object} handler.ErrorResponse "Unauthorized"
+// @Failure 500 {object} handler.ErrorResponse "Internal server error"
+// @Router /chat-rooms/{id}/leave [post]
 func LeaveChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
 	userID := c.GetString("user_id")
