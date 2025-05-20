@@ -52,4 +52,9 @@ func InitChatRoomRouter(
 	router.POST("/:id/leave", middleware.Authentication, func(c *gin.Context) {
 		chatHandler.LeaveChatRoom(c, chatUseCase)
 	})
+
+	// Thêm vào file chat_room_router.go
+	router.GET("/private/:userID", middleware.Authentication, func(c *gin.Context) {
+		chatHandler.FindOrCreatePrivateChatRoom(c, chatUseCase)
+	})
 }

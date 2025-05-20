@@ -353,3 +353,48 @@ func LeaveChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 
 	handler.SendSuccessResponse(c, http.StatusOK, "Left chat room successfully", nil)
 }
+
+// FindOrCreatePrivateChatRoom tìm chat room giữa người dùng hiện tại và một người dùng khác
+// Nếu không tồn tại, tạo mới chat room riêng tư
+// @Summary Find or create private chat room
+// @Description Finds existing private chat room between current user and specified user, or creates a new one
+// @Tags Chat Room
+// @Produce json
+// @Security BearerAuth
+// @Param userID path string true "Other User ID"
+// @Success 200 {object} handler.APIResponse{data=chat.ChatRoomOutput} "Chat room found or created successfully"
+// @Failure 400 {object} handler.APIResponse "User ID is required"
+// @Failure 401 {object} handler.APIResponse "Unauthorized"
+// @Failure 404 {object} handler.APIResponse "User not found"
+// @Failure 500 {object} handler.APIResponse "Internal server error"
+// @Router /chat-rooms/private/{userID} [get]
+func FindOrCreatePrivateChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
+	// Lấy user ID từ context
+	currentUserID := c.GetString("userId")
+	if currentUserID == "" {
+		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	// Lấy ID người dùng khác từ URL
+	otherUserID := c.Param("userID")
+	if otherUserID == "" {
+		handler.SendErrorResponse(c, http.StatusBadRequest, "User ID is required")
+		return
+	}
+
+	// Không thể tạo chat với chính mình
+	if currentUserID == otherUserID {
+		handler.SendErrorResponse(c, http.StatusBadRequest, "Cannot create chat with yourself")
+		return
+	}
+
+	// Tìm hoặc tạo chat room riêng tư
+	chatRoom, err := chatUseCase.FindOrCreatePrivateChatRoom(c.Request.Context(), currentUserID, otherUserID)
+	if err != nil {
+		handler.SendErrorResponse(c, http.StatusInternalServerError, fmt.Sprintf("Failed to find or create chat room: %v", err))
+		return
+	}
+
+	handler.SendSuccessResponse(c, http.StatusOK, "Chat room found or created successfully", chatRoom)
+}
