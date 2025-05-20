@@ -993,6 +993,49 @@ paths:
       summary: Send message to chat room
       tags:
       - Chat Room
+  /chat-rooms/private/{userID}:
+    get:
+      description: Finds existing private chat room between current user and specified
+        user, or creates a new one
+      parameters:
+      - description: Other User ID
+        in: path
+        name: userID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Chat room found or created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/chat.ChatRoomOutput'
+              type: object
+        "400":
+          description: User ID is required
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "404":
+          description: User not found
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Find or create private chat room
+      tags:
+      - Chat Room
   /users:
     get:
       consumes:
