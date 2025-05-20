@@ -77,15 +77,6 @@ definitions:
       type:
         type: string
     type: object
-  chat.MessageInput:
-    properties:
-      content:
-        type: string
-      mime_type:
-        type: string
-      type:
-        $ref: '#/definitions/domain.MessageType'
-    type: object
   chat.MessageOutput:
     properties:
       avatar_url:
@@ -948,59 +939,6 @@ paths:
       security:
       - BearerAuth: []
       summary: Get chat room messages
-      tags:
-      - Chat Room
-    post:
-      consumes:
-      - application/json
-      description: Sends a new message to a chat room
-      parameters:
-      - description: Chat Room ID
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Message data
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/chat.MessageInput'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Message sent successfully
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/chat.MessageOutput'
-              type: object
-        "400":
-          description: Invalid request format or chat room ID is required
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "403":
-          description: User not a member of chat room
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "404":
-          description: Chat room not found
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Send message to chat room
       tags:
       - Chat Room
   /chat-rooms/private/{userID}:

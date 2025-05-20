@@ -1246,92 +1246,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Sends a new message to a chat room",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Chat Room"
-                ],
-                "summary": "Send message to chat room",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Chat Room ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Message data",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/chat.MessageInput"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Message sent successfully",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/handler.APIResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/chat.MessageOutput"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request format or chat room ID is required",
-                        "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "User not a member of chat room",
-                        "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Chat room not found",
-                        "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/handler.APIResponse"
-                        }
-                    }
-                }
             }
         },
         "/users": {
@@ -1594,20 +1508,6 @@ const docTemplate = `{
                 },
                 "type": {
                     "type": "string"
-                }
-            }
-        },
-        "chat.MessageInput": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "mime_type": {
-                    "type": "string"
-                },
-                "type": {
-                    "$ref": "#/definitions/domain.MessageType"
                 }
             }
         },
