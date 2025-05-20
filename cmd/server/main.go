@@ -114,18 +114,24 @@ func main() {
 	verificationRepo := repository.NewVerificationRepo(db)
 	friendShipRepo := repository.NewFriendShipRepo(db)
 	friendRequestRepo := repository.NewFriendRequestRepo(db)
+	chatRoomRepo := repository.NewChatRoomRepo(db)
+	messageRepo := repository.NewMessageRepo(db)
 
 	deps := &usecase.SharedDependencies{
-		Config:                   cfg,
-		JwtService:               jwtService,
-		EmailService:             emailService,
-		VerificationService:      verificationService,
+		Config:              cfg,
+		JwtService:          jwtService,
+		EmailService:        emailService,
+		VerificationService: verificationService,
+
 		AccountRepo:              accountRepo,
 		VerificationRegisterRepo: verificationRepo,
 		FriendShipRepo:           friendShipRepo,
 		FriendRequestRepo:        friendRequestRepo,
-		CloudStorage:             cldService,
-		RedisService:             redisService,
+		ChatRoomRepo:             chatRoomRepo,
+		MessageRepo:              messageRepo,
+
+		CloudStorage: cldService,
+		RedisService: redisService,
 	}
 
 	useCaseContainer := usecase.NewUseCaseContainer(deps)
