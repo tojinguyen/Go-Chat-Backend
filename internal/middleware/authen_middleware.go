@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"gochat-backend/internal/handler"
+	"log"
 	"net/http"
 	"strings"
 
@@ -12,6 +13,7 @@ func (m *middleware) Authentication(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
 
 	if authHeader == "" {
+		log.Println("Authorization header is missing")
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Authorization header is required")
 		c.Abort()
 		return
@@ -19,6 +21,7 @@ func (m *middleware) Authentication(c *gin.Context) {
 
 	// Check if the header has the correct format
 	if !strings.HasPrefix(authHeader, "Bearer ") {
+		log.Println("Invalid Authorization header format")
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Invalid Authorization header format")
 		c.Abort()
 		return
@@ -28,6 +31,7 @@ func (m *middleware) Authentication(c *gin.Context) {
 
 	claims, err := m.jwtService.ValidateAccessToken(tokenString)
 	if err != nil {
+		log.Println("Invalid token:", err)
 		handler.SendErrorResponse(c, http.StatusUnauthorized, err.Error())
 		c.Abort()
 		return
