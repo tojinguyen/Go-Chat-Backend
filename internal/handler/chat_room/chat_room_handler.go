@@ -25,7 +25,7 @@ import (
 // @Router /chat-rooms [post]
 func CreateChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -60,7 +60,7 @@ func CreateChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // @Router /chat-rooms [get]
 func GetChatRooms(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -91,7 +91,7 @@ func GetChatRooms(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // @Router /chat-rooms/{id} [get]
 func GetChatRoomByID(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -132,7 +132,7 @@ func GetChatRoomByID(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // @Router /chat-rooms/{id}/members [post]
 func AddChatRoomMembers(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -184,7 +184,7 @@ func AddChatRoomMembers(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // @Router /chat-rooms/{id}/members/{userID} [delete]
 func RemoveChatRoomMember(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -231,7 +231,7 @@ func RemoveChatRoomMember(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // @Router /chat-rooms/{id}/messages [get]
 func GetChatRoomMessages(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -286,7 +286,7 @@ func GetChatRoomMessages(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // @Router /chat-rooms/{id}/messages [post]
 func SendMessage(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
@@ -331,7 +331,7 @@ func SendMessage(c *gin.Context, chatUseCase chat.ChatUseCase) {
 // @Router /chat-rooms/{id}/leave [post]
 func LeaveChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	// Get user ID from context
-	userID := c.GetString("user_id")
+	userID := c.GetString("userId")
 	if userID == "" {
 		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
 		return
