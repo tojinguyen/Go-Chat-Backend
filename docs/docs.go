@@ -686,7 +686,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves all chat rooms the authenticated user belongs to",
+                "description": "Retrieves all chat rooms the authenticated user belongs to with pagination support",
                 "produces": [
                     "application/json"
                 ],
@@ -694,6 +694,20 @@ const docTemplate = `{
                     "Chat Room"
                 ],
                 "summary": "Get all user's chat rooms",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Page number (default: 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (default: 20)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Chat rooms retrieved successfully",

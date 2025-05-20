@@ -48,12 +48,14 @@ func CreateChatRoom(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	handler.SendSuccessResponse(c, http.StatusCreated, "Chat room created successfully", chatRoom)
 }
 
-// GetChatRooms retrieves all chat rooms for the current user
+// GetChatRooms retrieves all chat rooms for the current user with pagination
 // @Summary Get all user's chat rooms
-// @Description Retrieves all chat rooms the authenticated user belongs to
+// @Description Retrieves all chat rooms the authenticated user belongs to with pagination support
 // @Tags Chat Room
 // @Produce json
 // @Security BearerAuth
+// @Param page query int false "Page number (default: 1)"
+// @Param limit query int false "Items per page (default: 20)"
 // @Success 200 {object} handler.APIResponse{data=[]chat.ChatRoomOutput} "Chat rooms retrieved successfully"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 500 {object} handler.APIResponse "Internal server error"

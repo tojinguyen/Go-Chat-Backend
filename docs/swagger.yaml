@@ -642,7 +642,17 @@ paths:
       - Auth
   /chat-rooms:
     get:
-      description: Retrieves all chat rooms the authenticated user belongs to
+      description: Retrieves all chat rooms the authenticated user belongs to with
+        pagination support
+      parameters:
+      - description: 'Page number (default: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Items per page (default: 20)'
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
