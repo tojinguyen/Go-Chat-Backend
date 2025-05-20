@@ -283,54 +283,6 @@ func GetChatRoomMessages(c *gin.Context, chatUseCase chat.ChatUseCase) {
 	handler.SendSuccessResponse(c, http.StatusOK, "Messages retrieved successfully", messages)
 }
 
-// SendMessage sends a message to a chat room
-// @Summary Send message to chat room
-// @Description Sends a new message to a chat room
-// @Tags Chat Room
-// @Accept json
-// @Produce json
-// @Security BearerAuth
-// @Param id path string true "Chat Room ID"
-// @Param request body chat.MessageInput true "Message data"
-// @Success 201 {object} handler.APIResponse{data=chat.MessageOutput} "Message sent successfully"
-// @Failure 400 {object} handler.APIResponse "Invalid request format or chat room ID is required"
-// @Failure 401 {object} handler.APIResponse "Unauthorized"
-// @Failure 403 {object} handler.APIResponse "User not a member of chat room"
-// @Failure 404 {object} handler.APIResponse "Chat room not found"
-// @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /chat-rooms/{id}/messages [post]
-func SendMessage(c *gin.Context, chatUseCase chat.ChatUseCase) {
-	// Get user ID from context
-	userID := c.GetString("userId")
-	if userID == "" {
-		handler.SendErrorResponse(c, http.StatusUnauthorized, "Unauthorized")
-		return
-	}
-
-	// Get chat room ID from URL params
-	chatRoomID := c.Param("id")
-	if chatRoomID == "" {
-		handler.SendErrorResponse(c, http.StatusBadRequest, "Chat room ID is required")
-		return
-	}
-
-	// Parse request body
-	var input chat.MessageInput
-	if err := c.ShouldBindJSON(&input); err != nil {
-		handler.SendErrorResponse(c, http.StatusBadRequest, fmt.Sprintf("Invalid request format: %v", err))
-		return
-	}
-
-	// Send message
-	message, err := chatUseCase.SendMessage(c.Request.Context(), userID, chatRoomID, input)
-	if err != nil {
-		handler.SendErrorResponse(c, http.StatusInternalServerError, fmt.Sprintf("Failed to send message: %v", err))
-		return
-	}
-
-	handler.SendSuccessResponse(c, http.StatusCreated, "Message sent successfully", message)
-}
-
 // LeaveChatRoom allows a user to leave a chat room
 // @Summary Leave chat room
 // @Description Allows the authenticated user to leave a chat room

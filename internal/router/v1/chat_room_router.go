@@ -43,11 +43,6 @@ func InitChatRoomRouter(
 		chatHandler.GetChatRoomMessages(c, chatUseCase)
 	})
 
-	// Send a message to a chat room
-	router.POST("/:id/messages", middleware.Authentication, func(c *gin.Context) {
-		chatHandler.SendMessage(c, chatUseCase)
-	})
-
 	// Leave a chat room
 	router.POST("/:id/leave", middleware.Authentication, func(c *gin.Context) {
 		chatHandler.LeaveChatRoom(c, chatUseCase)
