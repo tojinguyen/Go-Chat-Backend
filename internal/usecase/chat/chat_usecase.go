@@ -57,7 +57,7 @@ type MessageOutput struct {
 
 type ChatUseCase interface {
 	CreateChatRoom(ctx context.Context, userID string, input ChatRoomCreateInput) (*ChatRoomOutput, error)
-	GetChatRooms(ctx context.Context, userID string) ([]*ChatRoomOutput, error)
+	GetChatRooms(ctx context.Context, userID string, page, limit int) ([]*ChatRoomOutput, error)
 	GetChatRoomByID(ctx context.Context, userID, chatRoomID string) (*ChatRoomOutput, error)
 	AddChatRoomMembers(ctx context.Context, userID, chatRoomID string, memberIDs []string) error
 	RemoveChatRoomMember(ctx context.Context, userID, chatRoomID, memberID string) error
@@ -176,9 +176,19 @@ func (c *chatUseCase) CreateChatRoom(ctx context.Context, userID string, input C
 }
 
 // GetChatRooms gets all chat rooms for a user
-func (c *chatUseCase) GetChatRooms(ctx context.Context, userID string) ([]*ChatRoomOutput, error) {
+func (c *chatUseCase) GetChatRooms(ctx context.Context, userID string, page, limit int) ([]*ChatRoomOutput, error) {
+	// Set default pagination values if not provided
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 20 // default limit
+	}
+
+	offset := (page - 1) * limit
+
 	// Get all chat rooms where the user is a member
-	chatRooms, err := c.chatRoomRepository.FindChatRoomsByUserID(ctx, userID)
+	chatRooms, err := c.chatRoomRepository.FindChatRoomsByUserID(ctx, userID, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("error finding chat rooms: %w", err)
 	}

@@ -12,7 +12,7 @@ import (
 type ChatRoomRepository interface {
 	CreateChatRoom(ctx context.Context, chatRoom *domain.ChatRoom) error
 	FindChatRoomByID(ctx context.Context, chatRoomID string) (*domain.ChatRoom, error)
-	FindChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.ChatRoom, error)
+	FindChatRoomsByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.ChatRoom, error)
 	FindPrivateChatRoom(ctx context.Context, userID1, userID2 string) (*domain.ChatRoom, error)
 	UpdateLastMessage(ctx context.Context, chatRoomID string, message *domain.Message) error
 	DeleteChatRoom(ctx context.Context, chatRoomID string) error
@@ -124,16 +124,17 @@ func (r *chatRoomRepo) getLastMessage(ctx context.Context, chatRoomID string) (*
 }
 
 // FindChatRoomsByUserID retrieves all chat rooms a user is a member of
-func (r *chatRoomRepo) FindChatRoomsByUserID(ctx context.Context, userID string) ([]*domain.ChatRoom, error) {
+func (r *chatRoomRepo) FindChatRoomsByUserID(ctx context.Context, userID string, limit, offset int) ([]*domain.ChatRoom, error) {
 	query := `
-        SELECT cr.id, cr.name, cr.type, cr.created_at
-        FROM chat_rooms cr
-        JOIN chat_room_members crm ON cr.id = crm.chat_room_id
-        WHERE crm.user_id = ?
-        ORDER BY cr.created_at DESC
-    `
+		SELECT cr.id, cr.name, cr.type, cr.created_at
+		FROM chat_rooms cr
+		JOIN chat_room_members crm ON cr.id = crm.chat_room_id
+		WHERE crm.user_id = ?
+		ORDER BY cr.created_at DESC
+		LIMIT ? OFFSET ?
+	`
 
-	rows, err := r.database.DB.QueryContext(ctx, query, userID)
+	rows, err := r.database.DB.QueryContext(ctx, query, userID, limit, offset)
 	if err != nil {
 		return nil, err
 	}

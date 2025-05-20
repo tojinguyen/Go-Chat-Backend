@@ -66,8 +66,21 @@ func GetChatRooms(c *gin.Context, chatUseCase chat.ChatUseCase) {
 		return
 	}
 
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "20")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		limit = 20
+	}
+
 	// Get all chat rooms
-	chatRooms, err := chatUseCase.GetChatRooms(c.Request.Context(), userID)
+	chatRooms, err := chatUseCase.GetChatRooms(c.Request.Context(), userID, page, limit)
 	if err != nil {
 		handler.SendErrorResponse(c, http.StatusInternalServerError, fmt.Sprintf("Failed to get chat rooms: %v", err))
 		return
