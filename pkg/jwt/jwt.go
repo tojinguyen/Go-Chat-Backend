@@ -39,10 +39,14 @@ func NewJwtService(cfg *config.Environment) JwtService {
 }
 
 func (s *jwtService) GenerateAccessToken(input *GenerateTokenInput) (string, error) {
+	now := time.Now().UTC()
 	claims := &CustomJwtClaims{
 		*input,
 		jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Duration(s.cfg.AccessTokenExpireMinutes) * time.Minute).Unix(),
+			IssuedAt:  now.Unix(),
+			ExpiresAt: time.Now().UTC().Add(time.Duration(s.cfg.AccessTokenExpireMinutes) * time.Minute).Unix(),
+			NotBefore: now.Unix(),
+			Issuer:    "gochat-backend",
 		},
 	}
 
@@ -78,16 +82,22 @@ func (s *jwtService) ValidateAccessToken(tokenString string) (*CustomJwtClaims, 
 	claims := &CustomJwtClaims{}
 
 	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		// Kiểm tra thuật toán
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errorConstants.ErrTokenInvalid
+		}
 		return []byte(s.cfg.AccessTokenSecretKey), nil
 	})
 
 	if err != nil {
 		log.Println("Error parsing token:", err)
-		v, _ := err.(*jwt.ValidationError)
 
-		if v.Errors == jwt.ValidationErrorExpired {
-			log.Println("Token expired")
-			return nil, errorConstants.ErrTokenExpired
+		// Kiểm tra lỗi cụ thể
+		if ve, ok := err.(*jwt.ValidationError); ok {
+			if ve.Errors&jwt.ValidationErrorExpired != 0 {
+				log.Println("Token expired")
+				return nil, errorConstants.ErrTokenExpired
+			}
 		}
 
 		return nil, errorConstants.ErrTokenInvalid
