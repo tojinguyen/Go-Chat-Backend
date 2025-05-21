@@ -11,23 +11,21 @@ import (
 
 func (m *middleware) Authentication(c *gin.Context) {
 	authHeader := c.GetHeader("Authorization")
+	var tokenString string
 
-	if authHeader == "" {
-		log.Println("Authorization header is missing")
-		handler.SendErrorResponse(c, http.StatusUnauthorized, "Authorization header is required")
+	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
+		tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+	} else {
+		// Nếu không có header, thử lấy token từ query string (dùng cho WebSocket)
+		tokenString = c.Query("token")
+	}
+
+	if tokenString == "" {
+		log.Println("Authorization token is missing")
+		handler.SendErrorResponse(c, http.StatusUnauthorized, "Authorization token is required")
 		c.Abort()
 		return
 	}
-
-	// Check if the header has the correct format
-	if !strings.HasPrefix(authHeader, "Bearer ") {
-		log.Println("Invalid Authorization header format")
-		handler.SendErrorResponse(c, http.StatusUnauthorized, "Invalid Authorization header format")
-		c.Abort()
-		return
-	}
-
-	tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 	claims, err := m.jwtService.ValidateAccessToken(tokenString)
 	if err != nil {
@@ -41,6 +39,8 @@ func (m *middleware) Authentication(c *gin.Context) {
 	c.Set("userId", claims.UserId)
 	c.Set("email", claims.Email)
 	c.Set("role", claims.Role)
+
+	log.Println("User ID from token:", claims.UserId)
 
 	c.Next()
 }
