@@ -29,6 +29,8 @@ func (h *MessageHandler) HandleMessage(client *Client, data []byte) {
 	socketMsg.SenderID = client.ID
 	socketMsg.Timestamp = time.Now().UnixMilli()
 
+	log.Printf("Received message from client %s: %s", client.ID, string(data))
+
 	switch socketMsg.Type {
 	case SocketMessageTypeChat:
 		h.handleChatMessage(client, socketMsg)
