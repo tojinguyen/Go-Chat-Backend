@@ -28,8 +28,8 @@ func NewMessageRepo(db *mysqlinfra.Database) MessageRepository {
 // CreateMessage creates a new message
 func (r *messageRepo) CreateMessage(ctx context.Context, message *domain.Message) error {
 	query := `
-        INSERT INTO messages (id, sender_id, receiver_id, type, mime_type, content, created_at, chat_room_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO messages (id, sender_id, chat_room_id, type, mime_type, content, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     `
 
 	// Set created_at if not provided
@@ -42,12 +42,11 @@ func (r *messageRepo) CreateMessage(ctx context.Context, message *domain.Message
 		query,
 		message.ID,
 		message.SenderId,
-		message.ReceiverId,
+		message.ChatRoomId,
 		message.Type,
 		message.MimeType,
 		message.Content,
 		message.CreatedAt,
-		message.ChatRoomId,
 	)
 
 	return err
@@ -56,7 +55,7 @@ func (r *messageRepo) CreateMessage(ctx context.Context, message *domain.Message
 // FindMessageByID retrieves a message by its ID
 func (r *messageRepo) FindMessageByID(ctx context.Context, messageID string) (*domain.Message, error) {
 	query := `
-        SELECT id, sender_id, receiver_id, type, mime_type, content, created_at, chat_room_id
+        SELECT id, sender_id, chat_room_id type, mime_type, content, created_at
         FROM messages
         WHERE id = ?
     `
@@ -68,12 +67,11 @@ func (r *messageRepo) FindMessageByID(ctx context.Context, messageID string) (*d
 		Scan(
 			&message.ID,
 			&message.SenderId,
-			&message.ReceiverId,
+			&message.ChatRoomId,
 			&messageType,
 			&message.MimeType,
 			&message.Content,
 			&message.CreatedAt,
-			&message.ChatRoomId,
 		)
 
 	if err != nil {
@@ -90,7 +88,7 @@ func (r *messageRepo) FindMessageByID(ctx context.Context, messageID string) (*d
 // FindMessagesByChatRoomID retrieves messages for a chat room with pagination
 func (r *messageRepo) FindMessagesByChatRoomID(ctx context.Context, chatRoomID string, limit, offset int) ([]*domain.Message, error) {
 	query := `
-        SELECT id, sender_id, receiver_id, type, mime_type, content, created_at, chat_room_id
+        SELECT id, sender_id, chat_room_id, type, mime_type, content, created_at
         FROM messages
         WHERE chat_room_id = ?
         ORDER BY created_at DESC
@@ -111,12 +109,11 @@ func (r *messageRepo) FindMessagesByChatRoomID(ctx context.Context, chatRoomID s
 		if err := rows.Scan(
 			&message.ID,
 			&message.SenderId,
-			&message.ReceiverId,
+			&message.ChatRoomId,
 			&messageType,
 			&message.MimeType,
 			&message.Content,
 			&message.CreatedAt,
-			&message.ChatRoomId,
 		); err != nil {
 			return nil, err
 		}

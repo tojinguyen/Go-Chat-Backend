@@ -90,7 +90,7 @@ func (r *chatRoomRepo) FindChatRoomByID(ctx context.Context, chatRoomID string) 
 // getLastMessage retrieves the last message for a chat room
 func (r *chatRoomRepo) getLastMessage(ctx context.Context, chatRoomID string) (*domain.Message, error) {
 	query := `
-        SELECT id, sender_id, receiver_id, type, mime_type, content, created_at, chat_room_id
+        SELECT id, sender_id, chat_room_id, type, mime_type, content, created_at
         FROM messages
         WHERE chat_room_id = ?
         ORDER BY created_at DESC
@@ -104,7 +104,6 @@ func (r *chatRoomRepo) getLastMessage(ctx context.Context, chatRoomID string) (*
 		Scan(
 			&message.ID,
 			&message.SenderId,
-			&message.ReceiverId,
 			&messageType,
 			&message.MimeType,
 			&message.Content,

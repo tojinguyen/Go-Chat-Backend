@@ -13,12 +13,11 @@ const (
 type Message struct {
 	ID         string      `json:"id"`
 	SenderId   string      `json:"sender_id"`
-	ReceiverId string      `json:"receiver_id"`
+	ChatRoomId string      `json:"chat_room_id"`
 	Type       MessageType `json:"type"`
 	MimeType   string      `json:"mime_type,omitempty"`
 	Content    string      `json:"content"`
 	CreatedAt  string      `json:"created_at"`
-	ChatRoomId string      `json:"chat_room_id"`
 }
 
 type ChatRoom struct {
