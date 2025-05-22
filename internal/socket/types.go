@@ -1,20 +1,20 @@
 package socket
 
-import (
-	"encoding/json"
-	"sync"
+type SocketMessageType string
+
+const (
+	// Tin nhắn từ client
+	SocketMessageTypeChat        SocketMessageType = "CHAT"         // Gửi tin nhắn chat
+	SocketMessageTypeJoin        SocketMessageType = "JOIN"         // Tham gia phòng chat
+	SocketMessageTypeLeave       SocketMessageType = "LEAVE"        // Rời phòng chat
+	SocketMessageTypeTyping      SocketMessageType = "TYPING"       // Đang nhập
+	SocketMessageTypeReadReceipt SocketMessageType = "READ_RECEIPT" // Đánh dấu đã đọc
+
+	// Tin nhắn từ server
+	SocketMessageTypeUsers       SocketMessageType = "USERS"        // Danh sách người dùng
+	SocketMessageTypeJoinSuccess SocketMessageType = "JOIN_SUCCESS" // Tham gia phòng thành công
+	SocketMessageTypeJoinError   SocketMessageType = "JOIN_ERROR"   // Lỗi khi tham gia phòng
+	SocketMessageTypeUserJoined  SocketMessageType = "USER_JOINED"  // Thông báo người dùng khác tham gia
+	SocketMessageTypeUserLeft    SocketMessageType = "USER_LEFT"    // Thông báo người dùng khác rời đi
+	SocketMessageTypeError       SocketMessageType = "ERROR"        // Thông báo lỗi
 )
-
-type SocketMessage struct {
-	Type       SocketMessageType `json:"type"`
-	ChatRoomID string            `json:"chat_room_id,omitempty"`
-	SenderID   string            `json:"sender_id"`
-	Timestamp  int64             `json:"timestamp"`
-	Data       json.RawMessage   `json:"data,omitempty"` // Dữ liệu tùy chọn
-}
-
-type ChatRoomSocket struct {
-	ID      string
-	Clients map[string]*Client
-	mutex   sync.RWMutex
-}
