@@ -130,7 +130,18 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 // handleJoinMessage xử lý yêu cầu tham gia phòng
 func (h *MessageHandler) handleJoinMessage(client *Client, socketMsg SocketMessage) {
 	log.Printf("Handling join message from client %s", client.ID)
-	if socketMsg.ChatRoomID == "" {
+
+	log.Printf("Client %s requested to join room %s with data: %s", client.ID, socketMsg.ChatRoomID, string(socketMsg.Data))
+
+	payload, err := ParsePayload[JoinPayload](socketMsg.Data)
+
+	if err != nil {
+		log.Printf("Error parsing join message payload: %v", err)
+		h.sendErrorToClient(client, "Invalid payload format")
+		return
+	}
+
+	if payload.RoomID == "" {
 		log.Printf("Client %s sent join message without room ID", client.ID)
 		h.sendErrorToClient(client, "Thiếu thông tin phòng chat")
 		return

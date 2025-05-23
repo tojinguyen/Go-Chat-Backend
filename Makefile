@@ -3,6 +3,9 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
+debug:
+	go run ./cmd/server/main.go --debug
+
 dev:
 	go run ./cmd/server/main.go
 

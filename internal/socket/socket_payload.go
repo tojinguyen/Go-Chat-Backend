@@ -17,7 +17,7 @@ type ChatMessagePayload struct {
 }
 
 type JoinPayload struct {
-	UserName string `json:"user_name"`
+	RoomID string `json:"room_id"`
 }
 
 type LeavePayload struct {
