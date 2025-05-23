@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"context"
 	"gochat-backend/internal/usecase"
 	"log"
 	"net/http"
@@ -38,11 +39,15 @@ func (sm *SocketManager) ServeWS(w http.ResponseWriter, r *http.Request, clientI
 		return
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	client := &Client{
-		ID:   clientID,
-		Conn: conn,
-		Send: make(chan []byte, 256),
-		Hub:  sm.Hub,
+		ID:     clientID,
+		Conn:   conn,
+		Send:   make(chan []byte, 256),
+		Hub:    sm.Hub,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 
 	// Đăng ký client với Hub

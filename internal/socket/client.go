@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"context"
 	"log"
 	"time"
 
@@ -8,10 +9,12 @@ import (
 )
 
 type Client struct {
-	ID   string
-	Conn *websocket.Conn
-	Send chan []byte
-	Hub  *Hub
+	ID     string
+	Conn   *websocket.Conn
+	Send   chan []byte
+	Hub    *Hub
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 // Đọc message từ client và chuyển đến Hub xử lý
@@ -19,21 +22,28 @@ func (c *Client) ReadPump() {
 	defer func() {
 		c.Hub.Unregister <- c
 		c.Conn.Close()
+		c.cancel()
 	}()
 
 	c.Conn.SetReadLimit(4096) // Giới hạn kích thước tin nhắn
 
 	for {
-		_, message, err := c.Conn.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				log.Printf("Error reading message: %v", err)
+		select {
+		case <-c.ctx.Done():
+			// Context đã bị hủy, thoát khỏi goroutine
+			return
+		default:
+			_, message, err := c.Conn.ReadMessage()
+			if err != nil {
+				if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
+					log.Printf("Error reading message: %v", err)
+				}
+				return
 			}
-			break
-		}
 
-		// Chuyển tin nhắn đến Hub xử lý
-		c.Hub.HandleMessage(c, message)
+			// Chuyển tin nhắn đến Hub xử lý với context
+			c.Hub.HandleMessageWithContext(c, message, c.ctx)
+		}
 	}
 }
 
@@ -47,6 +57,9 @@ func (c *Client) WritePump() {
 
 	for {
 		select {
+		case <-c.ctx.Done():
+			// Context đã bị hủy, thoát khỏi goroutine
+			return
 		case msg, ok := <-c.Send:
 			c.Conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
 			if !ok {

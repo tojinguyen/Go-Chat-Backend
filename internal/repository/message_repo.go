@@ -27,6 +27,12 @@ func NewMessageRepo(db *mysqlinfra.Database) MessageRepository {
 
 // CreateMessage creates a new message
 func (r *messageRepo) CreateMessage(ctx context.Context, message *domain.Message) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	query := `
         INSERT INTO messages (id, sender_id, chat_room_id, type, mime_type, content, created_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)

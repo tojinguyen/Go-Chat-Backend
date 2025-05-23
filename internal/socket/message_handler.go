@@ -1,7 +1,9 @@
 package socket
 
 import (
+	"context"
 	"encoding/json"
+	domain "gochat-backend/internal/domain/chat"
 	"gochat-backend/internal/repository"
 	"log"
 	"time"
@@ -29,7 +31,8 @@ func NewMessageHandler(
 }
 
 // HandleSocketMessage xử lý tin nhắn từ client
-func (h *MessageHandler) HandleSocketMessage(client *Client, data []byte) {
+// HandleSocketMessageWithContext xử lý tin nhắn từ client với context
+func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []byte, ctx context.Context) {
 	var socketMsg SocketMessage
 	if err := json.Unmarshal(data, &socketMsg); err != nil {
 		h.sendErrorToClient(client, "Message format is invalid")
@@ -37,15 +40,24 @@ func (h *MessageHandler) HandleSocketMessage(client *Client, data []byte) {
 		return
 	}
 
-	// Suren sender ID and timestamp
+	// Ensure sender ID and timestamp
 	socketMsg.SenderID = client.ID
 	socketMsg.Timestamp = time.Now().UnixMilli()
 
 	log.Printf("Received message from client %s: %s", client.ID, string(data))
 
+	// Check if context is canceled
+	select {
+	case <-ctx.Done():
+		log.Printf("Context canceled while processing message from client %s", client.ID)
+		return
+	default:
+		// Continue processing
+	}
+
 	switch socketMsg.Type {
 	case SocketMessageTypeChat:
-		h.handleChatMessage(client, socketMsg)
+		h.handleChatMessage(client, socketMsg, ctx)
 	case SocketMessageTypeJoin:
 		h.handleJoinMessage(client, socketMsg)
 	case SocketMessageTypeLeave:
@@ -55,13 +67,12 @@ func (h *MessageHandler) HandleSocketMessage(client *Client, data []byte) {
 	case SocketMessageTypeReadReceipt:
 		h.handleReadReceiptMessage(client, socketMsg)
 	default:
-		h.sendErrorToClient(client, "Message type is not supported")
-		log.Printf("Unsupported message type: %s", socketMsg.Type)
+		h.sendErrorToClient(client, "Unknown message type")
 	}
 }
 
 // handleChatMessage xử lý tin nhắn chat
-func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessage) {
+func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
 	// Kiểm tra client đã join phòng này chưa
 	if !h.hub.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
 		h.sendErrorToClient(client, "Bạn chưa tham gia phòng chat này")
@@ -69,13 +80,48 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 	}
 
 	// Parse payload từ Data
-	// payload, err := ParsePayload[ChatMessagePayload](socketMsg.Data)
-	// if err != nil {
-	// 	h.sendErrorToClient(client, "Dữ liệu chat không hợp lệ")
-	// 	return
-	// }
+	payload, err := ParsePayload[ChatMessagePayload](socketMsg.Data)
+	if err != nil {
+		h.sendErrorToClient(client, "Dữ liệu chat không hợp lệ")
+		return
+	}
 
-	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
+	select {
+	case <-ctx.Done():
+		log.Printf("Context canceled during chat message processing for client %s", client.ID)
+		return
+	default:
+		// Tiếp tục nếu context vẫn còn hoạt động
+	}
+
+	message := &domain.Message{
+		ChatRoomId: socketMsg.ChatRoomID,
+		SenderId:   socketMsg.SenderID,
+		Content:    payload.Content,
+	}
+
+	err = h.messageRepository.CreateMessage(ctx, message)
+
+	if err != nil {
+		// Kiểm tra lại context trước khi gửi lỗi
+		select {
+		case <-ctx.Done():
+			log.Printf("Context canceled after DB operation for client %s", client.ID)
+			return
+		default:
+			h.sendErrorToClient(client, "Không thể lưu tin nhắn")
+			return
+		}
+	}
+
+	// Kiểm tra lần cuối trước khi broadcast
+	select {
+	case <-ctx.Done():
+		log.Printf("Context canceled before broadcasting for client %s", client.ID)
+		return
+	default:
+		h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
+	}
 }
 
 // handleJoinMessage xử lý yêu cầu tham gia phòng

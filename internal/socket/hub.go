@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"context"
 	"encoding/json"
 	"gochat-backend/internal/usecase"
 	"log"
@@ -66,8 +67,9 @@ func (h *Hub) Run() {
 }
 
 // HandleMessage xử lý tin nhắn từ client
-func (h *Hub) HandleMessage(client *Client, data []byte) {
-	h.MessageHandler.HandleSocketMessage(client, data)
+func (h *Hub) HandleMessageWithContext(client *Client, data []byte, ctx context.Context) {
+	// Truyền context vào message handler
+	h.MessageHandler.HandleSocketMessageWithContext(client, data, ctx)
 }
 
 // BroadcastToRoom gửi tin nhắn tới tất cả client trong phòng
