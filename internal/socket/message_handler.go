@@ -75,8 +75,10 @@ func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []b
 
 // handleChatMessage xử lý tin nhắn chat
 func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
-	// Kiểm tra client đã join phòng này chưa
+	log.Printf("Handling chat message from client %s", client.ID)
+
 	if !h.hub.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
+		log.Printf("Client %s is not in room %s", client.ID, socketMsg.ChatRoomID)
 		h.sendErrorToClient(client, "You haven't joined this room")
 		return
 	}
@@ -84,11 +86,13 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 	// Parse payload từ Data
 	payload, err := ParsePayload[ChatMessagePayload](socketMsg.Data)
 	if err != nil {
+		log.Printf("Error parsing chat message payload: %v", err)
 		h.sendErrorToClient(client, "Invalid payload format")
 		return
 	}
 
 	if CheckContext(ctx, client.ID, "Context canceled during chat message processing") {
+		log.Printf("Context canceled while processing chat message from client %s", client.ID)
 		return
 	}
 
@@ -106,15 +110,20 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 
 	if err != nil {
 		if CheckContext(ctx, client.ID, "Context canceled during chat message processing") {
+			log.Printf("Context canceled while processing chat message from client %s", client.ID)
 			return
 		}
+		log.Printf("Error saving message to database: %v", err)
 		h.sendErrorToClient(client, "Không thể lưu tin nhắn")
 		return
 	}
 
 	if CheckContext(ctx, client.ID, "Context canceled before broadcasting") {
+		log.Printf("Context canceled while broadcasting message from client %s", client.ID)
 		return
 	}
+
+	log.Printf("Broadcasting message to room %s", socketMsg.ChatRoomID)
 	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 }
 
@@ -145,6 +154,7 @@ func (h *MessageHandler) handleLeaveMessage(client *Client, socketMsg SocketMess
 // handleTypingMessage xử lý thông báo đang gõ
 func (h *MessageHandler) handleTypingMessage(client *Client, socketMsg SocketMessage) {
 	if !h.hub.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
+		h.sendErrorToClient(client, "You aren't in this room")
 		return // Bỏ qua nếu không ở trong phòng
 	}
 	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
