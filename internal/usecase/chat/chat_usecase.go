@@ -51,7 +51,7 @@ type MessageOutput struct {
 	Type       domain.MessageType `json:"type"`
 	MimeType   string             `json:"mime_type,omitempty"`
 	Content    string             `json:"content"`
-	CreatedAt  string             `json:"created_at"`
+	CreatedAt  time.Time          `json:"created_at"`
 	ChatRoomID string             `json:"chat_room_id"`
 }
 
@@ -435,7 +435,7 @@ func (c *chatUseCase) SendMessage(ctx context.Context, userID, chatRoomID string
 	}
 
 	// Create message
-	now := time.Now().Format(time.RFC3339)
+	now := time.Now().UTC()
 	message := &domain.Message{
 		ID:         uuid.New().String(),
 		SenderId:   userID,

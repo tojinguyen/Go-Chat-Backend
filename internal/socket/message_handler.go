@@ -103,7 +103,7 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 		Type:       domain.TextMessageType, // Hoặc loại tin nhắn phù hợp
 		MimeType:   payload.MimeType,
 		Content:    payload.Content,
-		CreatedAt:  time.Now().UTC().Format(time.RFC3339), // Thời gian hiện tại
+		CreatedAt:  time.Now().UTC(), // Thời gian hiện tại
 	}
 
 	err = h.messageRepository.CreateMessage(ctx, message)

@@ -38,9 +38,8 @@ func (r *messageRepo) CreateMessage(ctx context.Context, message *domain.Message
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `
 
-	// Set created_at if not provided
-	if message.CreatedAt == "" {
-		message.CreatedAt = time.Now().Format(time.RFC3339)
+	if message.CreatedAt.IsZero() {
+		message.CreatedAt = time.Now().UTC()
 	}
 
 	_, err := r.database.DB.ExecContext(
