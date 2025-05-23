@@ -23,15 +23,15 @@ type Message struct {
 }
 
 type ChatRoom struct {
-	ID          string   `json:"id"`
-	Name        string   `json:"name"`
-	Type        string   `json:"type"` // "GROUP" or "PRIVATE"
-	CreatedAt   string   `json:"created_at"`
-	LastMessage *Message `json:"last_message"`
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	Type        string    `json:"type"` // "GROUP" or "PRIVATE"
+	CreatedAt   time.Time `json:"created_at"`
+	LastMessage *Message  `json:"last_message"`
 }
 
 type ChatRoomMember struct {
-	ChatRoomId string `json:"chat_room_id"`
-	UserId     string `json:"user_id"`
-	JoinedAt   string `json:"joined_at"`
+	ChatRoomId string    `json:"chat_room_id"`
+	UserId     string    `json:"user_id"`
+	JoinedAt   time.Time `json:"joined_at"`
 }

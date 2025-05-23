@@ -37,8 +37,8 @@ func (r *chatRoomRepo) CreateChatRoom(ctx context.Context, chatRoom *domain.Chat
 	query := `INSERT INTO chat_rooms (id, name, type, created_at) VALUES (?, ?, ?, ?)`
 
 	// Set created_at if not provided
-	if chatRoom.CreatedAt == "" {
-		chatRoom.CreatedAt = time.Now().Format(time.RFC3339)
+	if chatRoom.CreatedAt.IsZero() {
+		chatRoom.CreatedAt = time.Now().UTC()
 	}
 
 	_, err := r.database.DB.ExecContext(
@@ -225,8 +225,8 @@ func (r *chatRoomRepo) AddChatRoomMember(ctx context.Context, member *domain.Cha
 	query := `INSERT INTO chat_room_members (chat_room_id, user_id, joined_at) VALUES (?, ?, ?)`
 
 	// Set joined_at if not provided
-	if member.JoinedAt == "" {
-		member.JoinedAt = time.Now().Format(time.RFC3339)
+	if member.JoinedAt.IsZero() {
+		member.JoinedAt = time.Now().UTC()
 	}
 
 	_, err := r.database.DB.ExecContext(

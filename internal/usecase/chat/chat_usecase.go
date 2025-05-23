@@ -20,7 +20,7 @@ type ChatRoomOutput struct {
 	ID          string             `json:"id"`
 	Name        string             `json:"name"`
 	Type        string             `json:"type"`
-	CreatedAt   string             `json:"created_at"`
+	CreatedAt   time.Time          `json:"created_at"`
 	MemberCount int                `json:"member_count"`
 	Members     []ChatMemberOutput `json:"members,omitempty"`
 	LastMessage *MessageOutput     `json:"last_message,omitempty"`
@@ -31,10 +31,10 @@ type ChatRoomMembersInput struct {
 }
 
 type ChatMemberOutput struct {
-	UserID    string `json:"user_id"`
-	Name      string `json:"name"`
-	AvatarURL string `json:"avatar_url"`
-	JoinedAt  string `json:"joined_at"`
+	UserID    string    `json:"user_id"`
+	Name      string    `json:"name"`
+	AvatarURL string    `json:"avatar_url"`
+	JoinedAt  time.Time `json:"joined_at"`
 }
 
 type MessageInput struct {
@@ -127,7 +127,7 @@ func (c *chatUseCase) CreateChatRoom(ctx context.Context, userID string, input C
 	}
 
 	// Create chat room
-	now := time.Now().Format(time.RFC3339)
+	now := time.Now().UTC()
 	chatRoom := &domain.ChatRoom{
 		ID:        uuid.New().String(),
 		Name:      input.Name,
@@ -260,7 +260,7 @@ func (c *chatUseCase) AddChatRoomMembers(ctx context.Context, userID, chatRoomID
 	}
 
 	// Add members
-	now := time.Now().Format(time.RFC3339)
+	now := time.Now().UTC()
 	for _, memberID := range memberIDs {
 		// Check if the user exists
 		account, err := c.accountRepository.FindById(ctx, memberID)
