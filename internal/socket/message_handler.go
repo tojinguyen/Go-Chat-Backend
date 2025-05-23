@@ -129,8 +129,9 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 
 // handleJoinMessage xử lý yêu cầu tham gia phòng
 func (h *MessageHandler) handleJoinMessage(client *Client, socketMsg SocketMessage) {
-	// Kiểm tra xem có ChatRoomID không
+	log.Printf("Handling join message from client %s", client.ID)
 	if socketMsg.ChatRoomID == "" {
+		log.Printf("Client %s sent join message without room ID", client.ID)
 		h.sendErrorToClient(client, "Thiếu thông tin phòng chat")
 		return
 	}
