@@ -75,23 +75,19 @@ func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []b
 func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
 	// Kiểm tra client đã join phòng này chưa
 	if !h.hub.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
-		h.sendErrorToClient(client, "Bạn chưa tham gia phòng chat này")
+		h.sendErrorToClient(client, "You haven't joined this room")
 		return
 	}
 
 	// Parse payload từ Data
 	payload, err := ParsePayload[ChatMessagePayload](socketMsg.Data)
 	if err != nil {
-		h.sendErrorToClient(client, "Dữ liệu chat không hợp lệ")
+		h.sendErrorToClient(client, "Invalid payload format")
 		return
 	}
 
-	select {
-	case <-ctx.Done():
-		log.Printf("Context canceled during chat message processing for client %s", client.ID)
+	if CheckContext(ctx, client.ID, "Context canceled during chat message processing") {
 		return
-	default:
-		// Tiếp tục nếu context vẫn còn hoạt động
 	}
 
 	message := &domain.Message{
@@ -103,25 +99,17 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 	err = h.messageRepository.CreateMessage(ctx, message)
 
 	if err != nil {
-		// Kiểm tra lại context trước khi gửi lỗi
-		select {
-		case <-ctx.Done():
-			log.Printf("Context canceled after DB operation for client %s", client.ID)
-			return
-		default:
-			h.sendErrorToClient(client, "Không thể lưu tin nhắn")
+		if CheckContext(ctx, client.ID, "Context canceled during chat message processing") {
 			return
 		}
+		h.sendErrorToClient(client, "Không thể lưu tin nhắn")
+		return
 	}
 
-	// Kiểm tra lần cuối trước khi broadcast
-	select {
-	case <-ctx.Done():
-		log.Printf("Context canceled before broadcasting for client %s", client.ID)
+	if CheckContext(ctx, client.ID, "Context canceled before broadcasting") {
 		return
-	default:
-		h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 	}
+	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 }
 
 // handleJoinMessage xử lý yêu cầu tham gia phòng
