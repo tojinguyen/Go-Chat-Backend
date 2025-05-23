@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type MessageType string
 
 const (
@@ -17,7 +19,7 @@ type Message struct {
 	Type       MessageType `json:"type"`
 	MimeType   string      `json:"mime_type,omitempty"`
 	Content    string      `json:"content"`
-	CreatedAt  string      `json:"created_at"`
+	CreatedAt  time.Time   `json:"created_at"`
 }
 
 type ChatRoom struct {

@@ -129,9 +129,7 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 
 // handleJoinMessage xử lý yêu cầu tham gia phòng
 func (h *MessageHandler) handleJoinMessage(client *Client, socketMsg SocketMessage) {
-	log.Printf("Handling join message from client %s", client.ID)
-
-	log.Printf("Client %s requested to join room %s with data: %s", client.ID, socketMsg.ChatRoomID, string(socketMsg.Data))
+	log.Printf("Handling join message from client %s: %+v", client.ID, socketMsg) // Log toàn bộ nội dung socketMsg
 
 	payload, err := ParsePayload[JoinPayload](socketMsg.Data)
 
