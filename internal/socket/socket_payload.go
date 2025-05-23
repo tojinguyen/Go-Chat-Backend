@@ -13,6 +13,7 @@ type SocketMessage struct {
 type ChatMessagePayload struct {
 	Content   string `json:"content"`
 	MessageID string `json:"message_id,omitempty"`
+	MimeType  string `json:"mime_type,omitempty"`
 }
 
 type JoinPayload struct {

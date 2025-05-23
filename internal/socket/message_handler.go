@@ -7,6 +7,8 @@ import (
 	"gochat-backend/internal/repository"
 	"log"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type MessageHandler struct {
@@ -91,9 +93,13 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 	}
 
 	message := &domain.Message{
-		ChatRoomId: socketMsg.ChatRoomID,
+		ID:         uuid.New().String(), // Hàm tạo ID duy nhất (bạn cần định nghĩa)
 		SenderId:   socketMsg.SenderID,
+		ChatRoomId: socketMsg.ChatRoomID,
+		Type:       domain.TextMessageType, // Hoặc loại tin nhắn phù hợp
+		MimeType:   payload.MimeType,
 		Content:    payload.Content,
+		CreatedAt:  time.Now().UTC().Format(time.RFC3339), // Thời gian hiện tại
 	}
 
 	err = h.messageRepository.CreateMessage(ctx, message)
