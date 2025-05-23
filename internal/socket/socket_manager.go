@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"gochat-backend/internal/usecase"
 	"log"
 	"net/http"
 	"time"
@@ -13,8 +14,8 @@ type SocketManager struct {
 }
 
 // NewSocketManager khởi tạo SocketManager mới
-func NewSocketManager() *SocketManager {
-	hub := NewHub()
+func NewSocketManager(deps *usecase.SharedDependencies) *SocketManager {
+	hub := NewHub(deps)
 	// Khởi chạy hub trong goroutine riêng
 	go hub.Run()
 

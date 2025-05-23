@@ -4,7 +4,6 @@ import (
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/socket"
 	"gochat-backend/internal/usecase"
-	"gochat-backend/pkg/jwt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +12,7 @@ func InitV1Router(
 	r *gin.RouterGroup,
 	middleware middleware.Middleware,
 	useCaseContainer *usecase.UseCaseContainer,
-	jwtService jwt.JwtService,
+	deps *usecase.SharedDependencies,
 ) {
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -38,7 +37,7 @@ func InitV1Router(
 	}
 
 	{
-		socketManager := socket.NewSocketManager()
+		socketManager := socket.NewSocketManager(deps)
 		InitWebSocketRouter(r.Group("/ws"), middleware, socketManager)
 	}
 }

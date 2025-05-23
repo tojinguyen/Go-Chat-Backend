@@ -48,3 +48,9 @@ type UserEventPayload struct {
 type ErrorPayload struct {
 	Message string `json:"message"`
 }
+
+func ParsePayload[T any](data json.RawMessage) (*T, error) {
+	var payload T
+	err := json.Unmarshal(data, &payload)
+	return &payload, err
+}

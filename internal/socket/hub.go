@@ -2,6 +2,7 @@ package socket
 
 import (
 	"encoding/json"
+	"gochat-backend/internal/usecase"
 	"log"
 	"sync"
 	"time"
@@ -24,7 +25,7 @@ type Hub struct {
 }
 
 // NewHub khởi tạo Hub mới
-func NewHub() *Hub {
+func NewHub(deps *usecase.SharedDependencies) *Hub {
 	hub := &Hub{
 		ChatRooms:  make(map[string]*ChatRoomSocket),
 		Clients:    make(map[string]*Client),
@@ -32,7 +33,12 @@ func NewHub() *Hub {
 		Unregister: make(chan *Client),
 	}
 
-	hub.MessageHandler = NewMessageHandler(hub)
+	hub.MessageHandler = NewMessageHandler(
+		hub,
+		deps.ChatRoomRepo,
+		deps.MessageRepo,
+		deps.AccountRepo,
+	)
 	return hub
 }
 
@@ -60,9 +66,47 @@ func (h *Hub) Run() {
 }
 
 // HandleMessage xử lý tin nhắn từ client
-// HandleMessage xử lý tin nhắn từ client
 func (h *Hub) HandleMessage(client *Client, data []byte) {
-	h.MessageHandler.HandleMessage(client, data)
+	h.MessageHandler.HandleSocketMessage(client, data)
+}
+
+// BroadcastToRoom gửi tin nhắn tới tất cả client trong phòng
+func (h *Hub) BroadcastToRoom(chatRoomID string, message SocketMessage) {
+	h.mutex.RLock()
+	room, exists := h.ChatRooms[chatRoomID]
+	h.mutex.RUnlock()
+
+	if !exists {
+		log.Printf("Cannot broadcast to non-existent chat room: %s", chatRoomID)
+		return
+	}
+
+	messageJSON, err := json.Marshal(message)
+	if err != nil {
+		log.Printf("Error marshalling message: %v", err)
+		return
+	}
+
+	room.mutex.RLock()
+	defer room.mutex.RUnlock()
+
+	var failedClients []*Client
+
+	for clientID, client := range room.Clients {
+		select {
+		case client.Send <- messageJSON:
+			// Gửi thành công
+		default:
+			// Kênh đầy hoặc bị đóng
+			failedClients = append(failedClients, client)
+			log.Printf("Failed to send message to client %s", clientID)
+		}
+	}
+
+	// Xử lý các client không nhận được tin nhắn
+	for _, client := range failedClients {
+		h.removeClientFromAllRooms(client)
+	}
 }
 
 // JoinRoomWithResponse là phiên bản mở rộng của JoinRoom với phản hồi JOIN_SUCCESS
@@ -163,60 +207,6 @@ func (h *Hub) LeaveRoom(chatRoomID string, client *Client) {
 	}
 
 	log.Printf("Client %s left chat room %s", client.ID, chatRoomID)
-}
-
-// BroadcastToRoom gửi tin nhắn tới tất cả client trong phòng
-func (h *Hub) BroadcastToRoom(chatRoomID string, message SocketMessage) {
-	h.mutex.RLock()
-	room, exists := h.ChatRooms[chatRoomID]
-	h.mutex.RUnlock()
-
-	if !exists {
-		log.Printf("Cannot broadcast to non-existent chat room: %s", chatRoomID)
-		return
-	}
-
-	messageJSON, err := json.Marshal(message)
-	if err != nil {
-		log.Printf("Error marshalling message: %v", err)
-		return
-	}
-
-	room.mutex.RLock()
-	defer room.mutex.RUnlock()
-
-	var failedClients []*Client
-
-	for clientID, client := range room.Clients {
-		select {
-		case client.Send <- messageJSON:
-			// Gửi thành công
-		default:
-			// Kênh đầy hoặc bị đóng
-			failedClients = append(failedClients, client)
-			log.Printf("Failed to send message to client %s", clientID)
-		}
-	}
-
-	// Xử lý các client không nhận được tin nhắn
-	for _, client := range failedClients {
-		h.removeClientFromAllRooms(client)
-	}
-}
-
-// GetClientCount trả về số lượng client trong một phòng
-func (h *Hub) GetClientCount(chatRoomID string) int {
-	h.mutex.RLock()
-	room, exists := h.ChatRooms[chatRoomID]
-	h.mutex.RUnlock()
-
-	if !exists {
-		return 0
-	}
-
-	room.mutex.RLock()
-	defer room.mutex.RUnlock()
-	return len(room.Clients)
 }
 
 // IsClientInRoom kiểm tra một client có trong phòng không

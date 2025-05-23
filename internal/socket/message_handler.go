@@ -2,30 +2,42 @@ package socket
 
 import (
 	"encoding/json"
+	"gochat-backend/internal/repository"
 	"log"
 	"time"
 )
 
 type MessageHandler struct {
-	hub *Hub
+	hub                *Hub
+	chatRoomRepository repository.ChatRoomRepository
+	messageRepository  repository.MessageRepository
+	accountRepository  repository.AccountRepository
 }
 
-func NewMessageHandler(hub *Hub) *MessageHandler {
+func NewMessageHandler(
+	hub *Hub,
+	chatRoomRepository repository.ChatRoomRepository,
+	messageRepository repository.MessageRepository,
+	accountRepository repository.AccountRepository,
+) *MessageHandler {
 	return &MessageHandler{
-		hub: hub,
+		hub:                hub,
+		chatRoomRepository: chatRoomRepository,
+		messageRepository:  messageRepository,
+		accountRepository:  accountRepository,
 	}
 }
 
-// HandleMessage xử lý tin nhắn từ client
-func (h *MessageHandler) HandleMessage(client *Client, data []byte) {
+// HandleSocketMessage xử lý tin nhắn từ client
+func (h *MessageHandler) HandleSocketMessage(client *Client, data []byte) {
 	var socketMsg SocketMessage
 	if err := json.Unmarshal(data, &socketMsg); err != nil {
-		h.sendErrorToClient(client, "Tin nhắn không hợp lệ")
+		h.sendErrorToClient(client, "Message format is invalid")
 		log.Printf("Error parsing message: %v", err)
 		return
 	}
 
-	// Đảm bảo gán người gửi từ client
+	// Suren sender ID and timestamp
 	socketMsg.SenderID = client.ID
 	socketMsg.Timestamp = time.Now().UnixMilli()
 
@@ -43,7 +55,8 @@ func (h *MessageHandler) HandleMessage(client *Client, data []byte) {
 	case SocketMessageTypeReadReceipt:
 		h.handleReadReceiptMessage(client, socketMsg)
 	default:
-		h.sendErrorToClient(client, "Loại tin nhắn không được hỗ trợ")
+		h.sendErrorToClient(client, "Message type is not supported")
+		log.Printf("Unsupported message type: %s", socketMsg.Type)
 	}
 }
 
@@ -54,6 +67,14 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 		h.sendErrorToClient(client, "Bạn chưa tham gia phòng chat này")
 		return
 	}
+
+	// Parse payload từ Data
+	// payload, err := ParsePayload[ChatMessagePayload](socketMsg.Data)
+	// if err != nil {
+	// 	h.sendErrorToClient(client, "Dữ liệu chat không hợp lệ")
+	// 	return
+	// }
+
 	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 }
 
