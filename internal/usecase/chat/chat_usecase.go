@@ -62,7 +62,6 @@ type ChatUseCase interface {
 	AddChatRoomMembers(ctx context.Context, userID, chatRoomID string, memberIDs []string) error
 	RemoveChatRoomMember(ctx context.Context, userID, chatRoomID, memberID string) error
 	GetChatRoomMessages(ctx context.Context, userID, chatRoomID string, page, limit int) ([]*MessageOutput, error)
-	SendMessage(ctx context.Context, userID, chatRoomID string, input MessageInput) (*MessageOutput, error)
 	LeaveChatRoom(ctx context.Context, userID, chatRoomID string) error
 	FindOrCreatePrivateChatRoom(ctx context.Context, currentUserID, otherUserID string) (*ChatRoomOutput, error)
 }
@@ -400,91 +399,6 @@ func (c *chatUseCase) GetChatRoomMessages(ctx context.Context, userID, chatRoomI
 	return output, nil
 }
 
-// SendMessage sends a message to a chat room
-func (c *chatUseCase) SendMessage(ctx context.Context, userID, chatRoomID string, input MessageInput) (*MessageOutput, error) {
-	// Check if the chat room exists
-	chatRoom, err := c.chatRoomRepository.FindChatRoomByID(ctx, chatRoomID)
-	if err != nil {
-		return nil, fmt.Errorf("error finding chat room: %w", err)
-	}
-
-	if chatRoom == nil {
-		return nil, fmt.Errorf("chat room not found")
-	}
-
-	// Check if the user is a member of the chat room
-	isMember, err := c.chatRoomRepository.IsUserMemberOfChatRoom(ctx, userID, chatRoomID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking chat room membership: %w", err)
-	}
-
-	if !isMember {
-		return nil, fmt.Errorf("user is not a member of this chat room")
-	}
-
-	// Validate message type
-	switch input.Type {
-	case domain.TextMessageType,
-		domain.ImageMessageType,
-		domain.VideoMessageType,
-		domain.AudioMessageType,
-		domain.FileMessageType:
-		// Valid types
-	default:
-		return nil, fmt.Errorf("invalid message type")
-	}
-
-	// Create message
-	now := time.Now().UTC()
-	message := &domain.Message{
-		ID:         uuid.New().String(),
-		SenderId:   userID,
-		Type:       input.Type,
-		MimeType:   input.MimeType,
-		Content:    input.Content,
-		CreatedAt:  now,
-		ChatRoomId: chatRoomID,
-	}
-
-	// Save message
-	err = c.messageRepository.CreateMessage(ctx, message)
-	if err != nil {
-		return nil, fmt.Errorf("error creating message: %w", err)
-	}
-
-	// Update chat room's last message
-	err = c.chatRoomRepository.UpdateLastMessage(ctx, chatRoomID, message)
-	if err != nil {
-		return nil, fmt.Errorf("error updating last message: %w", err)
-	}
-
-	// Get sender information
-	sender, err := c.accountRepository.FindById(ctx, userID)
-	if err != nil {
-		return nil, fmt.Errorf("error finding sender: %w", err)
-	}
-
-	senderName := "Unknown User"
-	avatarURL := ""
-	if sender != nil {
-		senderName = sender.Name
-		avatarURL = sender.AvatarURL
-	}
-
-	// Return the created message
-	return &MessageOutput{
-		ID:         message.ID,
-		SenderID:   message.SenderId,
-		SenderName: senderName,
-		AvatarURL:  avatarURL,
-		Type:       message.Type,
-		MimeType:   message.MimeType,
-		Content:    message.Content,
-		CreatedAt:  message.CreatedAt,
-		ChatRoomID: message.ChatRoomId,
-	}, nil
-}
-
 // LeaveChatRoom allows a user to leave a chat room
 func (c *chatUseCase) LeaveChatRoom(ctx context.Context, userID, chatRoomID string) error {
 	// Check if the chat room exists
@@ -532,6 +446,42 @@ func (c *chatUseCase) LeaveChatRoom(ctx context.Context, userID, chatRoomID stri
 
 	// For group chats, just remove the user
 	return c.chatRoomRepository.RemoveChatRoomMember(ctx, chatRoomID, userID)
+}
+
+// Cài đặt phương thức này
+func (c *chatUseCase) FindOrCreatePrivateChatRoom(ctx context.Context, currentUserID, otherUserID string) (*ChatRoomOutput, error) {
+	// Kiểm tra người dùng thứ 2 có tồn tại không
+	otherUser, err := c.accountRepository.FindById(ctx, otherUserID)
+	if err != nil {
+		return nil, fmt.Errorf("error finding user: %w", err)
+	}
+
+	if otherUser == nil {
+		return nil, fmt.Errorf("user not found")
+	}
+
+	// Tìm chat room riêng tư giữa hai người dùng
+	existingRoom, err := c.chatRoomRepository.FindPrivateChatRoom(ctx, currentUserID, otherUserID)
+	if err != nil {
+		return nil, fmt.Errorf("error checking existing chat rooms: %w", err)
+	}
+
+	// Nếu đã tồn tại, trả về chat room đó
+	if existingRoom != nil {
+		return c.convertChatRoomToOutput(ctx, existingRoom)
+	}
+
+	// Tạo tên mặc định cho chat room riêng tư
+	roomName := otherUser.Name
+
+	// Tạo chat room mới
+	input := ChatRoomCreateInput{
+		Name:    roomName,
+		Type:    "PRIVATE",
+		Members: []string{otherUserID},
+	}
+
+	return c.CreateChatRoom(ctx, currentUserID, input)
 }
 
 // Helper function to convert domain.ChatRoom to ChatRoomOutput
@@ -604,40 +554,4 @@ func (c *chatUseCase) convertChatRoomToOutput(ctx context.Context, chatRoom *dom
 		Members:     memberOutputs,
 		LastMessage: lastMessageOutput,
 	}, nil
-}
-
-// Cài đặt phương thức này
-func (c *chatUseCase) FindOrCreatePrivateChatRoom(ctx context.Context, currentUserID, otherUserID string) (*ChatRoomOutput, error) {
-	// Kiểm tra người dùng thứ 2 có tồn tại không
-	otherUser, err := c.accountRepository.FindById(ctx, otherUserID)
-	if err != nil {
-		return nil, fmt.Errorf("error finding user: %w", err)
-	}
-
-	if otherUser == nil {
-		return nil, fmt.Errorf("user not found")
-	}
-
-	// Tìm chat room riêng tư giữa hai người dùng
-	existingRoom, err := c.chatRoomRepository.FindPrivateChatRoom(ctx, currentUserID, otherUserID)
-	if err != nil {
-		return nil, fmt.Errorf("error checking existing chat rooms: %w", err)
-	}
-
-	// Nếu đã tồn tại, trả về chat room đó
-	if existingRoom != nil {
-		return c.convertChatRoomToOutput(ctx, existingRoom)
-	}
-
-	// Tạo tên mặc định cho chat room riêng tư
-	roomName := otherUser.Name
-
-	// Tạo chat room mới
-	input := ChatRoomCreateInput{
-		Name:    roomName,
-		Type:    "PRIVATE",
-		Members: []string{otherUserID},
-	}
-
-	return c.CreateChatRoom(ctx, currentUserID, input)
 }
