@@ -104,11 +104,11 @@ func (r *chatRoomRepo) getLastMessage(ctx context.Context, chatRoomID string) (*
 		Scan(
 			&message.ID,
 			&message.SenderId,
+			&message.ChatRoomId,
 			&messageType,
 			&message.MimeType,
 			&message.Content,
 			&message.CreatedAt,
-			&message.ChatRoomId,
 		)
 
 	if err != nil {
