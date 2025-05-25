@@ -6,5 +6,5 @@ type UploadSignatureResponse struct {
 	APIKey    string `json:"api_key"`
 	CloudName string `json:"cloud_name"`
 	Folder    string `json:"folder"`
-	PublicID  string `json:"public_id,omitempty"` // Optional, server can generate this
+	PublicID  string `json:"public_id,omitempty"`
 }

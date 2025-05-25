@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/Netflix/go-env v0.1.2
 	github.com/bxcodec/faker/v4 v4.0.0-beta.3
-	github.com/cloudinary/cloudinary-go/v2 v2.9.1
+	github.com/cloudinary/cloudinary-go/v2 v2.10.0
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/gin-contrib/cors v1.7.5
 	github.com/gin-gonic/gin v1.10.0

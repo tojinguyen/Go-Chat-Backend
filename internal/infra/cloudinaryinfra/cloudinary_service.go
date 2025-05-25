@@ -46,7 +46,7 @@ func NewCloudinaryService(cfg *config.Environment) (CloudinaryService, error) {
 }
 
 func (c *cloudinaryService) GenerateUploadSignature(folderName string, optionalPublicID ...string) (*UploadSignatureResponse, error) {
-	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+	timestamp := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 
 	paramsToSign := map[string]interface{}{
 		"timestamp": timestamp,
