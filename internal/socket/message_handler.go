@@ -44,17 +44,14 @@ func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []b
 
 	// Ensure sender ID and timestamp
 	socketMsg.SenderID = client.ID
-	socketMsg.Timestamp = time.Now().UnixMilli()
+	socketMsg.Timestamp = time.Now().UTC().UnixMilli()
 
 	log.Printf("Received message from client %s: %s", client.ID, string(data))
 
 	// Check if context is canceled
-	select {
-	case <-ctx.Done():
+	if CheckContext(ctx, client.ID, "Context canceled during message processing") {
 		log.Printf("Context canceled while processing message from client %s", client.ID)
 		return
-	default:
-		// Continue processing
 	}
 
 	switch socketMsg.Type {
@@ -68,6 +65,8 @@ func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []b
 		h.handleTypingMessage(client, socketMsg)
 	case SocketMessageTypeReadReceipt:
 		h.handleReadReceiptMessage(client, socketMsg)
+	case SocketMessageTypePing:
+		h.sendPongToClient(client)
 	default:
 		h.sendErrorToClient(client, "Unknown message type")
 	}
@@ -195,5 +194,22 @@ func (h *MessageHandler) sendErrorToClient(client *Client, errorMsg string) {
 	default:
 		// Không thể gửi
 		log.Printf("Failed to send error message to client %s", client.ID)
+	}
+}
+
+func (h *MessageHandler) sendPongToClient(client *Client) {
+	msg := SocketMessage{
+		Type:      SocketMessageTypePong,
+		SenderID:  "system",
+		Timestamp: time.Now().UTC().UnixMilli(),
+	}
+
+	messageJSON, _ := json.Marshal(msg)
+	select {
+	case client.Send <- messageJSON:
+		// Gửi thành công
+	default:
+		// Không thể gửi
+		log.Printf("Failed to send pong message to client %s", client.ID)
 	}
 }

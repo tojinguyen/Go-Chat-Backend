@@ -9,6 +9,7 @@ const (
 	SocketMessageTypeLeave       SocketMessageType = "LEAVE"        // Rời phòng chat
 	SocketMessageTypeTyping      SocketMessageType = "TYPING"       // Đang nhập
 	SocketMessageTypeReadReceipt SocketMessageType = "READ_RECEIPT" // Đánh dấu đã đọc
+	SocketMessageTypePing        SocketMessageType = "PING"         // Tin nhắn ping để kiểm tra kết nối
 
 	// Tin nhắn từ server
 	SocketMessageTypeUsers       SocketMessageType = "USERS"        // Danh sách người dùng
@@ -17,4 +18,5 @@ const (
 	SocketMessageTypeUserJoined  SocketMessageType = "USER_JOINED"  // Thông báo người dùng khác tham gia
 	SocketMessageTypeUserLeft    SocketMessageType = "USER_LEFT"    // Thông báo người dùng khác rời đi
 	SocketMessageTypeError       SocketMessageType = "ERROR"        // Thông báo lỗi
+	SocketMessageTypePong        SocketMessageType = "PONG"         // Tin nhắn pong để phản hồi ping
 )
