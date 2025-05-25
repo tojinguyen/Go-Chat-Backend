@@ -16,9 +16,9 @@ import (
 // @Accept  json
 // @Produce  json
 // @Security BearerAuth
-// @Success 200 {object} response.APIResponse{data=cloudinaryinfra.UploadSignatureResponse} "Successfully generated signature"
-// @Failure 401 {object} response.APIResponse "Unauthorized"
-// @Failure 500 {object} response.APIResponse "Internal server error"
+// @Success 200 {object} handler.APIResponse{data=cloudinaryinfra.UploadSignatureResponse} "Successfully generated signature"
+// @Failure 401 {object} handler.APIResponse "Unauthorized"
+// @Failure 500 {object} handler.APIResponse "Internal server error"
 // @Router /api/v1/chat/upload-signature [post]
 func HandleUploadSignature(c *gin.Context, upload upload.UploaderUseCase) {
 	_, exists := c.Get("userId")

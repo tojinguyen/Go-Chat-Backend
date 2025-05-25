@@ -98,6 +98,22 @@ definitions:
       type:
         $ref: '#/definitions/domain.MessageType'
     type: object
+  cloudinaryinfra.UploadSignatureResponse:
+    properties:
+      api_key:
+        type: string
+      cloud_name:
+        type: string
+      folder:
+        type: string
+      public_id:
+        description: Optional, server can generate this
+        type: string
+      signature:
+        type: string
+      timestamp:
+        type: string
+    type: object
   domain.MessageType:
     enum:
     - TEXT
@@ -224,6 +240,37 @@ info:
   title: GoChat Backend API
   version: "1.0"
 paths:
+  /api/v1/chat/upload-signature:
+    post:
+      consumes:
+      - application/json
+      description: Generates a signature and parameters for direct client-side upload
+        to Cloudinary for chat files.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully generated signature
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/cloudinaryinfra.UploadSignatureResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Cloudinary Upload Signature
+      tags:
+      - Upload
   /api/v1/friends:
     get:
       consumes:
