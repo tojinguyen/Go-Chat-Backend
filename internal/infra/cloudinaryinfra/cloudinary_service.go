@@ -7,8 +7,11 @@ import (
 	"mime/multipart"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/cloudinary/cloudinary-go/api"
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
 	"github.com/google/uuid"
@@ -38,6 +41,51 @@ func NewCloudinaryService(cfg *config.Environment) (CloudinaryService, error) {
 	return &cloudinaryService{
 		config: cfg,
 		cld:    cld,
+	}, nil
+}
+
+func (c *cloudinaryService) GenerateUploadSignature(folderName string, optionalPublicID ...string) (*UploadSignatureResponse, error) {
+	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
+
+	paramsToSign := map[string]interface{}{
+		"timestamp": timestamp,
+	}
+
+	if folderName != "" {
+		paramsToSign["folder"] = folderName
+	}
+
+	var publicID string
+	if len(optionalPublicID) > 0 && optionalPublicID[0] != "" {
+		publicID = optionalPublicID[0]
+	} else {
+		// Generate a unique public_id if not provided
+		publicID = uuid.New().String()
+	}
+	paramsToSign["public_id"] = publicID
+
+	stringParams := make(map[string]string)
+	stringParams["timestamp"] = timestamp
+	stringParams["folder"] = folderName
+	stringParams["public_id"] = publicID
+
+	values := make(map[string][]string)
+	for k, v := range stringParams {
+		values[k] = []string{v}
+	}
+
+	signature, err := api.SignParameters(values, c.config.CloudinarySecret)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign parameters: %w", err)
+	}
+
+	return &UploadSignatureResponse{
+		Signature: signature,
+		Timestamp: timestamp,
+		APIKey:    c.config.CloudinaryKey,
+		CloudName: c.config.CloudinaryName,
+		Folder:    folderName,
+		PublicID:  publicID,
 	}, nil
 }
 
