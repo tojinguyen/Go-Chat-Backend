@@ -105,6 +105,18 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 		CreatedAt:  time.Now().UTC(),
 	}
 
+	updatedPayload := ChatMessagePayload{
+		Content:   message.Content,
+		MessageID: message.ID,
+		MimeType:  message.MimeType,
+	}
+	socketMsg.Data, err = json.Marshal(updatedPayload)
+	if err != nil {
+		log.Printf("Error marshalling updated payload: %v", err)
+		h.sendErrorToClient(client, "Error processing message")
+		return
+	}
+
 	err = h.messageRepository.CreateMessage(ctx, message)
 
 	if err != nil {
