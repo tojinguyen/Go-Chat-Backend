@@ -54,6 +54,8 @@ func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []b
 		return
 	}
 
+	log.Printf("Handling message type: %s from client %s", socketMsg.Type, client.ID)
+
 	switch socketMsg.Type {
 	case SocketMessageTypeChat:
 		h.handleChatMessage(client, socketMsg, ctx)
