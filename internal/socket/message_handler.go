@@ -32,7 +32,6 @@ func NewMessageHandler(
 	}
 }
 
-// HandleSocketMessage xử lý tin nhắn từ client
 // HandleSocketMessageWithContext xử lý tin nhắn từ client với context
 func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []byte, ctx context.Context) {
 	var socketMsg SocketMessage
@@ -74,7 +73,6 @@ func (h *MessageHandler) HandleSocketMessageWithContext(client *Client, data []b
 	}
 }
 
-// handleChatMessage xử lý tin nhắn chat
 func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
 	log.Printf("Handling chat message from client %s", client.ID)
 
@@ -128,7 +126,6 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 }
 
-// handleJoinMessage xử lý yêu cầu tham gia phòng
 func (h *MessageHandler) handleJoinMessage(client *Client, socketMsg SocketMessage) {
 	payload, err := ParsePayload[JoinPayload](socketMsg.Data)
 
@@ -151,7 +148,6 @@ func (h *MessageHandler) handleJoinMessage(client *Client, socketMsg SocketMessa
 	h.hub.JoinRoomWithResponse(socketMsg.ChatRoomID, client)
 }
 
-// handleLeaveMessage xử lý yêu cầu rời phòng
 func (h *MessageHandler) handleLeaveMessage(client *Client, socketMsg SocketMessage) {
 	if socketMsg.ChatRoomID == "" {
 		h.sendErrorToClient(client, "Thiếu thông tin phòng chat")
@@ -160,7 +156,6 @@ func (h *MessageHandler) handleLeaveMessage(client *Client, socketMsg SocketMess
 	h.hub.LeaveRoom(socketMsg.ChatRoomID, client)
 }
 
-// handleTypingMessage xử lý thông báo đang gõ
 func (h *MessageHandler) handleTypingMessage(client *Client, socketMsg SocketMessage) {
 	if !h.hub.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
 		h.sendErrorToClient(client, "You aren't in this room")
@@ -169,7 +164,6 @@ func (h *MessageHandler) handleTypingMessage(client *Client, socketMsg SocketMes
 	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 }
 
-// handleReadReceiptMessage xử lý xác nhận đã đọc
 func (h *MessageHandler) handleReadReceiptMessage(client *Client, socketMsg SocketMessage) {
 	if !h.hub.IsClientInRoom(socketMsg.ChatRoomID, client.ID) {
 		return
@@ -177,7 +171,6 @@ func (h *MessageHandler) handleReadReceiptMessage(client *Client, socketMsg Sock
 	h.hub.BroadcastToRoom(socketMsg.ChatRoomID, socketMsg)
 }
 
-// sendErrorToClient gửi thông báo lỗi cho client
 func (h *MessageHandler) sendErrorToClient(client *Client, errorMsg string) {
 	msg := SocketMessage{
 		Type:      SocketMessageTypeError,
