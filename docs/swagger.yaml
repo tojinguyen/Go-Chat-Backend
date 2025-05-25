@@ -107,7 +107,6 @@ definitions:
       folder:
         type: string
       public_id:
-        description: Optional, server can generate this
         type: string
       signature:
         type: string
@@ -240,37 +239,6 @@ info:
   title: GoChat Backend API
   version: "1.0"
 paths:
-  /api/v1/chat/upload-signature:
-    post:
-      consumes:
-      - application/json
-      description: Generates a signature and parameters for direct client-side upload
-        to Cloudinary for chat files.
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Successfully generated signature
-          schema:
-            allOf:
-            - $ref: '#/definitions/handler.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/cloudinaryinfra.UploadSignatureResponse'
-              type: object
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-        "500":
-          description: Internal server error
-          schema:
-            $ref: '#/definitions/handler.APIResponse'
-      security:
-      - BearerAuth: []
-      summary: Get Cloudinary Upload Signature
-      tags:
-      - Upload
   /api/v1/friends:
     get:
       consumes:
@@ -512,6 +480,37 @@ paths:
       summary: Reject a friend request
       tags:
       - Friends
+  /api/v1/uploads/file-signature:
+    post:
+      consumes:
+      - application/json
+      description: Generates a signature and parameters for direct client-side upload
+        to Cloudinary for chat files.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully generated signature
+          schema:
+            allOf:
+            - $ref: '#/definitions/handler.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/cloudinaryinfra.UploadSignatureResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/handler.APIResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Cloudinary Upload Signature
+      tags:
+      - Upload
   /auth/login:
     post:
       consumes:

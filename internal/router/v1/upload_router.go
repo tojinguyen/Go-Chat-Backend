@@ -1,9 +1,10 @@
 package v1
 
 import (
-	uploadHandler "gochat-backend/internal/handler/upload"
 	"gochat-backend/internal/middleware"
 	"gochat-backend/internal/usecase/upload"
+
+	uploadHandler "gochat-backend/internal/handler/uploader"
 
 	"github.com/gin-gonic/gin"
 )

@@ -19,7 +19,7 @@ import (
 // @Success 200 {object} handler.APIResponse{data=cloudinaryinfra.UploadSignatureResponse} "Successfully generated signature"
 // @Failure 401 {object} handler.APIResponse "Unauthorized"
 // @Failure 500 {object} handler.APIResponse "Internal server error"
-// @Router /api/v1/chat/upload-signature [post]
+// @Router /api/v1/uploads/file-signature [post]
 func HandleUploadSignature(c *gin.Context, upload upload.UploaderUseCase) {
 	_, exists := c.Get("userId")
 	if !exists {
