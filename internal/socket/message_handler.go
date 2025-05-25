@@ -97,13 +97,13 @@ func (h *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessa
 	}
 
 	message := &domain.Message{
-		ID:         uuid.New().String(), // Hàm tạo ID duy nhất (bạn cần định nghĩa)
+		ID:         uuid.New().String(),
 		SenderId:   socketMsg.SenderID,
 		ChatRoomId: socketMsg.ChatRoomID,
-		Type:       domain.TextMessageType, // Hoặc loại tin nhắn phù hợp
+		Type:       domain.TextMessageType,
 		MimeType:   payload.MimeType,
 		Content:    payload.Content,
-		CreatedAt:  time.Now().UTC(), // Thời gian hiện tại
+		CreatedAt:  time.Now().UTC(),
 	}
 
 	err = h.messageRepository.CreateMessage(ctx, message)
