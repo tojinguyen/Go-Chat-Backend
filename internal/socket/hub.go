@@ -66,13 +66,11 @@ func (h *Hub) Run() {
 	}
 }
 
-// HandleMessage xử lý tin nhắn từ client
 func (h *Hub) HandleMessageWithContext(client *Client, data []byte, ctx context.Context) {
 	// Truyền context vào message handler
 	h.MessageHandler.HandleSocketMessageWithContext(client, data, ctx)
 }
 
-// BroadcastToRoom gửi tin nhắn tới tất cả client trong phòng
 func (h *Hub) BroadcastToRoom(chatRoomID string, message SocketMessage) {
 	h.mutex.RLock()
 	room, exists := h.ChatRooms[chatRoomID]
@@ -111,7 +109,6 @@ func (h *Hub) BroadcastToRoom(chatRoomID string, message SocketMessage) {
 	}
 }
 
-// JoinRoomWithResponse là phiên bản mở rộng của JoinRoom với phản hồi JOIN_SUCCESS
 func (h *Hub) JoinRoomWithResponse(chatRoomID string, client *Client) {
 	h.mutex.Lock()
 	if _, exists := h.ChatRooms[chatRoomID]; !exists {
@@ -173,7 +170,6 @@ func (h *Hub) JoinRoomWithResponse(chatRoomID string, client *Client) {
 	log.Printf("Client %s joined chat room %s", client.ID, chatRoomID)
 }
 
-// LeaveRoom xóa client khỏi phòng
 func (h *Hub) LeaveRoom(chatRoomID string, client *Client) {
 	h.mutex.RLock()
 	room, exists := h.ChatRooms[chatRoomID]
@@ -211,7 +207,6 @@ func (h *Hub) LeaveRoom(chatRoomID string, client *Client) {
 	log.Printf("Client %s left chat room %s", client.ID, chatRoomID)
 }
 
-// IsClientInRoom kiểm tra một client có trong phòng không
 func (h *Hub) IsClientInRoom(chatRoomID, clientID string) bool {
 	h.mutex.RLock()
 	room, exists := h.ChatRooms[chatRoomID]
@@ -227,7 +222,6 @@ func (h *Hub) IsClientInRoom(chatRoomID, clientID string) bool {
 	return found
 }
 
-// removeClientFromAllRooms xóa client khỏi tất cả các phòng
 func (h *Hub) removeClientFromAllRooms(client *Client) {
 	h.mutex.RLock()
 	roomIDs := make([]string, 0, len(h.ChatRooms))
@@ -275,7 +269,6 @@ func (h *Hub) removeClientFromAllRooms(client *Client) {
 	}
 }
 
-// sendUserList gửi danh sách người dùng trong phòng
 func (h *Hub) sendUserList(chatRoomID string) {
 	h.mutex.RLock()
 	room, exists := h.ChatRooms[chatRoomID]
