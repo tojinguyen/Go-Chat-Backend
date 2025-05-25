@@ -130,8 +130,8 @@ func main() {
 		ChatRoomRepo:             chatRoomRepo,
 		MessageRepo:              messageRepo,
 
-		CloudStorage: cldService,
-		RedisService: redisService,
+		CloudinaryStorage: cldService,
+		RedisService:      redisService,
 	}
 
 	useCaseContainer := usecase.NewUseCaseContainer(deps)

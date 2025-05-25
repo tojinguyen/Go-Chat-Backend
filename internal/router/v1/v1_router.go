@@ -37,6 +37,10 @@ func InitV1Router(
 	}
 
 	{
+		InitUploadRouter(r.Group("/uploads"), middleware, useCaseContainer.Uploader)
+	}
+
+	{
 		socketManager := socket.NewSocketManager(deps)
 		InitWebSocketRouter(r.Group("/ws"), middleware, socketManager)
 	}

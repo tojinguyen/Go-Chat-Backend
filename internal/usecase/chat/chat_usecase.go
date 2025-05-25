@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	domain "gochat-backend/internal/domain/chat"
+	"gochat-backend/internal/infra/cloudinaryinfra"
 	"gochat-backend/internal/repository"
 	"time"
 
@@ -70,6 +71,7 @@ type chatUseCase struct {
 	chatRoomRepository repository.ChatRoomRepository
 	messageRepository  repository.MessageRepository
 	accountRepository  repository.AccountRepository
+	cloudinaryinfra    cloudinaryinfra.CloudinaryService
 }
 
 func NewChatUseCase(

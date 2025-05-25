@@ -20,6 +20,7 @@ import (
 type CloudinaryService interface {
 	UploadAvatar(file *multipart.FileHeader, folderPath string) (string, error)
 	MoveAvatar(avatarUrl string, fileName string) (string, error)
+	GenerateUploadSignature(folderName string, optionalPublicID ...string) (*UploadSignatureResponse, error)
 }
 
 type cloudinaryService struct {
