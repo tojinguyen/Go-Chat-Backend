@@ -20,7 +20,7 @@ import (
 type CloudinaryService interface {
 	UploadAvatar(file *multipart.FileHeader, folderPath string) (string, error)
 	MoveAvatar(avatarUrl string, fileName string) (string, error)
-	GenerateUploadSignature(folderName string, optionalPublicID ...string) (*UploadSignatureResponse, error)
+	GenerateUploadSignature(folderName string, resourceType string, optionalPublicID ...string) (*UploadSignatureResponse, error)
 }
 
 type cloudinaryService struct {
@@ -45,11 +45,17 @@ func NewCloudinaryService(cfg *config.Environment) (CloudinaryService, error) {
 	}, nil
 }
 
-func (c *cloudinaryService) GenerateUploadSignature(folderName string, optionalPublicID ...string) (*UploadSignatureResponse, error) {
+func (c *cloudinaryService) GenerateUploadSignature(folderName string, resourceType string, optionalPublicID ...string) (*UploadSignatureResponse, error) {
 	timestamp := strconv.FormatInt(time.Now().UTC().Unix(), 10)
 
+	// Nếu không được chỉ định, mặc định là "image"
+	if resourceType == "" {
+		resourceType = "image"
+	}
+
 	paramsToSign := map[string]interface{}{
-		"timestamp": timestamp,
+		"timestamp":     timestamp,
+		"resource_type": resourceType,
 	}
 
 	if folderName != "" {
@@ -69,6 +75,7 @@ func (c *cloudinaryService) GenerateUploadSignature(folderName string, optionalP
 	stringParams["timestamp"] = timestamp
 	stringParams["folder"] = folderName
 	stringParams["public_id"] = publicID
+	stringParams["resource_type"] = resourceType
 
 	values := make(map[string][]string)
 	for k, v := range stringParams {

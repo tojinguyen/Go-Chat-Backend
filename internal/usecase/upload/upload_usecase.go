@@ -3,7 +3,7 @@ package upload
 import "gochat-backend/internal/infra/cloudinaryinfra"
 
 type UploaderUseCase interface {
-	GenerateUploadSignature(folderName string) (*cloudinaryinfra.UploadSignatureResponse, error)
+	GenerateUploadSignature(folderName string, resourceType string) (*cloudinaryinfra.UploadSignatureResponse, error)
 }
 
 type uploadUseCase struct {
@@ -16,6 +16,6 @@ func NewUploaderUseCase(cloudinaryinfra cloudinaryinfra.CloudinaryService) Uploa
 	}
 }
 
-func (u *uploadUseCase) GenerateUploadSignature(folderName string) (*cloudinaryinfra.UploadSignatureResponse, error) {
-	return u.cloudinaryinfra.GenerateUploadSignature(folderName)
+func (u *uploadUseCase) GenerateUploadSignature(folderName string, resourceType string) (*cloudinaryinfra.UploadSignatureResponse, error) {
+	return u.cloudinaryinfra.GenerateUploadSignature(folderName, resourceType)
 }
