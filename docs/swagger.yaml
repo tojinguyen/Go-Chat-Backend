@@ -181,6 +181,13 @@ definitions:
     - email
     - password
     type: object
+  handler.SignatureRequest:
+    properties:
+      folder:
+        type: string
+      resourceType:
+        type: string
+    type: object
   handler.VerifyRegistrationRequest:
     properties:
       code:
@@ -486,6 +493,12 @@ paths:
       - application/json
       description: Generates a signature and parameters for direct client-side upload
         to Cloudinary for chat files.
+      parameters:
+      - description: Optional parameters
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/handler.SignatureRequest'
       produces:
       - application/json
       responses:

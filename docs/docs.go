@@ -424,6 +424,16 @@ const docTemplate = `{
                     "Upload"
                 ],
                 "summary": "Get Cloudinary Upload Signature",
+                "parameters": [
+                    {
+                        "description": "Optional parameters",
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/handler.SignatureRequest"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Successfully generated signature",
@@ -1713,6 +1723,17 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 255,
                     "minLength": 6
+                }
+            }
+        },
+        "handler.SignatureRequest": {
+            "type": "object",
+            "properties": {
+                "folder": {
+                    "type": "string"
+                },
+                "resourceType": {
+                    "type": "string"
                 }
             }
         },
