@@ -29,7 +29,7 @@ func InitAuthRouter(
 		authHandler.VerifyToken(c, authUseCase)
 	})
 
-	router.GET("/refresh-token", func(c *gin.Context) {
+	router.POST("/refresh-token", func(c *gin.Context) {
 		authHandler.RefreshToken(c, authUseCase)
 	})
 
