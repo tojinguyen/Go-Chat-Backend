@@ -75,7 +75,6 @@ func (c *cloudinaryService) GenerateUploadSignature(folderName string, resourceT
 	stringParams["timestamp"] = timestamp
 	stringParams["folder"] = folderName
 	stringParams["public_id"] = publicID
-	stringParams["resource_type"] = resourceType
 
 	values := make(map[string][]string)
 	for k, v := range stringParams {
