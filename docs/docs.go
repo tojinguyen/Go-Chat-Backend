@@ -1620,6 +1620,9 @@ const docTemplate = `{
                 "public_id": {
                     "type": "string"
                 },
+                "resource_type": {
+                    "type": "string"
+                },
                 "signature": {
                     "type": "string"
                 },
@@ -1729,9 +1732,6 @@ const docTemplate = `{
         "handler.SignatureRequest": {
             "type": "object",
             "properties": {
-                "folder": {
-                    "type": "string"
-                },
                 "resourceType": {
                     "type": "string"
                 }

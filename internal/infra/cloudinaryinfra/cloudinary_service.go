@@ -88,12 +88,13 @@ func (c *cloudinaryService) GenerateUploadSignature(folderName string, resourceT
 	}
 
 	return &UploadSignatureResponse{
-		Signature: signature,
-		Timestamp: timestamp,
-		APIKey:    c.config.CloudinaryKey,
-		CloudName: c.config.CloudinaryName,
-		Folder:    folderName,
-		PublicID:  publicID,
+		Signature:    signature,
+		Timestamp:    timestamp,
+		APIKey:       c.config.CloudinaryKey,
+		CloudName:    c.config.CloudinaryName,
+		Folder:       folderName,
+		PublicID:     publicID,
+		ResourceType: resourceType,
 	}, nil
 }
 

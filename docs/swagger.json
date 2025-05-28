@@ -1614,6 +1614,9 @@
                 "public_id": {
                     "type": "string"
                 },
+                "resource_type": {
+                    "type": "string"
+                },
                 "signature": {
                     "type": "string"
                 },
@@ -1723,9 +1726,6 @@
         "handler.SignatureRequest": {
             "type": "object",
             "properties": {
-                "folder": {
-                    "type": "string"
-                },
                 "resourceType": {
                     "type": "string"
                 }
