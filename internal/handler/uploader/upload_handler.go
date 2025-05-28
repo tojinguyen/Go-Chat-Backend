@@ -11,7 +11,6 @@ import (
 
 type SignatureRequest struct {
 	ResourceType string `json:"resourceType"`
-	Folder       string `json:"folder,omitempty"`
 }
 
 // HandleUploadSignature godoc
@@ -33,25 +32,18 @@ func HandleUploadSignature(c *gin.Context, upload upload.UploaderUseCase) {
 		return
 	}
 
-	// Parse request body if provided
 	var req SignatureRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		// If no body or invalid, use defaults
 		req.ResourceType = "image"
-		req.Folder = "chat_files"
 	}
 
-	// If folder not specified in request, use default
-	if req.Folder == "" {
-		req.Folder = "chat_files"
-	}
+	folder := "chat_files"
 
-	// Default to "image" if resourceType not specified
 	if req.ResourceType == "" {
 		req.ResourceType = "image"
 	}
 
-	signatureResponse, err := upload.GenerateUploadSignature(req.Folder, req.ResourceType)
+	signatureResponse, err := upload.GenerateUploadSignature(folder, req.ResourceType)
 	if err != nil {
 		log.Printf("Error generating upload signature: %v", err)
 		handler.SendErrorResponse(c, http.StatusInternalServerError, "Failed to generate upload signature")
