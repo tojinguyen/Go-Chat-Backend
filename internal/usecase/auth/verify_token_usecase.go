@@ -7,7 +7,6 @@ import (
 	"gochat-backend/pkg/jwt"
 	"log"
 	"strings"
-	"time"
 )
 
 // VerifyToken kiểm tra token truy cập và trả về thông tin người dùng nếu token hợp lệ
@@ -51,41 +50,28 @@ func (a *authUseCase) VerifyToken(ctx context.Context, token string) (*LoginOutp
 
 // RefreshToken kiểm tra refresh token và tạo cặp token mới
 func (a *authUseCase) RefreshToken(ctx context.Context, refreshToken string) (*LoginOutput, error) {
-	// Xác thực refresh token
+	// 1. Validate refresh token (giải mã + kiểm tra chữ ký + hạn)
 	claims, err := a.jwtService.ValidateRefreshToken(refreshToken)
 	if err != nil {
 		log.Printf("Lỗi xác thực refresh token: %v\n", err)
 		return nil, fmt.Errorf("refresh token không hợp lệ: %w", err)
 	}
 
-	// Lấy thông tin người dùng từ claims
-	userId := claims.UserId
-
-	// Kiểm tra xem refresh token có tồn tại trong Redis không
-	refreshTokenKey := fmt.Sprintf("refresh_token:%s", userId)
-	var storedToken string
-	err = a.redisService.Get(ctx, refreshTokenKey, &storedToken)
-	if err != nil || storedToken != refreshToken {
-		log.Printf("Refresh token không tìm thấy trong kho lưu trữ hoặc không khớp: %v\n", err)
-		return nil, errors.New("refresh token đã bị thu hồi hoặc không hợp lệ")
-	}
-
-	// Lấy thông tin tài khoản để tạo token mới
-	account, err := a.accountRepository.FindById(ctx, userId)
+	// 2. Lấy thông tin user từ token
+	account, err := a.accountRepository.FindById(ctx, claims.UserId)
 	if err != nil {
-		log.Printf("Lỗi tìm kiếm người dùng theo ID: %v\n", err)
+		log.Printf("Lỗi tìm kiếm người dùng: %v\n", err)
 		return nil, fmt.Errorf("không tìm thấy người dùng: %w", err)
 	}
-
 	if account == nil {
-		return nil, errors.New("không tìm thấy người dùng")
+		return nil, errors.New("người dùng không tồn tại")
 	}
 
-	// Tạo token mới
+	// 3. Tạo cặp token mới
 	jwtInput := &jwt.GenerateTokenInput{
 		UserId: account.Id,
 		Email:  account.Email,
-		Role:   claims.Role, // Giữ nguyên role từ token cũ
+		Role:   claims.Role,
 	}
 
 	newAccessToken, err := a.jwtService.GenerateAccessToken(jwtInput)
@@ -100,27 +86,14 @@ func (a *authUseCase) RefreshToken(ctx context.Context, refreshToken string) (*L
 		return nil, fmt.Errorf("không thể tạo refresh token: %w", err)
 	}
 
-	// Xóa refresh token cũ và lưu token mới
-	err = a.redisService.Delete(ctx, refreshTokenKey)
-	if err != nil {
-		log.Printf("Lỗi xóa refresh token cũ: %v\n", err)
-		// Tiếp tục xử lý, không cần dừng lại
-	}
-
-	// Lưu refresh token mới
-	err = a.redisService.Set(ctx, refreshTokenKey, newRefreshToken, time.Duration(a.cfg.RefreshTokenExpireMinutes)*time.Minute)
-	if err != nil {
-		log.Printf("Lỗi lưu refresh token mới: %v\n", err)
-		// Tiếp tục xử lý, không cần dừng lại
-	}
-
+	// 4. Trả về LoginOutput
 	return &LoginOutput{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
 		UserId:       account.Id,
 		Email:        account.Email,
 		FullName:     account.Name,
-		Role:         jwtInput.Role,
+		Role:         claims.Role,
 		AvatarUrl:    account.AvatarURL,
 	}, nil
 }
