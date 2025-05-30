@@ -105,7 +105,7 @@ func main() {
 	}
 
 	// Initialize Services
-	jwtService := jwt.NewJwtService(app.config)
+	jwtService := jwt.NewJwtService(app.config, redisService)
 	emailService := email.NewSMTPEmailService(app.config)
 	verificationService := verification.NewVerificationService(app.config)
 
