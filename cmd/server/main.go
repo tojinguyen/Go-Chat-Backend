@@ -110,7 +110,7 @@ func main() {
 	verificationService := verification.NewVerificationService(app.config)
 
 	// Initialize Repositories
-	accountRepo := repository.NewAccountRepo(db)
+	accountRepo := repository.NewAccountRepo(db, redisService)
 	verificationRepo := repository.NewVerificationRepo(db)
 	friendShipRepo := repository.NewFriendShipRepo(db)
 	friendRequestRepo := repository.NewFriendRequestRepo(db)

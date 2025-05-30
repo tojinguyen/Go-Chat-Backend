@@ -3,11 +3,18 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	domain "gochat-backend/internal/domain/auth"
 	"gochat-backend/internal/infra/mysqlinfra"
+	"gochat-backend/internal/infra/redisinfra"
 	"time"
 
 	"github.com/google/uuid"
+)
+
+const (
+	userCacheKeyPrefix = "user:"
+	userCacheTTLExpiry = 24 * time.Hour
 )
 
 type AccountRepository interface {
@@ -23,11 +30,15 @@ type AccountRepository interface {
 }
 
 type accountRepo struct {
-	database *mysqlinfra.Database
+	database     *mysqlinfra.Database
+	redisService redisinfra.RedisService
 }
 
-func NewAccountRepo(db *mysqlinfra.Database) AccountRepository {
-	return &accountRepo{database: db}
+func NewAccountRepo(db *mysqlinfra.Database, redisService redisinfra.RedisService) AccountRepository {
+	return &accountRepo{
+		database:     db,
+		redisService: redisService,
+	}
 }
 
 func (r *accountRepo) CreateUser(ctx context.Context, account *domain.Account) error {
@@ -39,7 +50,7 @@ func (r *accountRepo) CreateUser(ctx context.Context, account *domain.Account) e
         INSERT INTO users (id, name, email, password, avatar_url, created_at, updated_at)
         VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
+	err := r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		_, err := tx.ExecContext(
 			ctx,
 			query,
@@ -54,6 +65,18 @@ func (r *accountRepo) CreateUser(ctx context.Context, account *domain.Account) e
 
 		return err
 	})
+
+	if err != nil {
+		return err
+	}
+
+	cacheKey := r.generateUserCacheKey(account.Id)
+	accountToCache := *account
+	accountToCache.Password = ""
+	if err := r.redisService.Set(ctx, cacheKey, &accountToCache, userCacheTTLExpiry); err != nil {
+		fmt.Printf("Warning: Failed to cache user after creation (ID: %s): %v\n", account.Id, err)
+	}
+	return nil
 }
 
 func (r *accountRepo) FindByEmail(ctx context.Context, email string) (*domain.Account, error) {
@@ -213,4 +236,8 @@ func (r *accountRepo) CountByName(ctx context.Context, name string) (int, error)
 	}
 
 	return count, nil
+}
+
+func (r *accountRepo) generateUserCacheKey(id string) string {
+	return fmt.Sprintf("%s%s", userCacheKeyPrefix, id)
 }
