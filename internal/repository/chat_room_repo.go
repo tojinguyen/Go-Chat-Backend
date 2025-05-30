@@ -350,10 +350,8 @@ func (r *chatRoomRepo) RemoveAllChatRoomMembers(ctx context.Context, chatRoomID 
 	// Invalidate cache chi tiết phòng
 	r.invalidateChatRoomDetailsCache(ctx, chatRoomID)
 	// Invalidate cache danh sách phòng của tất cả member
-	if members != nil {
-		for _, m := range members {
-			r.invalidateUserChatRoomsListCache(ctx, m.UserId)
-		}
+	for _, m := range members {
+		r.invalidateUserChatRoomsListCache(ctx, m.UserId)
 	}
 	return nil
 }
