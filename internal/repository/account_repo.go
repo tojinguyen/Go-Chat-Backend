@@ -172,14 +172,14 @@ func (r *accountRepo) UpdatePassword(ctx context.Context, id string, password st
 }
 
 func (r *accountRepo) UpdateProfileInfo(ctx context.Context, account *domain.Account) error {
-	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
+	err := r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		query := `
-            UPDATE users SET 
-                name = ?, 
-                avatar_url = ?, 
-                updated_at = ? 
-            WHERE id = ?
-        `
+			UPDATE users SET
+				name = ?,
+				avatar_url = ?,
+				updated_at = ?
+			WHERE id = ?
+		`
 		_, err := tx.ExecContext(
 			ctx,
 			query,
@@ -190,14 +190,34 @@ func (r *accountRepo) UpdateProfileInfo(ctx context.Context, account *domain.Acc
 		)
 		return err
 	})
+	if err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	cacheKey := r.generateUserCacheKey(account.Id)
+	if err := r.redisService.Delete(ctx, cacheKey); err != nil {
+		fmt.Printf("Warning: Failed to delete user cache after update (ID: %s): %v\n", account.Id, err)
+	}
+	return nil
 }
 
 func (r *accountRepo) UpdateAvatar(ctx context.Context, id string, avatarURL string) error {
-	return r.database.ExecuteTransaction(func(tx *sql.Tx) error {
+	err := r.database.ExecuteTransaction(func(tx *sql.Tx) error {
 		query := `UPDATE users SET avatar_url = ?, updated_at = ? WHERE id = ?`
 		_, err := tx.ExecContext(ctx, query, avatarURL, time.Now(), id)
 		return err
 	})
+	if err != nil {
+		return err
+	}
+
+	// Invalidate cache
+	cacheKey := r.generateUserCacheKey(id)
+	if err := r.redisService.Delete(ctx, cacheKey); err != nil {
+		fmt.Printf("Warning: Failed to delete user cache after avatar update (ID: %s): %v\n", id, err)
+	}
+	return nil
 }
 
 func (r *accountRepo) FindByName(ctx context.Context, name string, limit, offset int) ([]*domain.Account, error) {
