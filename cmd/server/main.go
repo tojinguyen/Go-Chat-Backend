@@ -114,7 +114,7 @@ func main() {
 	verificationRepo := repository.NewVerificationRepo(db)
 	friendShipRepo := repository.NewFriendShipRepo(db)
 	friendRequestRepo := repository.NewFriendRequestRepo(db)
-	chatRoomRepo := repository.NewChatRoomRepo(db)
+	chatRoomRepo := repository.NewChatRoomRepo(db, redisService)
 	messageRepo := repository.NewMessageRepo(db)
 
 	deps := &usecase.SharedDependencies{
