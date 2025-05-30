@@ -109,6 +109,15 @@ func (r *accountRepo) FindByEmail(ctx context.Context, email string) (*domain.Ac
 }
 
 func (r *accountRepo) FindById(ctx context.Context, id string) (*domain.Account, error) {
+	cacheKey := r.generateUserCacheKey(id)
+	var cachedAccount domain.Account
+
+	// 1. Try to get the account from cache
+	if err := r.redisService.Get(ctx, cacheKey, &cachedAccount); err == nil {
+		return &cachedAccount, nil
+	}
+
+	// 2. If not found in cache, query the database
 	var account domain.Account
 	query := `
         SELECT 
@@ -132,6 +141,13 @@ func (r *accountRepo) FindById(ctx context.Context, id string) (*domain.Account,
 			return nil, nil // No user found
 		}
 		return nil, err // Some other error occurred
+	}
+
+	// 3. Save the account to cache
+	accountToCache := account
+	accountToCache.Password = ""
+	if err := r.redisService.Set(ctx, cacheKey, &accountToCache, userCacheTTLExpiry); err != nil {
+		fmt.Printf("Warning: Failed to cache user (ID: %s): %v\n", id, err)
 	}
 
 	return &account, nil
