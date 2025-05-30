@@ -27,7 +27,7 @@ func (m *middleware) Authentication(c *gin.Context) {
 		return
 	}
 
-	claims, err := m.jwtService.ValidateAccessToken(tokenString)
+	claims, err := m.jwtService.ValidateAccessToken(c, tokenString)
 	if err != nil {
 		log.Println("Invalid token:", err)
 		handler.SendErrorResponse(c, http.StatusUnauthorized, err.Error())

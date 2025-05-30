@@ -14,7 +14,7 @@ func (a *authUseCase) VerifyToken(ctx context.Context, token string) (*LoginOutp
 	token = strings.TrimPrefix(token, "Bearer ")
 
 	// Xác thực token truy cập
-	claims, err := a.jwtService.ValidateAccessToken(token)
+	claims, err := a.jwtService.ValidateAccessToken(ctx, token)
 	if err != nil {
 		log.Printf("Lỗi xác thực token: %v\n", err)
 		return nil, fmt.Errorf("token không hợp lệ: %w", err)
