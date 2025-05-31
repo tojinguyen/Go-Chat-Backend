@@ -18,7 +18,7 @@ type ChatRoomSocket struct {
 // Hub quản lý các phòng chat và kết nối
 type Hub struct {
 	ChatRooms      map[string]*ChatRoomSocket
-	Clients        map[string]*Client // Map clientID -> client
+	Clients        map[string]*Client // Map userId -> client
 	Register       chan *Client
 	Unregister     chan *Client
 	mutex          sync.RWMutex
