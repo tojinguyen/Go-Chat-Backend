@@ -3,6 +3,7 @@ package socket
 import (
 	"context"
 	"gochat-backend/internal/usecase"
+	"gochat-backend/internal/usecase/status"
 	"log"
 	"net/http"
 	"time"
@@ -11,17 +12,19 @@ import (
 )
 
 type SocketManager struct {
-	Hub *Hub
+	Hub           *Hub
+	statusUseCase status.StatusUseCase
 }
 
 // NewSocketManager khởi tạo SocketManager mới
-func NewSocketManager(deps *usecase.SharedDependencies) *SocketManager {
-	hub := NewHub(deps)
+func NewSocketManager(deps *usecase.SharedDependencies, statusUseCase status.StatusUseCase) *SocketManager {
+	hub := NewHub(deps, statusUseCase)
 	// Khởi chạy hub trong goroutine riêng
 	go hub.Run()
 
 	return &SocketManager{
-		Hub: hub,
+		Hub:           hub,
+		statusUseCase: statusUseCase,
 	}
 }
 
@@ -37,6 +40,10 @@ func (sm *SocketManager) ServeWS(w http.ResponseWriter, r *http.Request, clientI
 	if err != nil {
 		log.Println("Upgrade error:", err)
 		return
+	}
+
+	if err := sm.statusUseCase.SetUserOnline(r.Context(), clientID); err != nil {
+		log.Printf("Error setting user %s online: %v", clientID, err)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"gochat-backend/internal/usecase"
+	"gochat-backend/internal/usecase/status"
 	"log"
 	"sync"
 	"time"
@@ -23,15 +24,17 @@ type Hub struct {
 	Unregister     chan *Client
 	mutex          sync.RWMutex
 	MessageHandler *MessageHandler
+	statusUseCase  status.StatusUseCase
 }
 
 // NewHub khởi tạo Hub mới
-func NewHub(deps *usecase.SharedDependencies) *Hub {
+func NewHub(deps *usecase.SharedDependencies, statusUseCase status.StatusUseCase) *Hub {
 	hub := &Hub{
-		ChatRooms:  make(map[string]*ChatRoomSocket),
-		Clients:    make(map[string]*Client),
-		Register:   make(chan *Client),
-		Unregister: make(chan *Client),
+		ChatRooms:     make(map[string]*ChatRoomSocket),
+		Clients:       make(map[string]*Client),
+		Register:      make(chan *Client),
+		Unregister:    make(chan *Client),
+		statusUseCase: statusUseCase,
 	}
 
 	hub.MessageHandler = NewMessageHandler(
@@ -54,6 +57,9 @@ func (h *Hub) Run() {
 			log.Printf("Client %s registered to hub", client.ID)
 
 		case client := <-h.Unregister:
+			if err := h.statusUseCase.SetUserOffline(context.Background(), client.ID); err != nil {
+				log.Printf("Error setting user %s offline: %v", client.ID, err)
+			}
 			h.removeClientFromAllRooms(client)
 			h.mutex.Lock()
 			if _, exists := h.Clients[client.ID]; exists {

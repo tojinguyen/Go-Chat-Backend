@@ -41,7 +41,7 @@ func InitV1Router(
 	}
 
 	{
-		socketManager := socket.NewSocketManager(deps)
+		socketManager := socket.NewSocketManager(deps, useCaseContainer.UserStatus)
 		InitWebSocketRouter(r.Group("/ws"), middleware, socketManager)
 	}
 }
