@@ -1,0 +1,49 @@
+# .dockerignore (thêm hoặc chỉnh sửa từ .gitignore của bạn)
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+build-out # Nếu bạn có build output local tên này
+
+# Coverage files
+*.cover
+
+# Dependency dirs (nếu bạn không dùng Go modules hoặc muốn loại trừ vendor)
+# vendor/
+
+# IDE/editor configs
+.idea/
+.vscode/
+*.swp
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/ # Thư mục logs nếu có
+
+# Temp files
+**/tmp/
+
+# Env files
+.env
+.env.*
+
+# Docker files (không cần copy chính nó vào context)
+Dockerfile
+docker-compose.yml # Không cần thiết trong build context của app
+
+# Git directory
+.git
+.gitignore
+
+# Các file tài liệu không cần thiết trong image (nếu không phục vụ)
+# README.md
+# Makefile (trừ khi bạn dùng nó bên trong Dockerfile)
