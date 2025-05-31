@@ -116,6 +116,7 @@ func main() {
 	friendRequestRepo := repository.NewFriendRequestRepo(db)
 	chatRoomRepo := repository.NewChatRoomRepo(db, redisService)
 	messageRepo := repository.NewMessageRepo(db)
+	statusRepo := repository.NewRedisStatusRepository(redisService)
 
 	deps := &usecase.SharedDependencies{
 		Config:              cfg,
@@ -129,6 +130,7 @@ func main() {
 		FriendRequestRepo:        friendRequestRepo,
 		ChatRoomRepo:             chatRoomRepo,
 		MessageRepo:              messageRepo,
+		StatusRepo:               statusRepo,
 
 		CloudinaryStorage: cldService,
 		RedisService:      redisService,

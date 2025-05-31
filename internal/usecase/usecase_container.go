@@ -9,6 +9,7 @@ import (
 	"gochat-backend/internal/usecase/chat"
 	"gochat-backend/internal/usecase/friend"
 	"gochat-backend/internal/usecase/profile"
+	"gochat-backend/internal/usecase/status"
 	uploader "gochat-backend/internal/usecase/upload"
 	"gochat-backend/pkg/email"
 	"gochat-backend/pkg/jwt"
@@ -30,6 +31,7 @@ type SharedDependencies struct {
 	FriendRequestRepo        repository.FriendRequestRepository
 	ChatRoomRepo             repository.ChatRoomRepository
 	MessageRepo              repository.MessageRepository
+	StatusRepo               repository.StatusRepository
 
 	// Cloud Storage
 	CloudinaryStorage cloudinaryinfra.CloudinaryService
@@ -39,11 +41,12 @@ type SharedDependencies struct {
 }
 
 type UseCaseContainer struct {
-	Auth     auth.AuthUseCase
-	Profile  profile.ProfileUseCase
-	Friend   friend.FriendUseCase
-	Chat     chat.ChatUseCase
-	Uploader uploader.UploaderUseCase
+	Auth       auth.AuthUseCase
+	Profile    profile.ProfileUseCase
+	Friend     friend.FriendUseCase
+	Chat       chat.ChatUseCase
+	Uploader   uploader.UploaderUseCase
+	UserStatus status.StatusUseCase
 }
 
 func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
@@ -72,6 +75,10 @@ func NewUseCaseContainer(deps *SharedDependencies) *UseCaseContainer {
 		),
 		Uploader: uploader.NewUploaderUseCase(
 			deps.CloudinaryStorage,
+		),
+		UserStatus: status.NewStatusUseCase(
+			deps.StatusRepo,
+			deps.Config,
 		),
 	}
 }
