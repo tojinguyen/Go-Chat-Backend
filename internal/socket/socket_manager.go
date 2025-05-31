@@ -6,7 +6,6 @@ import (
 	"gochat-backend/internal/usecase/status"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -29,45 +28,51 @@ func NewSocketManager(deps *usecase.SharedDependencies, statusUseCase status.Sta
 }
 
 // ServeWS xử lý upgrade HTTP lên WebSocket và đăng ký client mới
-func (sm *SocketManager) ServeWS(w http.ResponseWriter, r *http.Request, clientID string) {
+// clientID ở đây CHÍNH LÀ UserID của người dùng đã xác thực
+func (sm *SocketManager) ServeWS(w http.ResponseWriter, r *http.Request, userID string) {
 	upgrader := websocket.Upgrader{
-		CheckOrigin:     func(r *http.Request) bool { return true },
+		CheckOrigin: func(r *http.Request) bool {
+			// TODO: Implement a proper origin check for production
+			// Ví dụ: return r.Header.Get("Origin") == "http://yourfrontend.com"
+			return true
+		},
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
 
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Upgrade error:", err)
+		log.Printf("SocketManager: Failed to upgrade connection for user %s: %v", userID, err)
+		http.Error(w, "Could not open websocket connection", http.StatusBadRequest)
 		return
 	}
+	log.Printf("SocketManager: WebSocket connection upgraded for user %s", userID)
 
-	if err := sm.statusUseCase.SetUserOnline(r.Context(), clientID); err != nil {
-		log.Printf("Error setting user %s online: %v", clientID, err)
+	// Cập nhật trạng thái user online
+	if err := sm.statusUseCase.SetUserOnline(r.Context(), userID); err != nil {
+		log.Printf("SocketManager: Error setting user %s online: %v", userID, err)
+		// Không hủy kết nối ở đây, vẫn cho phép user kết nối
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	// Tạo context cho client này, sẽ bị hủy khi client disconnect
+	clientCtx, clientCancel := context.WithCancel(context.Background())
 
 	client := &Client{
-		ID:     clientID,
+		ID:     userID, // Client.ID chính là UserID
 		Conn:   conn,
-		Send:   make(chan []byte, 256),
+		Send:   make(chan []byte, 256), // Kênh buffered để tránh block
 		Hub:    sm.Hub,
-		ctx:    ctx,
-		cancel: cancel,
+		ctx:    clientCtx,
+		cancel: clientCancel,
 	}
 
 	// Đăng ký client với Hub
 	sm.Hub.Register <- client
 
-	// Thiết lập ping/pong để giữ kết nối
-	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-	conn.SetPongHandler(func(string) error {
-		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-		return nil
-	})
-
-	// Goroutine đọc và ghi
-	go client.ReadPump()
+	// Goroutine đọc và ghi message cho client này
+	// ReadPump và WritePump sẽ tự xử lý việc đóng kết nối và unregister khi cần
 	go client.WritePump()
+	go client.ReadPump() // ReadPump nên chạy sau WritePump để WritePump có thể gửi CloseMessage nếu ReadPump thoát trước
+
+	log.Printf("SocketManager: Client %s registered and pumps started.", userID)
 }
