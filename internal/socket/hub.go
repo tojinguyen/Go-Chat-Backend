@@ -381,32 +381,3 @@ func (h *Hub) broadcastToActiveView(chatRoomID string, message SocketMessage, ex
 		}
 	}
 }
-
-func (h *Hub) sendUserList(chatRoomID string) {
-	h.mutex.RLock()
-	room, exists := h.ActiveRoomViews[chatRoomID]
-	h.mutex.RUnlock()
-
-	if !exists {
-		return
-	}
-
-	room.mutex.RLock()
-	userIDs := make([]string, 0, len(room.Clients))
-	for userID := range room.Clients {
-		userIDs = append(userIDs, userID)
-	}
-	room.mutex.RUnlock()
-
-	userListJSON, _ := json.Marshal(userIDs)
-
-	usersMsg := SocketMessage{
-		Type:       SocketMessageTypeUsers,
-		ChatRoomID: chatRoomID,
-		SenderID:   "system",
-		Timestamp:  time.Now().UnixMilli(),
-		Data:       userListJSON,
-	}
-
-	h.BroadcastToRoom(chatRoomID, usersMsg)
-}

@@ -120,23 +120,30 @@ func (r *chatRoomRepo) FindChatRoomsByUserID(ctx context.Context, userID string,
 	cacheKey := r.generateChatRoomsListCacheKey(userID, limit, offset)
 	var cachedChatRooms []*domain.ChatRoom
 
+	fmt.Printf("[FindChatRoomsByUserID] userID=%s, limit=%d, offset=%d, cacheKey=%s\n", userID, limit, offset, cacheKey)
+
 	// 1. Thử lấy từ Cache
 	if err := r.redisService.Get(ctx, cacheKey, &cachedChatRooms); err == nil {
+		fmt.Printf("[FindChatRoomsByUserID] Cache hit for userID=%s\n", userID)
 		return cachedChatRooms, nil
+	} else {
+		fmt.Printf("[FindChatRoomsByUserID] Cache miss for userID=%s, err=%v\n", userID, err)
 	}
 
 	// 2. Nếu không có trong Cache, truy vấn từ CSDL
+	fmt.Printf("[FindChatRoomsByUserID] Querying DB for userID=%s\n", userID)
 	query := `
-		SELECT cr.id, cr.name, cr.type, cr.created_at
-		FROM chat_rooms cr
-		JOIN chat_room_members crm ON cr.id = crm.chat_room_id
-		WHERE crm.user_id = ?
-		ORDER BY cr.created_at DESC
-		LIMIT ? OFFSET ?
-	`
+        SELECT cr.id, cr.name, cr.type, cr.created_at
+        FROM chat_rooms cr
+        JOIN chat_room_members crm ON cr.id = crm.chat_room_id
+        WHERE crm.user_id = ?
+        ORDER BY cr.created_at DESC
+        LIMIT ? OFFSET ?
+    `
 
 	rows, err := r.database.DB.QueryContext(ctx, query, userID, limit, offset)
 	if err != nil {
+		fmt.Printf("[FindChatRoomsByUserID] DB query error for userID=%s: %v\n", userID, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -151,12 +158,14 @@ func (r *chatRoomRepo) FindChatRoomsByUserID(ctx context.Context, userID string,
 			&chatRoom.Type,
 			&chatRoom.CreatedAt,
 		); err != nil {
+			fmt.Printf("[FindChatRoomsByUserID] Row scan error: %v\n", err)
 			return nil, err
 		}
 
 		// Get the last message for each chat room
 		lastMessage, err := r.getLastMessage(ctx, chatRoom.ID)
 		if err != nil {
+			fmt.Printf("[FindChatRoomsByUserID] Get last message error for chatRoomID=%s: %v\n", chatRoom.ID, err)
 			return nil, err
 		}
 
@@ -168,14 +177,19 @@ func (r *chatRoomRepo) FindChatRoomsByUserID(ctx context.Context, userID string,
 	if len(chatRooms) > 0 {
 		if err := r.redisService.Set(ctx, cacheKey, chatRooms, chatRoomsListCacheTTLExpiry); err != nil {
 			fmt.Printf("Warning: Failed to cache chat rooms list (userID: %s): %v\n", userID, err)
+		} else {
+			fmt.Printf("[FindChatRoomsByUserID] Cached chat rooms list for userID=%s\n", userID)
 		}
 	} else {
 		// Cache mảng rỗng
 		if err := r.redisService.Set(ctx, cacheKey, []*domain.ChatRoom{}, chatRoomsListCacheTTLExpiry); err != nil {
 			fmt.Printf("Warning: Failed to cache empty chat rooms list (userID: %s): %v\n", userID, err)
+		} else {
+			fmt.Printf("[FindChatRoomsByUserID] Cached empty chat rooms list for userID=%s\n", userID)
 		}
 	}
 
+	fmt.Printf("[FindChatRoomsByUserID] Returning %d chat rooms for userID=%s\n", len(chatRooms), userID)
 	return chatRooms, nil
 }
 
