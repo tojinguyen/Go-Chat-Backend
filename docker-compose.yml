@@ -52,7 +52,7 @@ services:
 
   # Kafka service (giữ nguyên nếu bạn đang dùng hoặc sẽ dùng)
   kafka:
-    image: bitnami/kafka:3.6 # Sử dụng phiên bản cụ thể
+    image: bitnami/kafka:4.0.0 # Sử dụng phiên bản cụ thể
     container_name: realtime_chat_app_kafka
     ports:
       - "9092:9092"
