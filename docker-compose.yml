@@ -30,7 +30,7 @@ services:
         max-file: "3"
 
   redis:
-    image: redis:7.2-alpine # Sử dụng phiên bản cụ thể
+    image: redis:8.0-rc1 # Sử dụng phiên bản cụ thể
     container_name: realtime_chat_app_redis
     # Bỏ environment REDIS_PASSWORD ở đây nếu command đã có --requirepass
     ports:
