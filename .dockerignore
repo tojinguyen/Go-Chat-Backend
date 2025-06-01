@@ -32,10 +32,6 @@ logs/ # Thư mục logs nếu có
 # Temp files
 **/tmp/
 
-# Env files
-.env
-.env.*
-
 # Docker files (không cần copy chính nó vào context)
 Dockerfile
 docker-compose.yml # Không cần thiết trong build context của app

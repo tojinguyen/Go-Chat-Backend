@@ -48,3 +48,5 @@ EXPOSE 8080
 # Lệnh để chạy ứng dụng khi container khởi động
 # Đảm bảo đường dẫn đến binary là chính xác
 CMD ["/app/gochat-backend"]
+
+COPY .env .env

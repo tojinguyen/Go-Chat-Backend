@@ -81,6 +81,8 @@ services:
     container_name: realtime_chat_app_backend
     ports:
       - "${APP_PORT:-8080}:8080" # PORT của app trong container là 8080
+    env_file:
+      - .env
     depends_on:
       mysql:
         condition: service_healthy # Đợi MySQL healthy
