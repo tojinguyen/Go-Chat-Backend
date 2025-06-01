@@ -1,0 +1,29 @@
+name: Deploy Go App
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build
+        run: go build -v ./...
+
+      # Tuỳ nền tảng, thêm bước deploy phù hợp
+      # Ví dụ: Deploy lên Render bằng GitHub integration (không cần thêm bước)
+      # Hoặc deploy lên Railway:
+      # - name: Deploy to Railway
+      #   uses: railwayapp/railway-up@v1
+      #   with:
+      #     railwayToken: ${{ secrets.RAILWAY_TOKEN }}
