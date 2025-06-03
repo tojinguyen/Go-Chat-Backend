@@ -31,7 +31,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"reflect"
 	"syscall"
 	"time"
 
@@ -51,15 +50,6 @@ type App struct {
 	config        *config.Environment
 	logger        *logrus.Entry
 	mysqlDatabase *mysqlinfra.Database
-}
-
-var listEnvSecret = []string{
-	"Constants",
-	"MysqlPassword",
-	"RedisPassword",
-	"AccessTokenSecretKey",
-	"RefreshTokenSecretKey",
-	"AwsSecretAccessKey",
 }
 
 func main() {
@@ -261,33 +251,17 @@ func initStartServerLog() *logrus.Entry {
 }
 
 func loadEnvironment() *config.Environment {
-	err := godotenv.Load()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to load .env file: %v", err))
+	if os.Getenv("RUN_MODE") != "release" {
+		err := godotenv.Load()
+		if err != nil {
+			panic(fmt.Sprintf("Failed to load .env file: %v", err))
+		}
 	}
 
 	cfg, err := config.Load()
 
 	if err != nil {
 		logrus.Fatalf("Failed to load environment variables: %v", err)
-	}
-
-	fmt.Println("======================================================")
-
-	v := reflect.ValueOf(cfg).Elem()
-	for i := 0; i < v.NumField(); i++ {
-		varName := v.Type().Field(i).Name
-		varValue := v.Field(i).Interface()
-		isLog := true
-		for _, envSecret := range listEnvSecret {
-			if varName == envSecret {
-				isLog = false
-				break
-			}
-		}
-		if isLog {
-			fmt.Printf("EnvKeyAndValue %s: '%v'\n", varName, varValue)
-		}
 	}
 
 	fmt.Println("======================================================")
