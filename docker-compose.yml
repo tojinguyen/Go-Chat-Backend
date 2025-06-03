@@ -1,25 +1,21 @@
 services:
   mysql:
-    image: mysql:8.0.41-debian # Sử dụng phiên bản cụ thể thay vì latest
+    image: mysql:8.0.41-debian
     container_name: realtime_chat_app_mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD} # Lấy từ .env
-      MYSQL_DATABASE: ${MYSQL_DATABASE}     # Lấy từ .env
-      MYSQL_USER: ${MYSQL_USER}             # Lấy từ .env
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}     # Lấy từ .env
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
-      - "${MYSQL_HOST_PORT:-3306}:3306" # Cho phép override port host từ .env
+      - "${MYSQL_HOST_PORT:-3306}:3306"
     volumes:
       - mysql_realtime-chat-data:/var/lib/mysql
-      # (Tùy chọn) Mount thư mục migrations để chạy từ host nếu muốn
-      # - ./migrations/mysql:/docker-entrypoint-initdb.d 
-      # Lưu ý: docker-entrypoint-initdb.d chỉ chạy khi DB khởi tạo lần đầu và trống.
-      # Để chạy migration thường xuyên, cần giải pháp khác.
     networks:
       - chat_app_network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_PASSWORD}"] # Thêm password cho ping
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,12 +26,11 @@ services:
         max-file: "3"
 
   redis:
-    image: redis:8.0-rc1 # Sử dụng phiên bản cụ thể
+    image: redis:8.0-rc1
     container_name: realtime_chat_app_redis
-    # Bỏ environment REDIS_PASSWORD ở đây nếu command đã có --requirepass
     ports:
       - "${REDIS_HOST_PORT:-6379}:6379"
-    command: redis-server --requirepass ${REDIS_PASSWORD} # Lấy từ .env
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     networks:
       - chat_app_network
     restart: unless-stopped
@@ -50,9 +45,8 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # Kafka service (giữ nguyên nếu bạn đang dùng hoặc sẽ dùng)
   kafka:
-    image: bitnami/kafka:4.0.0 # Sử dụng phiên bản cụ thể
+    image: bitnami/kafka:4.0.0
     container_name: realtime_chat_app_kafka
     ports:
       - "9092:9092"
@@ -61,137 +55,16 @@ services:
       - KAFKA_CFG_PROCESS_ROLES=broker,controller
       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@realtime_chat_app_kafka:9093
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092 # Sử dụng tên service 'kafka'
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-      - KAFKA_KRAFT_MODE_ENABLED=true # Đã có, đảm bảo KRaft mode
+      - KAFKA_KRAFT_MODE_ENABLED=true
       - ALLOW_PLAINTEXT_LISTENER=yes
     volumes:
       - kafka_data:/bitnami/kafka
     networks:
       - chat_app_network
     restart: unless-stopped
-    # Thêm healthcheck cho Kafka nếu cần
-
-  # SERVICE CHO ỨNG DỤNG GO BACKEND CỦA BẠN
-  app:
-    build:
-      context: . # Thư mục chứa Dockerfile này
-      dockerfile: Dockerfile # Tên Dockerfile (mặc định)
-    container_name: realtime_chat_app_backend
-    ports:
-      - "${APP_PORT:-8080}:8080" # PORT của app trong container là 8080
-    env_file:
-      - .env
-    depends_on:
-      mysql:
-        condition: service_healthy # Đợi MySQL healthy
-      redis:
-        condition: service_healthy # Đợi Redis healthy
-      # kafka: # Bỏ comment nếu app của bạn kết nối tới Kafka khi khởi động
-      #   condition: service_started
-    environment:
-      # Server Config
-      - RUN_MODE=${RUN_MODE:-release} # 'release' cho production, 'debug' cho dev
-      - PORT=8080 # Cổng bên trong container, khớp với EXPOSE trong Dockerfile
-
-      # Cors Config
-      - CORS_ALLOW_ORIGIN=${CORS_ALLOW_ORIGIN:-http://localhost:3000} # Thay bằng domain frontend của bạn
-
-      # Mysql DB Config (kết nối tới service 'mysql' của Docker Compose)
-      - MYSQL_HOST=mysql
-      - MYSQL_PORT=3306
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_DATABASE=${MYSQL_DATABASE}
-      - MYSQL_SSL_MODE=${MYSQL_SSL_MODE:-disable}
-      - MYSQL_MIGRATE_MODE=${MYSQL_MIGRATE_MODE:-auto} # 'auto' hoặc 'manual'
-      - MYSQL_MAX_OPEN_CONNS=${MYSQL_MAX_OPEN_CONNS:-100}
-      - MYSQL_MAX_IDLE_CONNS=${MYSQL_MAX_IDLE_CONNS:-10}
-      - MYSQL_CONN_MAX_LIFETIME=${MYSQL_CONN_MAX_LIFETIME:-60}
-      - MYSQL_CONN_MAX_IDLE_TIME=${MYSQL_CONN_MAX_IDLE_TIME:-60}
-
-      # JWT Config
-      - ACCESS_TOKEN_SECRET_KEY=${ACCESS_TOKEN_SECRET_KEY}
-      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
-      - REFRESH_TOKEN_SECRET_KEY=${REFRESH_TOKEN_SECRET_KEY}
-      - REFRESH_TOKEN_EXPIRE_MINUTES=${REFRESH_TOKEN_EXPIRE_MINUTES:-10080} # 7 days
-
-      # FE Config
-      - FRONTEND_URI=${FRONTEND_URI:-http://localhost}
-      - FRONTEND_PORT=${FRONTEND_PORT:-3000}
-
-      # Email Config
-      - EMAIL_HOST=${EMAIL_HOST}
-      - EMAIL_PORT=${EMAIL_PORT}
-      - EMAIL_USER=${EMAIL_USER}
-      - EMAIL_PASS=${EMAIL_PASS}
-      - EMAIL_FROM=${EMAIL_FROM}
-      - EMAIL_NAME=${EMAIL_NAME}
-
-      # Verification Config
-      - VERIFICATION_CODE_LENGTH=${VERIFICATION_CODE_LENGTH:-6}
-      - VERIFICATION_CODE_EXPIRE_MINUTES=${VERIFICATION_CODE_EXPIRE_MINUTES:-5}
-
-      # Cloudinary Config
-      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
-      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
-      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
-      - DEFAULT_AVATAR_URL=${DEFAULT_AVATAR_URL}
-
-      # Redis Config (kết nối tới service 'redis' của Docker Compose)
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_DB=${REDIS_DB:-0}
-
-      # Constants từ config/constant.go
-      - LOGIN_FAIL_LIMIT=${LOGIN_FAIL_LIMIT:-5}
-      - LOGIN_FAIL_DURATION_MINUTES=${LOGIN_FAIL_DURATION_MINUTES:-30}
-      - RESET_PASSWORD_DURATION_HOURS=${RESET_PASSWORD_DURATION_HOURS:-1}
-      - RESEND_REQUEST_RESET_PASSWORD_DURATION_SECONDS=${RESEND_REQUEST_RESET_PASSWORD_DURATION_SECONDS:-60}
-      - SYSTEM_TIME_OUT_SECONDS=${SYSTEM_TIME_OUT_SECONDS:-60}
-    networks:
-      - chat_app_network
-    restart: unless-stopped
-    # Thêm healthcheck cho app của bạn nếu cần
-    # healthcheck:
-    #   test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/v1/ping"] # Hoặc một endpoint health check thực sự
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 30s # Cho app thời gian khởi động
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # (Tùy chọn) Service để chạy migrations
-  # migration:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile # Dùng cùng Dockerfile, nhưng sẽ override CMD
-  #   container_name: realtime_chat_app_migration
-  #   depends_on:
-  #     mysql:
-  #       condition: service_healthy
-  #   environment: # Các biến môi trường cần thiết cho goose kết nối DB
-  #     - MYSQL_HOST=mysql
-  #     - MYSQL_PORT=3306
-  #     - MYSQL_USER=${MYSQL_USER}
-  #     - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-  #     - MYSQL_DATABASE=${MYSQL_DATABASE}
-  #     - MYSQL_SSL_MODE=${MYSQL_SSL_MODE:-disable}
-  #   # Cần cài goose trong image hoặc dùng image có sẵn goose
-  #   # Ví dụ: command: ["sh", "-c", "goose -dir ./migrations/mysql mysql 'user:pass@tcp(host:port)/dbname' up"]
-  #   # Hoặc nếu Dockerfile của bạn đã cài goose:
-  #   # command: ["goose", "-dir", "./migrations/mysql", "mysql", "DSN_string", "up"]
-  #   # Cách tốt hơn là tạo một script entrypoint cho việc này.
-  #   # Hiện tại, bạn có thể chạy migration từ host hoặc dùng một tool như migrate/migrate
-  #   networks:
-  #     - chat_app_network
-  #   restart: "no" # Chỉ chạy một lần
 
 volumes:
   mysql_realtime-chat-data:
