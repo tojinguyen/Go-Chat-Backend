@@ -14,6 +14,7 @@ type RedisService interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error
 	Get(ctx context.Context, key string, dest interface{}) error
 	Delete(ctx context.Context, key string) error
+	FlushAll(ctx context.Context) error
 }
 
 type redisService struct {
@@ -50,9 +51,6 @@ func (r *redisService) Set(ctx context.Context, key string, value interface{}, e
 func (r *redisService) Get(ctx context.Context, key string, dest interface{}) error {
 	data, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
-		if err == redis.Nil {
-			return nil // Key does not exist
-		}
 		return err
 	}
 
@@ -61,4 +59,8 @@ func (r *redisService) Get(ctx context.Context, key string, dest interface{}) er
 
 func (r *redisService) Delete(ctx context.Context, key string) error {
 	return r.client.Del(ctx, key).Err()
+}
+
+func (r *redisService) FlushAll(ctx context.Context) error {
+	return r.client.FlushAll(ctx).Err()
 }
