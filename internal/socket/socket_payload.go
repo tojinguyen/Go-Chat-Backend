@@ -27,6 +27,7 @@ type LeaveRoomPayload struct {
 }
 
 type TypingPayload struct {
+	UserID     string `json:"user_id"`
 	ChatRoomID string `json:"chat_room_id,omitempty"`
 	IsTyping   bool   `json:"is_typing"`
 }

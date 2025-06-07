@@ -234,6 +234,7 @@ func (mh *MessageHandler) handleTypingMessage(client *Client, socketMsg SocketMe
 
 	if mh.hub.IsClientInActiveView(payload.ChatRoomID, client.ID) {
 		// Gửi message này tới các client khác trong active view, trừ sender
+		log.Printf("MH: TYPING message from client %s for room %s: IsTyping=%t", client.ID, payload.ChatRoomID, payload.IsTyping)
 		mh.hub.broadcastToActiveView(payload.ChatRoomID, socketMsg, client.ID)
 	}
 }
