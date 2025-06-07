@@ -46,7 +46,9 @@ func (mh *MessageHandler) HandleSocketMessageWithContext(client *Client, data []
 	socketMsg.SenderID = client.ID // Luôn dùng ID của client đã xác thực
 	socketMsg.Timestamp = time.Now().UTC().UnixMilli()
 
-	log.Printf("MH: Received message type '%s' from client %s for room '%s'", socketMsg.Type, client.ID)
+	// Log thông tin tin nhắn nhận được
+	log.Printf("MH: Received message from client %s: Type=%s, Timestamp=%d, Data=%s",
+		client.ID, socketMsg.Type, socketMsg.Timestamp, string(socketMsg.Data))
 
 	// Kiểm tra context trước khi xử lý
 	if CheckContext(ctx, client.ID, "MH: Context canceled before message processing") {
@@ -96,11 +98,6 @@ func (mh *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMess
 		return
 	}
 
-	if err != nil {
-		log.Printf("MH: Error parsing CHAT message payload from client %s: %v", client.ID, err)
-		mh.sendErrorToClient(client, "Invalid CHAT payload format", "INVALID_CHAT_PAYLOAD")
-		return
-	}
 	if payload.Content == "" {
 		mh.sendErrorToClient(client, "Message content cannot be empty", "EMPTY_CONTENT")
 		return
@@ -252,12 +249,6 @@ func (mh *MessageHandler) handleReadReceiptMessage(client *Client, socketMsg Soc
 
 	if payload.ChatRoomID == "" {
 		log.Printf("MH: READ_RECEIPT message from client %s missing ChatRoomID.", client.ID)
-		return
-	}
-
-	if err != nil || payload.MessageID == "" {
-		log.Printf("MH: Invalid READ_RECEIPT payload from client %s: %v", client.ID, err)
-		// Không gửi lỗi cho client về việc này, chỉ log
 		return
 	}
 
