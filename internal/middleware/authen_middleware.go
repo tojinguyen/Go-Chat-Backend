@@ -39,7 +39,5 @@ func (m *middleware) Authentication(c *gin.Context) {
 	c.Set("email", claims.Email)
 	c.Set("role", claims.Role)
 
-	log.Println("User ID from token:", claims.UserId)
-
 	c.Next()
 }
