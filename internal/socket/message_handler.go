@@ -46,7 +46,7 @@ func (mh *MessageHandler) HandleSocketMessageWithContext(client *Client, data []
 	socketMsg.SenderID = client.ID // Luôn dùng ID của client đã xác thực
 	socketMsg.Timestamp = time.Now().UTC().UnixMilli()
 
-	log.Printf("MH: Received message type '%s' from client %s for room '%s'", socketMsg.Type, client.ID, socketMsg.ChatRoomID)
+	log.Printf("MH: Received message type '%s' from client %s for room '%s'", socketMsg.Type, client.ID)
 
 	// Kiểm tra context trước khi xử lý
 	if CheckContext(ctx, client.ID, "MH: Context canceled before message processing") {
@@ -73,28 +73,29 @@ func (mh *MessageHandler) HandleSocketMessageWithContext(client *Client, data []
 }
 
 func (mh *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
-	log.Printf("MH: Handling CHAT message from client %s for room %s", client.ID, socketMsg.ChatRoomID)
+	payload, err := ParsePayload[ChatMessageSendPayload](socketMsg.Data)
 
-	if socketMsg.ChatRoomID == "" {
-		mh.sendErrorToClient(client, "ChatRoomID is required for CHAT message", "CHAT_NO_ROOM_ID")
+	if err != nil {
+		log.Printf("MH: Error parsing CHAT message payload from client %s: %v", client.ID, err)
+		mh.sendErrorToClient(client, "Invalid CHAT payload format", "INVALID_CHAT_PAYLOAD")
 		return
 	}
 
+	log.Printf("MH: Handling CHAT message from client %s for room %s", client.ID, payload.ChatRoomID)
+
 	// 1. Kiểm tra client có phải là thành viên (DB) của phòng này không
-	isMemberDB, err := mh.chatRoomRepository.IsUserMemberOfChatRoom(ctx, client.ID, socketMsg.ChatRoomID)
+	isMemberDB, err := mh.chatRoomRepository.IsUserMemberOfChatRoom(ctx, client.ID, payload.ChatRoomID)
 	if err != nil {
-		log.Printf("MH: Error checking DB membership for client %s in room %s: %v", client.ID, socketMsg.ChatRoomID, err)
+		log.Printf("MH: Error checking DB membership for client %s in room %s: %v", client.ID, payload.ChatRoomID, err)
 		mh.sendErrorToClient(client, "Could not verify room membership.", "MEMBERSHIP_CHECK_FAILED")
 		return
 	}
 	if !isMemberDB {
-		log.Printf("MH: Client %s is not a DB member of room %s. CHAT message rejected.", client.ID, socketMsg.ChatRoomID)
+		log.Printf("MH: Client %s is not a DB member of room %s. CHAT message rejected.", client.ID, payload.ChatRoomID)
 		mh.sendErrorToClient(client, "You are not a member of this chat room.", "NOT_A_MEMBER")
 		return
 	}
 
-	// 2. Parse payload gửi từ client
-	payload, err := ParsePayload[ChatMessageSendPayload](socketMsg.Data)
 	if err != nil {
 		log.Printf("MH: Error parsing CHAT message payload from client %s: %v", client.ID, err)
 		mh.sendErrorToClient(client, "Invalid CHAT payload format", "INVALID_CHAT_PAYLOAD")
@@ -113,7 +114,7 @@ func (mh *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMess
 	dbMessage := &domain.Message{
 		ID:         uuid.New().String(), // Server tạo ID cho message
 		SenderId:   socketMsg.SenderID,
-		ChatRoomId: socketMsg.ChatRoomID,
+		ChatRoomId: payload.ChatRoomID,
 		Type:       domain.TextMessageType, // Giả định là TEXT, có thể mở rộng dựa vào MimeType
 		MimeType:   payload.MimeType,
 		Content:    payload.Content,
@@ -156,15 +157,15 @@ func (mh *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMess
 		AvatarURL:  avatarURL,
 		Content:    dbMessage.Content,
 		MimeType:   dbMessage.MimeType,
+		ChatRoomID: dbMessage.ChatRoomId,
 	}
 
 	// Tạo SocketMessage để gửi đi, với Type là NEW_MESSAGE
 	broadcastMsg := SocketMessage{
-		Type:       SocketMessageTypeNewMessage, // Server gửi xuống với type này
-		ChatRoomID: dbMessage.ChatRoomId,
-		SenderID:   dbMessage.SenderId, // Giữ nguyên sender gốc
-		Timestamp:  dbMessage.CreatedAt.UnixMilli(),
-		Data:       mustMarshal(receivePayload),
+		Type:      SocketMessageTypeNewMessage, // Server gửi xuống với type này
+		SenderID:  dbMessage.SenderId,          // Giữ nguyên sender gốc
+		Timestamp: dbMessage.CreatedAt.UnixMilli(),
+		Data:      mustMarshal(receivePayload),
 	}
 
 	// 6. Gửi message đến tất cả thành viên online của phòng
@@ -173,56 +174,87 @@ func (mh *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMess
 }
 
 func (mh *MessageHandler) handleJoinRoomMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
-	if socketMsg.ChatRoomID == "" {
+	payload, err := ParsePayload[JoinRoomPayload](socketMsg.Data)
+	if err != nil {
+		log.Printf("MH: Error parsing JOIN message payload from client %s: %v", client.ID, err)
+		mh.sendErrorToClient(client, "Invalid JOIN payload format", "INVALID_JOIN_PAYLOAD")
+		return
+	}
+
+	if payload.ChatRoomID == "" {
 		mh.sendErrorToClient(client, "ChatRoomID is required for JOIN message", "JOIN_NO_ROOM_ID")
 		return
 	}
 
 	// Kiểm tra client có phải là thành viên DB của phòng không
-	isMemberDB, err := mh.chatRoomRepository.IsUserMemberOfChatRoom(ctx, client.ID, socketMsg.ChatRoomID)
+	isMemberDB, err := mh.chatRoomRepository.IsUserMemberOfChatRoom(ctx, client.ID, payload.ChatRoomID)
 	if err != nil {
-		log.Printf("MH: Error checking DB membership for JOIN: client %s, room %s: %v", client.ID, socketMsg.ChatRoomID, err)
+		log.Printf("MH: Error checking DB membership for JOIN: client %s, room %s: %v", client.ID, payload.ChatRoomID, err)
 		mh.sendErrorToClient(client, "Could not verify room membership.", "JOIN_MEMBERSHIP_FAILED")
 		return
 	}
 	if !isMemberDB {
-		log.Printf("MH: Client %s is not a DB member of room %s. JOIN to active view rejected.", client.ID, socketMsg.ChatRoomID)
+		log.Printf("MH: Client %s is not a DB member of room %s. JOIN to active view rejected.", client.ID, payload.ChatRoomID)
 		mh.sendErrorToClient(client, "You are not a member of this room to join its active view.", "JOIN_NOT_MEMBER")
 		return
 	}
 
-	mh.hub.JoinActiveRoomView(socketMsg.ChatRoomID, client)
-	log.Printf("MH: JOIN message from client %s for room %s processed.", client.ID, socketMsg.ChatRoomID)
+	mh.hub.JoinActiveRoomView(payload.ChatRoomID, client)
+	log.Printf("MH: JOIN message from client %s for room %s processed.", client.ID, payload.ChatRoomID)
 }
 
 func (mh *MessageHandler) handleLeaveRoomMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
-	if socketMsg.ChatRoomID == "" {
+	payload, err := ParsePayload[LeaveRoomPayload](socketMsg.Data)
+
+	if err != nil {
+		log.Printf("MH: Error parsing LEAVE message payload from client %s: %v", client.ID, err)
+		mh.sendErrorToClient(client, "Invalid LEAVE payload format", "INVALID_LEAVE_PAYLOAD")
+		return
+	}
+
+	if payload.ChatRoomID == "" {
 		mh.sendErrorToClient(client, "ChatRoomID is required for LEAVE message", "LEAVE_NO_ROOM_ID")
 		return
 	}
-	mh.hub.LeaveActiveRoomView(socketMsg.ChatRoomID, client)
-	log.Printf("MH: LEAVE message from client %s for room %s processed.", client.ID, socketMsg.ChatRoomID)
+
+	mh.hub.LeaveActiveRoomView(payload.ChatRoomID, client)
+	log.Printf("MH: LEAVE message from client %s for room %s processed.", client.ID, payload.ChatRoomID)
 }
 
 func (mh *MessageHandler) handleTypingMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
-	if socketMsg.ChatRoomID == "" {
+	payload, err := ParsePayload[TypingPayload](socketMsg.Data)
+	if err != nil {
+		log.Printf("MH: Error parsing TYPING message payload from client %s: %v", client.ID, err)
+		// Không gửi lỗi, chỉ bỏ qua
+		return
+	}
+
+	if payload.ChatRoomID == "" {
 		// Không gửi lỗi, chỉ bỏ qua nếu roomID thiếu
 		log.Printf("MH: TYPING message from client %s missing ChatRoomID.", client.ID)
 		return
 	}
-	// Chỉ gửi cho những người đang active trong view
-	if mh.hub.IsClientInActiveView(socketMsg.ChatRoomID, client.ID) {
+
+	if mh.hub.IsClientInActiveView(payload.ChatRoomID, client.ID) {
 		// Gửi message này tới các client khác trong active view, trừ sender
-		mh.hub.broadcastToActiveView(socketMsg.ChatRoomID, socketMsg, client.ID)
+		mh.hub.broadcastToActiveView(payload.ChatRoomID, socketMsg, client.ID)
 	}
 }
 
 func (mh *MessageHandler) handleReadReceiptMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
-	if socketMsg.ChatRoomID == "" {
+	payload, err := ParsePayload[ReadReceiptPayload](socketMsg.Data)
+
+	if err != nil {
+		log.Printf("MH: Invalid READ_RECEIPT payload from client %s: %v", client.ID, err)
+		// Không gửi lỗi cho client về việc này, chỉ log
+		return
+	}
+
+	if payload.ChatRoomID == "" {
 		log.Printf("MH: READ_RECEIPT message from client %s missing ChatRoomID.", client.ID)
 		return
 	}
-	payload, err := ParsePayload[ReadReceiptPayload](socketMsg.Data)
+
 	if err != nil || payload.MessageID == "" {
 		log.Printf("MH: Invalid READ_RECEIPT payload from client %s: %v", client.ID, err)
 		// Không gửi lỗi cho client về việc này, chỉ log
@@ -236,8 +268,8 @@ func (mh *MessageHandler) handleReadReceiptMessage(client *Client, socketMsg Soc
 	// Hoặc gửi cho tất cả mọi người trong active view biết "user X đã đọc đến message Y".
 
 	// Hiện tại, đơn giản là broadcast cho active view:
-	if mh.hub.IsClientInActiveView(socketMsg.ChatRoomID, client.ID) {
-		mh.hub.broadcastToActiveView(socketMsg.ChatRoomID, socketMsg, client.ID)
+	if mh.hub.IsClientInActiveView(payload.ChatRoomID, client.ID) {
+		mh.hub.broadcastToActiveView(payload.ChatRoomID, socketMsg, client.ID)
 	}
 }
 

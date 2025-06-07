@@ -196,13 +196,12 @@ func (h *Hub) JoinActiveRoomView(chatRoomID string, client *Client) {
 	activeView.mutex.Unlock()
 
 	// Gửi phản hồi join thành công cho client
-	joinSuccessPayload := JoinSuccessPayload{RoomID: chatRoomID, Status: "joined_active_view"}
+	joinSuccessPayload := JoinSuccessPayload{ChatRoomID: chatRoomID, Status: "joined_active_view"}
 	successMsg := SocketMessage{
-		Type:       SocketMessageTypeJoinSuccess,
-		ChatRoomID: chatRoomID,
-		SenderID:   "system",
-		Timestamp:  time.Now().UnixMilli(),
-		Data:       mustMarshal(joinSuccessPayload),
+		Type:      SocketMessageTypeJoinSuccess,
+		SenderID:  "system",
+		Timestamp: time.Now().UnixMilli(),
+		Data:      mustMarshal(joinSuccessPayload),
 	}
 	client.Send <- mustMarshal(successMsg)
 
@@ -211,7 +210,7 @@ func (h *Hub) JoinActiveRoomView(chatRoomID string, client *Client) {
 	} else {
 		log.Printf("Client %s joined active view for room %s", client.ID, chatRoomID)
 		// Thông báo cho các client *khác* đang active trong view này
-		userJoinedPayload := UserEventPayload{UserID: client.ID} // Cần lấy thêm name, avatar từ AccountRepo nếu muốn
+		userJoinedPayload := UserEventPayload{ChatRoomID: chatRoomID, UserID: client.ID} // Cần lấy thêm name, avatar từ AccountRepo nếu muốn
 		account, _ := h.accountRepo.FindById(context.TODO(), client.ID)
 		if account != nil {
 			userJoinedPayload.UserName = account.Name
@@ -219,11 +218,10 @@ func (h *Hub) JoinActiveRoomView(chatRoomID string, client *Client) {
 		}
 
 		userJoinedMsg := SocketMessage{
-			Type:       SocketMessageTypeUserJoined,
-			ChatRoomID: chatRoomID,
-			SenderID:   "system", // Hoặc client.ID nếu muốn client khác biết ai join
-			Timestamp:  time.Now().UnixMilli(),
-			Data:       mustMarshal(userJoinedPayload),
+			Type:      SocketMessageTypeUserJoined,
+			SenderID:  "system", // Hoặc client.ID nếu muốn client khác biết ai join
+			Timestamp: time.Now().UnixMilli(),
+			Data:      mustMarshal(userJoinedPayload),
 		}
 		h.broadcastToActiveView(chatRoomID, userJoinedMsg, client.ID) // Gửi cho mọi người trừ client này
 	}
@@ -253,13 +251,12 @@ func (h *Hub) LeaveActiveRoomView(chatRoomID string, client *Client) {
 
 	if userActuallyLeftView {
 		log.Printf("Client %s left active view for room %s", client.ID, chatRoomID)
-		userLeftPayload := UserEventPayload{UserID: client.ID} // Lấy thêm name, avatar nếu cần
+		userLeftPayload := UserEventPayload{ChatRoomID: chatRoomID, UserID: client.ID} // Lấy thêm name, avatar nếu cần
 		userLeftMsg := SocketMessage{
-			Type:       SocketMessageTypeUserLeft,
-			ChatRoomID: chatRoomID,
-			SenderID:   "system",
-			Timestamp:  time.Now().UnixMilli(),
-			Data:       mustMarshal(userLeftPayload),
+			Type:      SocketMessageTypeUserLeft,
+			SenderID:  "system",
+			Timestamp: time.Now().UnixMilli(),
+			Data:      mustMarshal(userLeftPayload),
 		}
 		h.broadcastToActiveView(chatRoomID, userLeftMsg, "") // Gửi cho tất cả active (bao gồm cả client nếu họ vẫn còn listen)
 
@@ -334,13 +331,12 @@ func (h *Hub) sendActiveUsersListToView(chatRoomID string) {
 	}
 	activeView.mutex.RUnlock()
 
-	activeUsersListPayload := ActiveUsersListPayload{Users: usersPayloadList}
+	activeUsersListPayload := ActiveUsersListPayload{ChatRoomID: chatRoomID, Users: usersPayloadList}
 	usersListMsg := SocketMessage{
-		Type:       SocketMessageTypeUsers,
-		ChatRoomID: chatRoomID,
-		SenderID:   "system",
-		Timestamp:  time.Now().UnixMilli(),
-		Data:       mustMarshal(activeUsersListPayload),
+		Type:      SocketMessageTypeUsers,
+		SenderID:  "system",
+		Timestamp: time.Now().UnixMilli(),
+		Data:      mustMarshal(activeUsersListPayload),
 	}
 	h.broadcastToActiveView(chatRoomID, usersListMsg, "") // Gửi cho tất cả trong active view
 }
