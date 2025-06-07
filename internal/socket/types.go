@@ -5,7 +5,7 @@ type SocketMessageType string
 const (
 	// Tin nhắn từ client
 	SocketMessageTypeChat        SocketMessageType = "CHAT"         // Gửi tin nhắn chat
-	SocketMessageTypeJoin        SocketMessageType = "JOIN"         // Tham gia phòng chat
+	SocketMessageTypeJoin        SocketMessageType = "JOIN_ROOM"    // Tham gia phòng chat
 	SocketMessageTypeLeave       SocketMessageType = "LEAVE"        // Rời phòng chat
 	SocketMessageTypeTyping      SocketMessageType = "TYPING"       // Đang nhập
 	SocketMessageTypeReadReceipt SocketMessageType = "READ_RECEIPT" // Đánh dấu đã đọc

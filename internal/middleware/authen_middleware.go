@@ -16,7 +16,6 @@ func (m *middleware) Authentication(c *gin.Context) {
 	if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 		tokenString = strings.TrimPrefix(authHeader, "Bearer ")
 	} else {
-		// Nếu không có header, thử lấy token từ query string (dùng cho WebSocket)
 		tokenString = c.Query("token")
 	}
 
