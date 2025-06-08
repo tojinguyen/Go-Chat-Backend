@@ -45,30 +45,17 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  kafka:
-    image: bitnami/kafka:4.0.0
-    container_name: realtime_chat_app_kafka
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
-      - "9092:9092"
+      - "8080:8080"
     environment:
-      - KAFKA_CFG_NODE_ID=0
-      - KAFKA_CFG_PROCESS_ROLES=broker,controller
-      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@realtime_chat_app_kafka:9093
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-      - KAFKA_KRAFT_MODE_ENABLED=true
-      - ALLOW_PLAINTEXT_LISTENER=yes
-    volumes:
-      - kafka_data:/bitnami/kafka
-    networks:
-      - chat_app_network
-    restart: unless-stopped
+      - DATABASE_URL=tojidev:toai20102002@tcp(realtime_chat_app_mysql:3306)/chat_app_db
 
 volumes:
   mysql_realtime-chat-data:
-  kafka_data:
 
 networks:
   chat_app_network:
