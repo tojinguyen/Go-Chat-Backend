@@ -343,6 +343,8 @@ services:
       - chat1
       - chat2
       - chat3
+
+      
 volumes:
   mysql_realtime-chat-data:
   kafka_data:
