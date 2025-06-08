@@ -345,6 +345,7 @@ services:
       - chat3
 volumes:
   mysql_realtime-chat-data:
+  kafka_data:
 
 networks:
   default:
