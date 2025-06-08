@@ -53,7 +53,72 @@ services:
     ports:
       - "8080:8080"
     environment:
+      # Database
       - DATABASE_URL=tojidev:toai20102002@tcp(realtime_chat_app_mysql:3306)/chat_app_db
+      
+      # App Config
+      - RUN_MODE=debug
+      - PORT=8080
+      - CORS_ALLOW_ORIGIN=http://localhost:3000
+      
+      # MySQL
+      - MYSQL_HOST=realtime_chat_app_mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=tojidev
+      - MYSQL_PASSWORD=toai20102002
+      - MYSQL_DATABASE=chat_app_db
+      - MYSQL_SSL_MODE=disable
+      - MYSQL_MIGRATE_MODE=auto
+      
+      # Goose Migration
+      - GOOSE_DRIVER=mysql
+      - GOOSE_DBSTRING=tojidev:toai20102002@tcp(realtime_chat_app_mysql:3306)/chat_app_db?parseTime=true
+      - GOOSE_MIGRATION_DIR=migrations/mysql
+      
+      # JWT
+      - JWT_SECRET_KEY=your_jwt_secret_key
+      - JWT_EXPIRATION=24
+      
+      # Token
+      - ACCESS_TOKEN_SECRET_KEY=your_access_token_secret
+      - ACCESS_TOKEN_EXPIRE_MINutes=60
+      - REFRESH_TOKEN_SECRET_KEY=your_refresh_token_secret
+      - REFRESH_TOKEN_EXPIRE_MINUTES=1440
+      
+      # Frontend
+      - FRONTEND_URI=http://localhost:3000
+      - FRONTEND_PORT=3000
+      
+      # Mail
+      - EMAIL_HOST=smtp.gmail.com
+      - EMAIL_PORT=587
+      - EMAIL_USER=toainguyenvan20102002@gmail.com
+      - EMAIL_PASS=fuks eduz qrca blzx
+      - EMAIL_FROM=toainguyenvan20102002@gmail.com
+      - EMAIL_NAME=Realtime Chat App
+      
+      # Verification
+      - VERIFICATION_CODE_LENGTH=6
+      - VERIFICATION_TIMEOUT_MINUTES=5
+      
+      # Cloudinary
+      - CLOUDINARY_CLOUD_NAME=durc9hj8m
+      - CLOUDINARY_API_KEY=926449462278945
+      - CLOUDINARY_API_SECRET=fiaYmnfUF3fP_y1FtzGSzwJ853k
+      
+      # Redis
+      - REDIS_HOST=realtime_chat_app_redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=toai20102002
+      - REDIS_DB=0
+    networks:
+      - chat_app_network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   mysql_realtime-chat-data:
