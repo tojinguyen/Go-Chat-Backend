@@ -46,6 +46,7 @@ services:
         max-file: "3"
 
   api:
+    container_name: realtime_chat_app_api
     build:
       context: .
       dockerfile: Dockerfile
