@@ -3,6 +3,7 @@ package usecase
 import (
 	"gochat-backend/config"
 	"gochat-backend/internal/infra/cloudinaryinfra"
+	"gochat-backend/internal/infra/kafkainfra"
 	"gochat-backend/internal/infra/redisinfra"
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase/auth"
@@ -23,6 +24,7 @@ type SharedDependencies struct {
 	JwtService          jwt.JwtService
 	EmailService        email.EmailService
 	VerificationService verification.VerificationService
+	KafkaService        *kafkainfra.KafkaService
 
 	//Repositories
 	AccountRepo              repository.AccountRepository

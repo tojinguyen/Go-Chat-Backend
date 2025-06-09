@@ -37,6 +37,7 @@ import (
 	"net/http"
 
 	cloudstorage "gochat-backend/internal/infra/cloudinaryinfra"
+	"gochat-backend/internal/infra/kafkainfra"
 	"gochat-backend/internal/infra/mysqlinfra"
 	"gochat-backend/internal/infra/redisinfra"
 
@@ -98,6 +99,7 @@ func main() {
 	jwtService := jwt.NewJwtService(app.config, redisService)
 	emailService := email.NewSMTPEmailService(app.config)
 	verificationService := verification.NewVerificationService(app.config)
+	kafkaService := kafkainfra.NewKafkaService(app.config.Brokers, app.config.ChatTopic, app.config.ConsumerGroup)
 
 	// Initialize Repositories
 	accountRepo := repository.NewAccountRepo(db, redisService)
@@ -113,6 +115,7 @@ func main() {
 		JwtService:          jwtService,
 		EmailService:        emailService,
 		VerificationService: verificationService,
+		KafkaService:        kafkaService,
 
 		AccountRepo:              accountRepo,
 		VerificationRegisterRepo: verificationRepo,

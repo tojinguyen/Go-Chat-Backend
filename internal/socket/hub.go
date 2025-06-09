@@ -3,6 +3,7 @@ package socket
 import (
 	"context"
 	"encoding/json"
+	"gochat-backend/internal/infra/kafkainfra"
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase"
 	"gochat-backend/internal/usecase/status"
@@ -34,6 +35,8 @@ type Hub struct {
 
 	accountRepo  repository.AccountRepository
 	chatRoomRepo repository.ChatRoomRepository
+
+	kafkaService *kafkainfra.KafkaService
 }
 
 // NewHub khởi tạo Hub mới
@@ -46,6 +49,7 @@ func NewHub(deps *usecase.SharedDependencies, statusUseCase status.StatusUseCase
 		statusUseCase:   statusUseCase,
 		accountRepo:     deps.AccountRepo,
 		chatRoomRepo:    deps.ChatRoomRepo,
+		kafkaService:    deps.KafkaService,
 	}
 
 	hub.MessageHandler = NewMessageHandler(
@@ -376,4 +380,19 @@ func (h *Hub) broadcastToActiveView(chatRoomID string, message SocketMessage, ex
 			log.Printf("Hub: Send channel for client %s in active view %s is full/closed.", client.ID, chatRoomID)
 		}
 	}
+}
+
+// startKafkaConsumer khởi động consumer Kafka để nhận tin nhắn
+func (h *Hub) startKafkaConsumer() {
+	ctx := context.Background()
+	err := h.kafkaService.StartChatConsumer(ctx, h.handleKafkaEvent)
+	if err != nil {
+		log.Printf("Error starting Kafka consumer: %v", err)
+	}
+}
+
+// handleKafkaEvent xử lý sự kiện từ Kafka
+func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
+	log.Printf("Received Kafka event: %s", event.Type)
+	return nil
 }

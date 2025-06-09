@@ -21,6 +21,8 @@ func NewSocketManager(deps *usecase.SharedDependencies, statusUseCase status.Sta
 	// Khởi chạy hub trong goroutine riêng
 	go hub.Run()
 
+	go hub.startKafkaConsumer()
+
 	return &SocketManager{
 		Hub:           hub,
 		statusUseCase: statusUseCase,
