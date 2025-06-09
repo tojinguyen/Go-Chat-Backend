@@ -1,11 +1,11 @@
 package kafkainfra
 
-type MQEventTopic string
+type MQEventType string
 
 const (
-	MessageSent   MQEventTopic = "message_sent"
-	TypingStarted MQEventTopic = "typing_started"
-	TypingStopped MQEventTopic = "typing_stopped"
-	UserOnline    MQEventTopic = "user_online"
-	UserOffline   MQEventTopic = "user_offline"
+	MessageSent   MQEventType = "message_sent"
+	TypingStarted MQEventType = "typing_started"
+	TypingStopped MQEventType = "typing_stopped"
+	UserOnline    MQEventType = "user_online"
+	UserOffline   MQEventType = "user_offline"
 )

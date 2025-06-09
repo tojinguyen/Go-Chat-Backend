@@ -11,11 +11,11 @@ import (
 )
 
 type MQEvent struct {
-	Type       MQEventTopic `json:"type"`
-	ChatRoomID string       `json:"chat_room_id"`
-	UserID     string       `json:"user_id"`
-	Timestamp  time.Time    `json:"timestamp"`
-	Metadata   interface{}  `json:"metadata"`
+	Type       MQEventType `json:"type"`
+	ChatRoomID string      `json:"chat_room_id"`
+	UserID     string      `json:"user_id"`
+	Timestamp  time.Time   `json:"timestamp"`
+	Metadata   interface{} `json:"metadata"`
 }
 
 type MQEventProducer struct {

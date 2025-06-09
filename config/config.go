@@ -66,6 +66,12 @@ type Environment struct {
 	RedisPort     int    `env:"REDIS_PORT,required=true"`
 	RedisPassword string `env:"REDIS_PASSWORD,required=true"`
 	RedisDB       int    `env:"REDIS_DB,default=0"`
+
+	// Kafka Config
+	Brokers       []string `env:"KAFKA_BROKERS,required=true"`
+	ChatTopic     string   `env:"KAFKA_CHAT_TOPIC,required=true"`
+	ConsumerGroup string   `env:"KAFKA_CONSUMER_GROUP,required=true"`
+	Enabled       bool     `env:"KAFKA_ENABLED,default=true"`
 }
 
 func Load() (*Environment, error) {
