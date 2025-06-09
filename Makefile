@@ -24,7 +24,7 @@ build:
 	upx -9 -q ./build-out
 
 docker-build:
-	docker-compose up --build
+	docker-compose up -d --build
 
 docker-up:
 	docker-compose up -d
