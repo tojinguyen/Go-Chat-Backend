@@ -24,6 +24,8 @@ require (
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
+require github.com/segmentio/kafka-go v0.4.48 // indirect
+
 require (
 	github.com/cloudinary/cloudinary-go v1.7.0
 	github.com/davecgh/go-spew v1.1.1 // indirect
