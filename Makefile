@@ -23,10 +23,10 @@ build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o build-out cmd/main.go
 	upx -9 -q ./build-out
 
-docker-build:
+docker build:
 	docker-compose up -d --build
 
-docker-up:
+docker up:
 	docker-compose up -d
 
 create-migration:
