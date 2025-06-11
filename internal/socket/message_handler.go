@@ -245,7 +245,39 @@ func (mh *MessageHandler) handleTypingMessage(client *Client, socketMsg SocketMe
 	if mh.hub.IsClientInActiveView(payload.ChatRoomID, client.ID) {
 		// Gửi message này tới các client khác trong active view, trừ sender
 		log.Printf("MH: TYPING message from client %s for room %s: IsTyping=%t", client.ID, payload.ChatRoomID, payload.IsTyping)
-		mh.hub.broadcastToActiveView(payload.ChatRoomID, socketMsg, client.ID)
+		// Tạo một bản sao đảm bảo SenderID, UserID và Timestamp được thiết lập đúng
+		typingPayload := TypingPayload{
+			UserID:     client.ID,
+			ChatRoomID: payload.ChatRoomID,
+			IsTyping:   payload.IsTyping,
+		}
+
+		// Chuyển đổi payload thành bytes để gửi qua Kafka
+		payloadBytes, err := json.Marshal(typingPayload)
+		if err != nil {
+			log.Printf("MH: Failed to marshal typing payload: %v", err)
+			return
+		}
+
+		// Xác định loại sự kiện Kafka dựa trên trạng thái typing
+		eventType := kafkainfra.TypingStarted
+		if !payload.IsTyping {
+			eventType = kafkainfra.TypingStopped
+		}
+
+		// Tạo sự kiện Kafka
+		kafkaEvent := &kafkainfra.MQEvent{
+			EventType:  eventType,
+			ChatRoomID: payload.ChatRoomID,
+			SenderID:   client.ID,
+			Timestamp:  time.Now().UTC(),
+			Metadata:   payloadBytes,
+		}
+
+		// Publish sự kiện đến Kafka
+		if err := mh.hub.kafkaService.PublishChatEvent(ctx, kafkaEvent); err != nil {
+			log.Printf("MH: Failed to publish typing event to Kafka: %v", err)
+		}
 	}
 }
 

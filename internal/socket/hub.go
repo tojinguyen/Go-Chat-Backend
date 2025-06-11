@@ -450,7 +450,50 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 		h.DeliverMessageToRoomRecipients(context.Background(), event.ChatRoomID, socketMsg)
 
 	case kafkainfra.TypingStarted:
+		var payload TypingPayload
+		metadataBytes, ok := event.Metadata.([]byte)
+		if !ok {
+			metadataBytes, ok = event.Metadata.(json.RawMessage)
+			if !ok {
+				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
+			}
+		}
+
+		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+			return fmt.Errorf("failed to unmarshal typing payload: %w", err)
+		}
+
+		typingMsg := SocketMessage{
+			Type:      SocketMessageTypeTyping,
+			SenderID:  event.SenderID,
+			Timestamp: time.Now().UTC().UnixMilli(),
+			Data:      mustMarshal(payload),
+		}
+
+		h.broadcastToActiveView(payload.ChatRoomID, typingMsg, event.SenderID)
 	case kafkainfra.TypingStopped:
+		var payload TypingPayload
+		metadataBytes, ok := event.Metadata.([]byte)
+		if !ok {
+			metadataBytes, ok = event.Metadata.(json.RawMessage)
+			if !ok {
+				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
+			}
+		}
+
+		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+			return fmt.Errorf("failed to unmarshal typing payload: %w", err)
+		}
+
+		typingMsg := SocketMessage{
+			Type:      SocketMessageTypeTyping,
+			SenderID:  event.SenderID,
+			Timestamp: time.Now().UTC().UnixMilli(),
+			Data:      mustMarshal(payload),
+		}
+
+		h.broadcastToActiveView(payload.ChatRoomID, typingMsg, event.SenderID)
+
 	case kafkainfra.UserJoinedRoom:
 		var payload UserEventPayload
 		metadataBytes, ok := event.Metadata.([]byte)
