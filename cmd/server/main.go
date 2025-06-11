@@ -100,7 +100,10 @@ func main() {
 	emailService := email.NewSMTPEmailService(app.config)
 	verificationService := verification.NewVerificationService(app.config)
 	kafkaService := kafkainfra.NewKafkaService(app.config.Brokers, app.config.ChatTopic, app.config.ConsumerGroup)
-	kafkaService.Initialize()
+
+	if err := kafkaService.Initialize(); err != nil {
+		loggerStartServer.Fatalf("Failed to initialize Kafka service: %v", err)
+	}
 
 	// Initialize Repositories
 	accountRepo := repository.NewAccountRepo(db, redisService)
