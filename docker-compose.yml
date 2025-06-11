@@ -166,6 +166,12 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=toai20102002
       - REDIS_DB=0
+
+      # Kafka
+      - KAFKA_BROKERS=localhost:9092
+      - KAFKA_CHAT_TOPIC=chat_app_topic
+      - KAFKA_CONSUMER_GROUP=chat_app_group
+
     networks:
       - chat_app_network
     depends_on:
@@ -243,6 +249,11 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=toai20102002
       - REDIS_DB=0
+
+      # Kafka
+      - KAFKA_BROKERS=localhost:9092
+      - KAFKA_CHAT_TOPIC=chat_app_topic
+      - KAFKA_CONSUMER_GROUP=chat_app_group
     networks:
       - chat_app_network
     depends_on:
@@ -320,6 +331,11 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=toai20102002
       - REDIS_DB=0
+
+      # Kafka
+      - KAFKA_BROKERS=localhost:9092
+      - KAFKA_CHAT_TOPIC=chat_app_topic
+      - KAFKA_CONSUMER_GROUP=chat_app_group
     networks:
       - chat_app_network
     depends_on:
