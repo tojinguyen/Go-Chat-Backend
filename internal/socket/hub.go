@@ -262,7 +262,27 @@ func (h *Hub) LeaveActiveRoomView(chatRoomID string, client *Client) {
 
 	if userActuallyLeftView {
 		log.Printf("Client %s left active view for room %s", client.ID, chatRoomID)
-		userLeftPayload := UserEventPayload{ChatRoomID: chatRoomID, UserID: client.ID} // Lấy thêm name, avatar nếu cần
+		userLeftPayload := UserEventPayload{
+			ChatRoomID: chatRoomID,
+			UserID:     client.ID,
+		}
+
+		payloadBytes, err := json.Marshal(userLeftPayload)
+
+		if err != nil {
+			log.Printf("Hub: Failed to marshal UserLeft payload: %v", err)
+		} else {
+			kafkaEvent := &kafkainfra.MQEvent{
+				EventType:  kafkainfra.UserLeftRoom,
+				ChatRoomID: chatRoomID,
+				SenderID:   client.ID,
+				Timestamp:  time.Now().UTC(),
+				Metadata:   payloadBytes,
+			}
+
+			h.kafkaService.PublishChatEvent(context.Background(), kafkaEvent)
+		}
+
 		userLeftMsg := SocketMessage{
 			Type:      SocketMessageTypeUserLeft,
 			SenderID:  "system",
@@ -448,7 +468,7 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 		userJoinedMsg := SocketMessage{
 			Type:      SocketMessageTypeUserJoined,
 			SenderID:  "system",
-			Timestamp: time.Now().UnixMilli(),
+			Timestamp: time.Now().UTC().UnixMilli(),
 			Data:      mustMarshal(payload),
 		}
 
@@ -456,7 +476,27 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 		h.sendActiveUsersListToView(payload.ChatRoomID)
 
 	case kafkainfra.UserLeftRoom:
+		var payload UserEventPayload
+		metadataBytes, ok := event.Metadata.([]byte)
+		if !ok {
+			metadataBytes, ok = event.Metadata.(json.RawMessage)
+			if !ok {
+				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
+			}
+		}
 
+		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+			return fmt.Errorf("failed to unmarshal user left payload: %w", err)
+		}
+
+		userLeftMsg := SocketMessage{
+			Type:      SocketMessageTypeUserLeft,
+			SenderID:  "system",
+			Timestamp: time.Now().UTC().UnixMilli(),
+			Data:      mustMarshal(payload),
+		}
+
+		h.broadcastToActiveView(payload.ChatRoomID, userLeftMsg, payload.UserID)
 	default:
 		return fmt.Errorf("unsupported event type: %s", event.EventType)
 	}
