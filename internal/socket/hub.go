@@ -404,10 +404,14 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 		var payload ChatMessageReceivePayload
 		metadataBytes, ok := event.Metadata.([]byte)
 		if !ok {
-			return fmt.Errorf("expected event.Metadata to be []byte, got %T", event.Metadata)
+			metadataBytes, ok = event.Metadata.(json.RawMessage)
+			if !ok {
+				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
+			}
 		}
+
 		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal message payload: %w", err)
 		}
 
 		socketMsg = SocketMessage{
@@ -418,6 +422,14 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 		}
 
 		h.DeliverMessageToRoomRecipients(context.Background(), event.ChatRoomID, socketMsg)
+
+	case kafkainfra.TypingStarted:
+	case kafkainfra.TypingStopped:
+	case kafkainfra.UserJoinedRoom:
+	case kafkainfra.UserLeftRoom:
+
+	default:
+		return fmt.Errorf("unsupported event type: %s", event.EventType)
 	}
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	domain "gochat-backend/internal/domain/chat"
+	"gochat-backend/internal/infra/kafkainfra"
 	"gochat-backend/internal/repository"
 	"log"
 	"strings"
@@ -157,17 +158,26 @@ func (mh *MessageHandler) handleChatMessage(client *Client, socketMsg SocketMess
 		ChatRoomID: dbMessage.ChatRoomId,
 	}
 
-	// Tạo SocketMessage để gửi đi, với Type là NEW_MESSAGE
-	broadcastMsg := SocketMessage{
-		Type:      SocketMessageTypeNewMessage, // Server gửi xuống với type này
-		SenderID:  dbMessage.SenderId,          // Giữ nguyên sender gốc
-		Timestamp: dbMessage.CreatedAt.UnixMilli(),
-		Data:      mustMarshal(receivePayload),
+	payloadBytes, err := json.Marshal(receivePayload)
+
+	if err != nil {
+		log.Printf("MH: Failed to marshal payload for Kafka: %v", err)
+		return
 	}
 
-	// 6. Gửi message đến tất cả thành viên online của phòng
-	mh.hub.DeliverMessageToRoomRecipients(ctx, dbMessage.ChatRoomId, broadcastMsg)
-	log.Printf("MH: CHAT message from %s for room %s processed and delivered.", client.ID, dbMessage.ChatRoomId)
+	// Create Kafka event
+	kafkaEvent := &kafkainfra.MQEvent{
+		EventType:  kafkainfra.MessageSent,
+		ChatRoomID: dbMessage.ChatRoomId,
+		SenderID:   dbMessage.SenderId,
+		Timestamp:  dbMessage.CreatedAt,
+		Metadata:   payloadBytes,
+	}
+
+	// Send event đến Kafka
+	if err := mh.hub.kafkaService.PublishChatEvent(ctx, kafkaEvent); err != nil {
+		log.Printf("MH: Failed to publish to Kafka: %v", err)
+	}
 }
 
 func (mh *MessageHandler) handleJoinRoomMessage(client *Client, socketMsg SocketMessage, ctx context.Context) {
