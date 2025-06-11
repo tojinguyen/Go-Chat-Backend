@@ -168,7 +168,7 @@ services:
       - REDIS_DB=0
 
       # Kafka
-      - KAFKA_BROKERS=localhost:9092
+      - KAFKA_BROKERS=kafka:9092
       - KAFKA_CHAT_TOPIC=chat_app_topic
       - KAFKA_CONSUMER_GROUP=chat_app_group
 
@@ -251,7 +251,7 @@ services:
       - REDIS_DB=0
 
       # Kafka
-      - KAFKA_BROKERS=localhost:9092
+      - KAFKA_BROKERS=kafka:9092
       - KAFKA_CHAT_TOPIC=chat_app_topic
       - KAFKA_CONSUMER_GROUP=chat_app_group
     networks:
@@ -333,7 +333,7 @@ services:
       - REDIS_DB=0
 
       # Kafka
-      - KAFKA_BROKERS=localhost:9092
+      - KAFKA_BROKERS=kafka:9092
       - KAFKA_CHAT_TOPIC=chat_app_topic
       - KAFKA_CONSUMER_GROUP=chat_app_group
     networks:
