@@ -3,6 +3,7 @@ package socket
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"gochat-backend/internal/infra/kafkainfra"
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase"
@@ -393,6 +394,30 @@ func (h *Hub) startKafkaConsumer() {
 
 // handleKafkaEvent xử lý sự kiện từ Kafka
 func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
-	log.Printf("Received Kafka event: %s", event.Type)
+	log.Printf("Received Kafka event: %s for room %s from user %s",
+		event.EventType, event.ChatRoomID, event.SenderID)
+
+	var socketMsg SocketMessage
+
+	switch event.EventType {
+	case kafkainfra.MessageSent:
+		var payload ChatMessageReceivePayload
+		metadataBytes, ok := event.Metadata.([]byte)
+		if !ok {
+			return fmt.Errorf("expected event.Metadata to be []byte, got %T", event.Metadata)
+		}
+		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+			return err
+		}
+
+		socketMsg = SocketMessage{
+			Type:      SocketMessageTypeNewMessage,
+			SenderID:  event.SenderID,
+			Timestamp: event.Timestamp.UnixMilli(),
+			Data:      mustMarshal(payload),
+		}
+
+		h.DeliverMessageToRoomRecipients(context.Background(), event.ChatRoomID, socketMsg)
+	}
 	return nil
 }

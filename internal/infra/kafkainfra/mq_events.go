@@ -11,9 +11,9 @@ import (
 )
 
 type MQEvent struct {
-	Type       MQEventType `json:"type"`
+	EventType  MQEventType `json:"event_type"`
 	ChatRoomID string      `json:"chat_room_id"`
-	UserID     string      `json:"user_id"`
+	SenderID   string      `json:"sender_id"`
 	Timestamp  time.Time   `json:"timestamp"`
 	Metadata   interface{} `json:"metadata"`
 }
@@ -45,7 +45,7 @@ func NewChatEventProducer(brokers []string, topic string) (*MQEventProducer, err
 func (p *MQEventProducer) PublishEvent(ctx context.Context, event *MQEvent) error {
 	// Set timestamp if not provided
 	if event.Timestamp.IsZero() {
-		event.Timestamp = time.Now()
+		event.Timestamp = time.Now().UTC()
 	}
 
 	// Serialize event to JSON
