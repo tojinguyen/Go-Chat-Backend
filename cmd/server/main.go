@@ -100,6 +100,7 @@ func main() {
 	emailService := email.NewSMTPEmailService(app.config)
 	verificationService := verification.NewVerificationService(app.config)
 	kafkaService := kafkainfra.NewKafkaService(app.config.Brokers, app.config.ChatTopic, app.config.ConsumerGroup)
+	kafkaService.Initialize()
 
 	// Initialize Repositories
 	accountRepo := repository.NewAccountRepo(db, redisService)
