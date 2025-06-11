@@ -222,16 +222,22 @@ func (h *Hub) JoinActiveRoomView(chatRoomID string, client *Client) {
 			userJoinedPayload.AvatarURL = account.AvatarURL
 		}
 
-		userJoinedMsg := SocketMessage{
-			Type:      SocketMessageTypeUserJoined,
-			SenderID:  "system", // Hoặc client.ID nếu muốn client khác biết ai join
-			Timestamp: time.Now().UnixMilli(),
-			Data:      mustMarshal(userJoinedPayload),
+		payloadBytes, err := json.Marshal(userJoinedPayload)
+
+		if err != nil {
+			log.Printf("Hub: Failed to marshal UserJoined payload: %v", err)
+		} else {
+			kafkaEvent := &kafkainfra.MQEvent{
+				EventType:  kafkainfra.UserJoinedRoom,
+				ChatRoomID: chatRoomID,
+				SenderID:   client.ID,
+				Timestamp:  time.Now().UTC(),
+				Metadata:   payloadBytes,
+			}
+
+			h.kafkaService.PublishChatEvent(context.Background(), kafkaEvent)
 		}
-		h.broadcastToActiveView(chatRoomID, userJoinedMsg, client.ID) // Gửi cho mọi người trừ client này
 	}
-	// Gửi danh sách những người đang active trong view này cho TẤT CẢ những người active trong view
-	h.sendActiveUsersListToView(chatRoomID)
 }
 
 // LeaveActiveRoomView xử lý khi client không còn xem phòng chat đó nữa.
@@ -426,6 +432,29 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 	case kafkainfra.TypingStarted:
 	case kafkainfra.TypingStopped:
 	case kafkainfra.UserJoinedRoom:
+		var payload UserEventPayload
+		metadataBytes, ok := event.Metadata.([]byte)
+		if !ok {
+			metadataBytes, ok = event.Metadata.(json.RawMessage)
+			if !ok {
+				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
+			}
+		}
+
+		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+			return fmt.Errorf("failed to unmarshal user joined payload: %w", err)
+		}
+
+		userJoinedMsg := SocketMessage{
+			Type:      SocketMessageTypeUserJoined,
+			SenderID:  "system",
+			Timestamp: time.Now().UnixMilli(),
+			Data:      mustMarshal(payload),
+		}
+
+		h.broadcastToActiveView(payload.ChatRoomID, userJoinedMsg, payload.UserID)
+		h.sendActiveUsersListToView(payload.ChatRoomID)
+
 	case kafkainfra.UserLeftRoom:
 
 	default:
