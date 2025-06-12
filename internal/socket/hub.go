@@ -428,15 +428,8 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 	switch event.EventType {
 	case kafkainfra.MessageSent:
 		var payload ChatMessageReceivePayload
-		metadataBytes, ok := event.Metadata.([]byte)
-		if !ok {
-			metadataBytes, ok = event.Metadata.(json.RawMessage)
-			if !ok {
-				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
-			}
-		}
 
-		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+		if err := json.Unmarshal(event.Metadata, &payload); err != nil {
 			return fmt.Errorf("failed to unmarshal message payload: %w", err)
 		}
 
@@ -451,15 +444,8 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 
 	case kafkainfra.TypingStarted:
 		var payload TypingPayload
-		metadataBytes, ok := event.Metadata.([]byte)
-		if !ok {
-			metadataBytes, ok = event.Metadata.(json.RawMessage)
-			if !ok {
-				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
-			}
-		}
 
-		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+		if err := json.Unmarshal(event.Metadata, &payload); err != nil {
 			return fmt.Errorf("failed to unmarshal typing payload: %w", err)
 		}
 
@@ -473,15 +459,8 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 		h.broadcastToActiveView(payload.ChatRoomID, typingMsg, event.SenderID)
 	case kafkainfra.TypingStopped:
 		var payload TypingPayload
-		metadataBytes, ok := event.Metadata.([]byte)
-		if !ok {
-			metadataBytes, ok = event.Metadata.(json.RawMessage)
-			if !ok {
-				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
-			}
-		}
 
-		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+		if err := json.Unmarshal(event.Metadata, &payload); err != nil {
 			return fmt.Errorf("failed to unmarshal typing payload: %w", err)
 		}
 
@@ -496,15 +475,8 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 
 	case kafkainfra.UserJoinedRoom:
 		var payload UserEventPayload
-		metadataBytes, ok := event.Metadata.([]byte)
-		if !ok {
-			metadataBytes, ok = event.Metadata.(json.RawMessage)
-			if !ok {
-				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
-			}
-		}
 
-		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+		if err := json.Unmarshal(event.Metadata, &payload); err != nil {
 			return fmt.Errorf("failed to unmarshal user joined payload: %w", err)
 		}
 
@@ -520,15 +492,8 @@ func (h *Hub) handleKafkaEvent(event *kafkainfra.MQEvent) error {
 
 	case kafkainfra.UserLeftRoom:
 		var payload UserEventPayload
-		metadataBytes, ok := event.Metadata.([]byte)
-		if !ok {
-			metadataBytes, ok = event.Metadata.(json.RawMessage)
-			if !ok {
-				return fmt.Errorf("expected event.Metadata to be []byte or json.RawMessage, got %T", event.Metadata)
-			}
-		}
 
-		if err := json.Unmarshal(metadataBytes, &payload); err != nil {
+		if err := json.Unmarshal(event.Metadata, &payload); err != nil {
 			return fmt.Errorf("failed to unmarshal user left payload: %w", err)
 		}
 
