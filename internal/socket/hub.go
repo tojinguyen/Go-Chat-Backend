@@ -411,11 +411,26 @@ func (h *Hub) broadcastToActiveView(chatRoomID string, message SocketMessage, ex
 
 // startKafkaConsumer khởi động consumer Kafka để nhận tin nhắn
 func (h *Hub) startKafkaConsumer() {
-	ctx := context.Background()
-	err := h.kafkaService.StartChatConsumer(ctx, h.handleKafkaEvent)
-	if err != nil {
-		log.Printf("Error starting Kafka consumer: %v", err)
+	log.Println("Attempting to start Kafka consumer...")
+	if h.kafkaService == nil {
+		log.Println("ERROR: Kafka service is nil, cannot start consumer")
+		return
 	}
+	// Tạo context riêng cho Kafka consumer
+	ctx := context.Background()
+
+	// Bắt đầu consumer trong goroutine riêng
+	go func() {
+		log.Println("Starting Kafka consumer in a separate goroutine...")
+		err := h.kafkaService.StartChatConsumer(ctx, h.handleKafkaEvent)
+		if err != nil {
+			log.Printf("Kafka consumer stopped with error: %v", err)
+		}
+	}()
+
+	// Đặt thời gian chờ để kiểm tra xem consumer có khởi động thành công không
+	time.Sleep(2 * time.Second)
+	log.Println("Kafka consumer started successfully")
 }
 
 // handleKafkaEvent xử lý sự kiện từ Kafka
