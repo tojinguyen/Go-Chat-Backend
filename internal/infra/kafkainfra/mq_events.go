@@ -119,12 +119,17 @@ func (h *ConsumerGroupHandler) Cleanup(sarama.ConsumerGroupSession) error {
 }
 
 func (h *ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+	log.Printf("Starting to consume from partition %d, initial offset: %d", claim.Partition(), claim.InitialOffset())
+
 	for {
 		select {
 		case message := <-claim.Messages():
 			if message == nil {
+				log.Println("Received nil message, stopping consumption")
 				return nil
 			}
+
+			log.Printf("Received message from partition %d at offset %d", message.Partition, message.Offset)
 
 			var event MQEvent
 			if err := json.Unmarshal(message.Value, &event); err != nil {
@@ -139,8 +144,10 @@ func (h *ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 			}
 
 			session.MarkMessage(message, "")
+			log.Printf("Successfully processed message: %s for room %s", event.EventType, event.ChatRoomID)
 
 		case <-session.Context().Done():
+			log.Println("Consumer session context done, stopping consumption")
 			return nil
 		}
 	}
@@ -148,19 +155,24 @@ func (h *ConsumerGroupHandler) ConsumeClaim(session sarama.ConsumerGroupSession,
 
 // StartConsuming starts consuming events with the provided handler
 func (c *MQEventConsumer) StartConsuming(ctx context.Context, eventHandler func(*MQEvent) error) error {
+	log.Printf("Starting Kafka consumer for topic '%s' with consumer group '%s'", c.topic, c.groupID)
+
 	handler := &ConsumerGroupHandler{
 		eventHandler: eventHandler,
 	}
 
 	for {
 		if err := c.consumer.Consume(ctx, []string{c.topic}, handler); err != nil {
-			log.Printf("Error from consumer: %v", err)
+			log.Printf("Error from consumer group '%s': %v", c.groupID, err)
 			return err
 		}
 
 		if ctx.Err() != nil {
+			log.Printf("Context canceled for consumer group '%s'", c.groupID)
 			return ctx.Err()
 		}
+
+		log.Printf("Consumer group '%s' session ended, rebalancing", c.groupID)
 	}
 }
 

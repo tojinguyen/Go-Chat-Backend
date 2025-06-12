@@ -416,6 +416,7 @@ func (h *Hub) startKafkaConsumer() {
 		log.Println("ERROR: Kafka service is nil, cannot start consumer")
 		return
 	}
+
 	// Tạo context riêng cho Kafka consumer
 	ctx := context.Background()
 
@@ -425,12 +426,16 @@ func (h *Hub) startKafkaConsumer() {
 		err := h.kafkaService.StartChatConsumer(ctx, h.handleKafkaEvent)
 		if err != nil {
 			log.Printf("Kafka consumer stopped with error: %v", err)
+		} else {
+			log.Println("Kafka consumer stopped without error (unexpected)")
 		}
 	}()
 
 	// Đặt thời gian chờ để kiểm tra xem consumer có khởi động thành công không
+	// Lưu ý: Đây chỉ là giả định consumer đã khởi động, không có cách nào để biết chắc chắn
+	// mà không triển khai cơ chế phản hồi từ consumer
 	time.Sleep(2 * time.Second)
-	log.Println("Kafka consumer started successfully")
+	log.Println("Kafka consumer setup completed - now listening for events")
 }
 
 // handleKafkaEvent xử lý sự kiện từ Kafka

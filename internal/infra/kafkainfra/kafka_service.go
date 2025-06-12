@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
 // KafkaService manages Kafka producers and consumers
@@ -15,14 +17,19 @@ type KafkaService struct {
 	chatTopic     string
 	consumerGroup string
 	mu            sync.RWMutex
+	instanceID    string // Unique ID for this instance
 }
 
 // NewKafkaService creates a new Kafka service
 func NewKafkaService(brokers []string, chatTopic, consumerGroup string) *KafkaService {
+	// Tạo instanceID duy nhất cho mỗi instance bằng UUID
+	instanceID := uuid.New().String()[:8]
+
 	return &KafkaService{
 		brokers:       brokers,
 		chatTopic:     chatTopic,
 		consumerGroup: consumerGroup,
+		instanceID:    instanceID,
 	}
 }
 
@@ -38,8 +45,12 @@ func (s *KafkaService) Initialize() error {
 	}
 	s.chatProducer = producer
 
+	// Tạo consumer group ID duy nhất cho mỗi instance
+	uniqueConsumerGroup := fmt.Sprintf("%s-%s", s.consumerGroup, s.instanceID)
+	log.Printf("Initializing Kafka consumer with unique consumer group: %s", uniqueConsumerGroup)
+
 	// Initialize consumer
-	consumer, err := NewChatEventConsumer(s.brokers, s.chatTopic, s.consumerGroup)
+	consumer, err := NewChatEventConsumer(s.brokers, s.chatTopic, uniqueConsumerGroup)
 	if err != nil {
 		return fmt.Errorf("failed to initialize chat consumer: %w", err)
 	}
