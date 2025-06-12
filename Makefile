@@ -29,6 +29,9 @@ docker build:
 docker up:
 	docker-compose up -d
 
+docker down:
+	docker-compose down
+
 create-migration:
 	if "$(name)" == "" ( \
 		echo ❌ Thiếu tên migration. Dùng: make create-migration name=ten_migration & exit /b 1 \
