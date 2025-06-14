@@ -8,11 +8,13 @@ A robust backend service for a real-time chat application built with Go, featuri
 - **User Authentication**: Complete JWT-based authentication system
 - **Friend Management**: Add, accept, reject friend requests and manage friendships
 - **Chat Rooms**: Create and manage chat rooms for group conversations
-- **File Storage**: Cloudinary integration for image and file uploads
+- **File Storage**: Cloudinary integration for image and file uploads with signed uploads
+- **Message Queuing**: Kafka integration for reliable message delivery and event processing
+- **User Status Tracking**: Real-time online/offline status with "last seen" timestamps
 - **Scalable Architecture**: Designed with clean architecture principles
-- **Database Support**: MySQL for persistent storage
+- **Database Support**: MySQL for persistent storage with migration support
 - **Caching**: Redis for improved performance
-- **API Documentation**: Swagger documentation included
+- **API Documentation**: Comprehensive Swagger documentation included
 
 ## System Design
 
@@ -42,7 +44,7 @@ The system is designed to ensure high scalability and reliability:
            ▼                   ▼                   ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│                   Redis Pub/Sub Cluster                     │
+│                       Kafka Cluster                         │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
            │                   │                   │
@@ -69,20 +71,21 @@ The system is designed to ensure high scalability and reliability:
 4. **Server Instances**: 
    - Multiple Go server instances handling REST API and WebSocket
    - Auto-scaling based on system load
-5. **Redis Pub/Sub**: 
-   - Synchronizes messages between server instances
-   - Manages presence (online/offline) and typing status
+5. **Kafka**: 
+   - Handles messaging and event processing between server instances
+   - Manages chat messages, notifications, and system events
+   - Ensures reliable message delivery even during high load
 6. **Data Layer**:
    - **MySQL**: Stores users, messages, chat rooms with sharding capability
-   - **Redis Cache**: Session data, JWT tokens, recent messages
+   - **Redis Cache**: Session data, JWT tokens, user presence information
    - **Cloudinary**: Image and file storage
 
 ### WebSocket Message Flow
 
 1. Client sends message via WebSocket to Server Instance X
 2. Server Instance X validates and saves message to MySQL
-3. Message is published to Redis Pub/Sub channel
-4. Redis distributes message to all Server Instances
+3. Message is published to Kafka topic
+4. Kafka distributes message to all consumer Server Instances
 5. Each Server Instance forwards message to connected recipients
 6. Push notifications sent to offline users
 
@@ -111,18 +114,44 @@ The codebase follows Clean Architecture principles with clear separation:
 - CORS, XSS, and CSRF protection
 - Input validation and sanitization
 
+## File Storage
+
+The application uses Cloudinary for secure file storage and management:
+
+### Cloudinary Integration
+
+- **Avatar uploads**: Profile picture management with automatic optimization
+- **Chat attachments**: Images, documents, and other media files in chat
+- **Secure uploads**: Client-side signed uploads for improved security
+- **Folder structure**: Organized content with proper access controls
+- **Image transformations**: On-the-fly resizing and optimization
+- **Direct upload**: Client can upload directly to Cloudinary after server authentication
+
+### Upload Process
+
+1. Server generates a signed upload token with specific permissions
+2. Client receives the token and uploads directly to Cloudinary
+3. Cloudinary validates the signature and processes the upload
+4. Server receives the upload notification and updates the database
+
 ## Tech Stack
 
-- **Go**: Main programming language
-- **MySQL**: Primary database
-- **Redis**: Caching and WebSocket message distribution
-- **WebSockets**: Real-time communication
-- **Docker**: Containerization
-- **Nginx**: Load balancing
-- **Swagger**: API documentation
-- **JWT**: Authentication
-- **Cloudinary**: File storage
-- **Kafka**: Message queuing (prepared infrastructure)
+- **Go 1.24+**: Main programming language with modern features and performance
+- **MySQL 8.0+**: Primary relational database for persistent storage
+- **Redis 6.0+**: Caching and session management
+- **Kafka 3.0+**: Message queuing and distributed event streaming platform
+- **WebSockets**: Real-time bidirectional communication protocol
+- **Docker & Docker Compose**: Application containerization and orchestration
+- **Nginx**: HTTP server and load balancer
+- **Swagger**: API documentation with OpenAPI specification
+- **JWT**: JSON Web Token based authentication
+- **Cloudinary**: Cloud-based image and video management service
+- **bcrypt**: Password hashing algorithm
+- **Gorilla WebSocket**: WebSocket implementation for Go
+- **GORM**: Object-relational mapping library for Go
+- **go-redis**: Redis client for Go
+- **Logrus**: Structured logging
+- **Viper**: Configuration management
 
 ## Project Structure
 
@@ -154,7 +183,9 @@ The codebase follows Clean Architecture principles with clear separation:
 - Go 1.24+
 - MySQL 8.0+
 - Redis 6.0+
-- Docker and Docker Compose (optional)
+- Kafka 3.0+ (optional, for event-driven features)
+- Cloudinary account (for file storage features)
+- Docker and Docker Compose (recommended)
 
 ### Installation
 
@@ -186,6 +217,44 @@ The codebase follows Clean Architecture principles with clear separation:
    ```
 
 The server will be available at `http://localhost:8080` by default.
+
+### Environment Configuration
+
+The `.env` file should include the following configuration:
+
+```env
+# Server
+SERVER_PORT=8080
+SERVER_MODE=development
+
+# Database
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=yourpassword
+DB_NAME=chat_app
+
+# Redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# JWT
+JWT_SECRET=your-secret-key
+JWT_EXPIRATION=24h
+
+# Cloudinary
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+
+# Kafka (optional)
+KAFKA_BROKERS=localhost:9092
+KAFKA_CHAT_TOPIC=chat-events
+KAFKA_STATUS_TOPIC=status-events
+KAFKA_CONSUMER_GROUP=chat-consumer-group
+```
 
 ### API Documentation
 
@@ -268,6 +337,33 @@ The system uses Redis for caching:
 - User's chat room lists
 - Authentication tokens
 - User status information
+
+## Message Queuing System
+
+The application relies on Kafka as the primary message queuing system for reliable message delivery and event processing:
+
+### Kafka Integration
+
+- **Producer/Consumer Model**: Asynchronous communication between system components
+- **Event Types**:
+  - `message_sent`: New messages in chat rooms
+  - `typing_started`/`typing_stopped`: User typing indicators
+  - `user_online`/`user_offline`: User presence events
+  - `user_joined_room`/`user_left_room`: Room participation events
+- **Benefits**:
+  - Guaranteed message delivery with persistence
+  - High throughput message processing
+  - Horizontal scalability for handling traffic spikes
+  - Message replay capabilities for system recovery
+  - Topic partitioning for ordered message processing
+- **Implementation**: Producer/Consumer implementations with error handling and retry mechanisms
+
+### Message Flow
+
+1. Events generated in the application are published to Kafka topics
+2. Consumer groups process events based on their responsibilities
+3. Events are partitioned by chat room ID for ordered processing
+4. Consumers implement idempotent operations for reliability
 
 ## Authentication
 
