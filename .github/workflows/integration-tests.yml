@@ -25,19 +25,21 @@ jobs:
           - 3306:3306
         options: >-
           --health-cmd="mysqladmin ping -h localhost -ptestpassword"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+          --health-start-period=30s
 
       redis:
-        image: redis:8.0-rc1
+        image: redis:7.2.4-alpine
         ports:
           - 6379:6379
         options: >-
           --health-cmd="redis-cli ping"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
+          --health-start-period=10s
 
     steps:
     - name: Checkout code
@@ -59,19 +61,43 @@ jobs:
     - name: Download dependencies
       run: go mod download
 
+    - name: Install MySQL and Redis clients
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mysql-client redis-tools
+
+    - name: Test database connectivity
+      run: |
+        chmod +x ./scripts/test-db-connectivity.sh
+        ./scripts/test-db-connectivity.sh
+
     - name: Wait for MySQL to be ready
       run: |
-        until mysqladmin ping -h"127.0.0.1" -P"3306" -u"root" -p"testpassword" --silent; do
-          echo 'Waiting for MySQL...'
+        max_attempts=60
+        attempt=1
+        until mysqladmin ping -h"127.0.0.1" -P"3306" -u"root" -p"testpassword" --silent 2>/dev/null; do
+          if [ $attempt -gt $max_attempts ]; then
+            echo "MySQL failed to start after $max_attempts attempts"
+            exit 1
+          fi
+          echo "Waiting for MySQL... (attempt $attempt/$max_attempts)"
           sleep 2
+          attempt=$((attempt + 1))
         done
         echo 'MySQL is ready!'
 
     - name: Wait for Redis to be ready
       run: |
-        until redis-cli -h 127.0.0.1 -p 6379 ping; do
-          echo 'Waiting for Redis...'
+        max_attempts=60
+        attempt=1
+        until redis-cli -h 127.0.0.1 -p 6379 ping > /dev/null 2>&1; do
+          if [ $attempt -gt $max_attempts ]; then
+            echo "Redis failed to start after $max_attempts attempts"
+            exit 1
+          fi
+          echo "Waiting for Redis... (attempt $attempt/$max_attempts)"
           sleep 2
+          attempt=$((attempt + 1))
         done
         echo 'Redis is ready!'
 

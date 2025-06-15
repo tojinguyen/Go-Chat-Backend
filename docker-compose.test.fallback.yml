@@ -26,7 +26,7 @@ services:
         max-file: "3"
 
   redis-test:
-    image: redis:7.2.4-alpine
+    image: redis:7.2.4-alpine  # Stable version as fallback
     container_name: realtime_chat_app_redis_test
     ports:
       - "6380:6379"  # Different port to avoid conflicts

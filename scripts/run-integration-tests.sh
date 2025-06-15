@@ -40,15 +40,19 @@ wait_for_mysql() {
     local port=${2:-3306}
     local user=${3:-root}
     local password=${4:-testpassword}
-    local max_attempts=30
+    local max_attempts=60
     local attempt=1
 
     print_status "Waiting for MySQL to be ready..."
     
     while [ $attempt -le $max_attempts ]; do
-        if mysqladmin ping -h"$host" -P"$port" -u"$user" -p"$password" --silent 2>/dev/null; then
-            print_success "MySQL is ready!"
-            return 0
+        # Check if port is open first
+        if nc -z "$host" "$port" 2>/dev/null; then
+            # If port is open, try MySQL ping command
+            if mysqladmin ping -h"$host" -P"$port" -u"$user" -p"$password" --silent 2>/dev/null; then
+                print_success "MySQL is ready!"
+                return 0
+            fi
         fi
         
         echo "Attempt $attempt/$max_attempts: MySQL not ready yet..."
@@ -64,15 +68,19 @@ wait_for_mysql() {
 wait_for_redis() {
     local host=${1:-127.0.0.1}
     local port=${2:-6379}
-    local max_attempts=30
+    local max_attempts=60
     local attempt=1
 
     print_status "Waiting for Redis to be ready..."
     
     while [ $attempt -le $max_attempts ]; do
-        if redis-cli -h "$host" -p "$port" ping >/dev/null 2>&1; then
-            print_success "Redis is ready!"
-            return 0
+        # Check if port is open first
+        if nc -z "$host" "$port" 2>/dev/null; then
+            # If port is open, try Redis ping command
+            if redis-cli -h "$host" -p "$port" ping >/dev/null 2>&1; then
+                print_success "Redis is ready!"
+                return 0
+            fi
         fi
         
         echo "Attempt $attempt/$max_attempts: Redis not ready yet..."

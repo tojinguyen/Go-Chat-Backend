@@ -52,17 +52,22 @@ function Wait-ForMySQL {
         [int]$Port = 3306,
         [string]$User = "root",
         [string]$Password = "testpassword",
-        [int]$MaxAttempts = 30
+        [int]$MaxAttempts = 60
     )
     
     Write-Status "Waiting for MySQL to be ready..."
     
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
         try {
-            $result = mysqladmin ping -h $Host -P $Port -u $User -p$Password --silent 2>$null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Success "MySQL is ready!"
-                return $true
+            # Check if port is open first
+            $portTest = Test-NetConnection -ComputerName $Host -Port $Port -InformationLevel Quiet -WarningAction SilentlyContinue
+            if ($portTest) {
+                # If port is open, try MySQL ping command
+                $result = mysqladmin ping -h $Host -P $Port -u $User -p$Password --silent 2>$null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Success "MySQL is ready!"
+                    return $true
+                }
             }
         }
         catch {
@@ -81,17 +86,22 @@ function Wait-ForRedis {
     param(
         [string]$Host = "127.0.0.1",
         [int]$Port = 6379,
-        [int]$MaxAttempts = 30
+        [int]$MaxAttempts = 60
     )
     
     Write-Status "Waiting for Redis to be ready..."
     
     for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
         try {
-            $result = redis-cli -h $Host -p $Port ping 2>$null
-            if ($LASTEXITCODE -eq 0) {
-                Write-Success "Redis is ready!"
-                return $true
+            # Use Test-NetConnection to check if port is open first
+            $portTest = Test-NetConnection -ComputerName $Host -Port $Port -InformationLevel Quiet -WarningAction SilentlyContinue
+            if ($portTest) {
+                # If port is open, try Redis ping command
+                $result = redis-cli -h $Host -p $Port ping 2>$null
+                if ($LASTEXITCODE -eq 0 -and $result -eq "PONG") {
+                    Write-Success "Redis is ready!"
+                    return $true
+                }
             }
         }
         catch {
