@@ -17,13 +17,13 @@ func TestRedisIntegration(t *testing.T) {
 	t.Run("set_and_get_string_integration", func(t *testing.T) {
 		key := "test:string:key"
 		value := "test string value"
-
 		// Set value
 		err := RedisService.Set(ctx, key, value, 5*time.Minute)
 		assert.NoError(t, err)
 
 		// Get value
-		retrievedValue, err := RedisService.Get(ctx, key)
+		var retrievedValue string
+		err = RedisService.Get(ctx, key, &retrievedValue)
 		assert.NoError(t, err)
 		assert.Equal(t, value, retrievedValue)
 
@@ -39,9 +39,9 @@ func TestRedisIntegration(t *testing.T) {
 		// Set value with short expiration
 		err := RedisService.Set(ctx, key, value, expiration)
 		assert.NoError(t, err)
-
 		// Get value immediately
-		retrievedValue, err := RedisService.Get(ctx, key)
+		var retrievedValue string
+		err = RedisService.Get(ctx, key, &retrievedValue)
 		assert.NoError(t, err)
 		assert.Equal(t, value, retrievedValue)
 
@@ -49,9 +49,8 @@ func TestRedisIntegration(t *testing.T) {
 		time.Sleep(3 * time.Second)
 
 		// Try to get expired value
-		retrievedValue, err = RedisService.Get(ctx, key)
+		err = RedisService.Get(ctx, key, &retrievedValue)
 		assert.Error(t, err)
-		assert.Equal(t, "", retrievedValue)
 		assert.Contains(t, err.Error(), "redis: nil")
 	})
 
@@ -62,9 +61,9 @@ func TestRedisIntegration(t *testing.T) {
 		// Set value
 		err := RedisService.Set(ctx, key, value, 5*time.Minute)
 		assert.NoError(t, err)
-
 		// Verify it exists
-		retrievedValue, err := RedisService.Get(ctx, key)
+		var retrievedValue string
+		err = RedisService.Get(ctx, key, &retrievedValue)
 		assert.NoError(t, err)
 		assert.Equal(t, value, retrievedValue)
 
@@ -73,18 +72,16 @@ func TestRedisIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Verify it's deleted
-		retrievedValue, err = RedisService.Get(ctx, key)
+		err = RedisService.Get(ctx, key, &retrievedValue)
 		assert.Error(t, err)
-		assert.Equal(t, "", retrievedValue)
 	})
 
 	t.Run("get_nonexistent_key_integration", func(t *testing.T) {
 		key := "test:nonexistent:key"
-
 		// Try to get non-existent key
-		value, err := RedisService.Get(ctx, key)
+		var value string
+		err := RedisService.Get(ctx, key, &value)
 		assert.Error(t, err)
-		assert.Equal(t, "", value)
 		assert.Contains(t, err.Error(), "redis: nil")
 	})
 
@@ -97,9 +94,9 @@ func TestRedisIntegration(t *testing.T) {
 		// Store refresh token
 		err := RedisService.Set(ctx, refreshTokenKey, refreshToken, expiration)
 		assert.NoError(t, err)
-
 		// Retrieve refresh token
-		storedToken, err := RedisService.Get(ctx, refreshTokenKey)
+		var storedToken string
+		err = RedisService.Get(ctx, refreshTokenKey, &storedToken)
 		assert.NoError(t, err)
 		assert.Equal(t, refreshToken, storedToken)
 
@@ -109,7 +106,7 @@ func TestRedisIntegration(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Verify new token
-		storedToken, err = RedisService.Get(ctx, refreshTokenKey)
+		err = RedisService.Get(ctx, refreshTokenKey, &storedToken)
 		assert.NoError(t, err)
 		assert.Equal(t, newRefreshToken, storedToken)
 
@@ -129,9 +126,9 @@ func TestRedisIntegration(t *testing.T) {
 		// Immediately set second value (should overwrite)
 		err = RedisService.Set(ctx, key, value2, 5*time.Minute)
 		assert.NoError(t, err)
-
 		// Get final value
-		retrievedValue, err := RedisService.Get(ctx, key)
+		var retrievedValue string
+		err = RedisService.Get(ctx, key, &retrievedValue)
 		assert.NoError(t, err)
 		assert.Equal(t, value2, retrievedValue)
 
@@ -156,10 +153,10 @@ func TestRedisIntegration(t *testing.T) {
 			err := RedisService.Set(ctx, key, values[i], 5*time.Minute)
 			assert.NoError(t, err)
 		}
-
 		// Get and verify all keys
 		for i, key := range keys {
-			retrievedValue, err := RedisService.Get(ctx, key)
+			var retrievedValue string
+			err := RedisService.Get(ctx, key, &retrievedValue)
 			assert.NoError(t, err)
 			assert.Equal(t, values[i], retrievedValue)
 		}
@@ -171,7 +168,8 @@ func TestRedisIntegration(t *testing.T) {
 
 		// Verify all keys are deleted
 		for _, key := range keys {
-			_, err := RedisService.Get(ctx, key)
+			var temp string
+			err := RedisService.Get(ctx, key, &temp)
 			assert.Error(t, err)
 		}
 	})
@@ -187,8 +185,8 @@ func TestRedisIntegration(t *testing.T) {
 
 		err = RedisService.Set(ctx, testKey, testValue, time.Minute)
 		assert.NoError(t, err)
-
-		retrievedValue, err := RedisService.Get(ctx, testKey)
+		var retrievedValue string
+		err = RedisService.Get(ctx, testKey, &retrievedValue)
 		assert.NoError(t, err)
 		assert.Equal(t, testValue, retrievedValue)
 

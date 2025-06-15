@@ -4,14 +4,15 @@ package integration
 
 import (
 	"context"
+	"mime/multipart"
 	"testing"
 	"time"
 
 	"gochat-backend/config"
 	domain "gochat-backend/internal/domain/auth"
+	"gochat-backend/internal/infra/cloudinaryinfra"
 	"gochat-backend/internal/repository"
 	"gochat-backend/internal/usecase/auth"
-	"gochat-backend/pkg/email"
 	"gochat-backend/pkg/jwt"
 	"gochat-backend/pkg/verification"
 
@@ -22,19 +23,19 @@ import (
 
 func TestAuthUseCaseIntegration_Login(t *testing.T) {
 	// Clean up before test
-	cleanupTestData()
-	// Setup repositories and services
+	cleanupTestData() // Setup repositories and services
 	accountRepo := repository.NewAccountRepo(MySQLService, RedisService)
-	jwtService := jwt.NewJwtService(TestEnv)
+	jwtService := jwt.NewJwtService(TestEnv, RedisService)
 	redisService := RedisService
 
 	// Create auth use case
 	authUseCase := auth.NewAuthUseCase(
-		accountRepo,
-		nil, // verification repo not needed for login
+		TestEnv,
 		jwtService,
 		nil, // email service not needed for login
 		nil, // verification service not needed for login
+		accountRepo,
+		nil, // verification repo not needed for login
 		nil, // cloudinary service not needed for login
 		redisService,
 	)
@@ -75,9 +76,9 @@ func TestAuthUseCaseIntegration_Login(t *testing.T) {
 		assert.Equal(t, "Test User", result.FullName)
 		assert.Equal(t, config.USER, result.Role)
 		assert.Equal(t, "https://example.com/avatar.jpg", result.AvatarUrl)
-
 		// Verify refresh token is stored in Redis
-		storedToken, err := redisService.Get(ctx, "refresh_token:test-user-123")
+		var storedToken string
+		err = RedisService.Get(ctx, "refresh_token:test-user-123", &storedToken)
 		assert.NoError(t, err)
 		assert.Equal(t, result.RefreshToken, storedToken)
 	})
@@ -111,25 +112,24 @@ func TestAuthUseCaseIntegration_Login(t *testing.T) {
 
 func TestAuthUseCaseIntegration_Register(t *testing.T) {
 	// Clean up before test
-	cleanupTestData()
-	// Setup repositories and services
+	cleanupTestData() // Setup repositories and services
 	accountRepo := repository.NewAccountRepo(MySQLService, RedisService)
 	verificationRepo := repository.NewVerificationRepo(MySQLService)
-	jwtService := jwt.NewJwtService(TestEnv)
+	jwtService := jwt.NewJwtService(TestEnv, RedisService)
 	emailService := &MockEmailService{} // Mock email service for integration test
 	verificationService := verification.NewVerificationService(TestEnv)
 	cloudinaryService := &MockCloudinaryService{} // Mock cloudinary service for integration test
-	redisService := RedisService
 
 	// Create auth use case
 	authUseCase := auth.NewAuthUseCase(
-		accountRepo,
-		verificationRepo,
+		TestEnv,
 		jwtService,
 		emailService,
 		verificationService,
+		accountRepo,
+		verificationRepo,
 		cloudinaryService,
-		redisService,
+		RedisService,
 	)
 
 	ctx := context.Background()
@@ -142,10 +142,11 @@ func TestAuthUseCaseIntegration_Register(t *testing.T) {
 		}
 
 		result, err := authUseCase.Register(ctx, input)
-
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.Equal(t, "Registration successful! Please check your email for verification code.", result.Message)
+		assert.Equal(t, "New User", result.Name)
+		assert.Equal(t, "newuser@example.com", result.Email)
+		assert.NotEmpty(t, result.ID)
 		// Verify verification code was created in database
 		verificationCode, err := verificationRepo.GetVerificationCodeByEmail(ctx, "newuser@example.com")
 		assert.NoError(t, err)
@@ -154,7 +155,6 @@ func TestAuthUseCaseIntegration_Register(t *testing.T) {
 		assert.NotEmpty(t, verificationCode.Code)
 		assert.Nil(t, verificationCode.VerifiedAt)
 	})
-
 	t.Run("email_already_exists_integration", func(t *testing.T) {
 		// First, create a user
 		testUser := &domain.Account{
@@ -164,7 +164,8 @@ func TestAuthUseCaseIntegration_Register(t *testing.T) {
 			Password:  "hashedpassword",
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
-		}		err := accountRepo.CreateUser(ctx, testUser)
+		}
+		err := accountRepo.CreateUser(ctx, testUser)
 		require.NoError(t, err)
 
 		// Try to register with the same email
@@ -184,22 +185,26 @@ func TestAuthUseCaseIntegration_Register(t *testing.T) {
 
 func TestAuthUseCaseIntegration_VerifyRegistration(t *testing.T) {
 	// Clean up before test
-	cleanupTestData()
-	// Setup repositories and services
+	cleanupTestData() // Setup repositories and services
 	accountRepo := repository.NewAccountRepo(MySQLService, RedisService)
 	verificationRepo := repository.NewVerificationRepo(MySQLService)
-	jwtService := jwt.NewJwtService(TestEnv)
-	redisService := RedisService
+	jwtService := jwt.NewJwtService(TestEnv, RedisService)
+
+	// Create mock services
+	emailService := &MockEmailService{}
+	verificationService := verification.NewVerificationService(TestEnv)
+	cloudinaryService := &MockCloudinaryService{}
 
 	// Create auth use case
 	authUseCase := auth.NewAuthUseCase(
+		TestEnv,
+		jwtService,
+		emailService,
+		verificationService,
 		accountRepo,
 		verificationRepo,
-		jwtService,
-		nil, // email service not needed for verification
-		nil, // verification service not needed for verification
-		nil, // cloudinary service not needed for verification
-		redisService,
+		cloudinaryService,
+		RedisService,
 	)
 
 	ctx := context.Background()
@@ -228,13 +233,11 @@ func TestAuthUseCaseIntegration_VerifyRegistration(t *testing.T) {
 		}
 
 		result, err := authUseCase.VerifyRegistration(ctx, input)
-
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
-		assert.NotEmpty(t, result.AccessToken)
-		assert.NotEmpty(t, result.RefreshToken)
 		assert.Equal(t, "verify@example.com", result.Email)
-		assert.Equal(t, "Test User", result.FullName)
+		assert.Equal(t, "Test User", result.Name)
+		assert.NotEmpty(t, result.ID)
 
 		// Verify user account was created
 		account, err := accountRepo.FindByEmail(ctx, "verify@example.com")
@@ -321,14 +324,20 @@ func TestAuthUseCaseIntegration_VerifyRegistration(t *testing.T) {
 // Mock services for integration tests
 type MockEmailService struct{}
 
-func (m *MockEmailService) SendEmail(input *email.SendEmailInput) error {
-	// Mock implementation - just return success
+func (m *MockEmailService) SendVerificationCode(toEmail string, code string, codeType verification.VerificationCodeType) error {
 	return nil
 }
 
 type MockCloudinaryService struct{}
 
-func (m *MockCloudinaryService) UploadImage(imageData []byte, publicId string) (string, error) {
-	// Mock implementation - return a fake URL
-	return "https://example.com/uploaded-image.jpg", nil
+func (m *MockCloudinaryService) UploadAvatar(file *multipart.FileHeader, folderPath string) (string, error) {
+	return "https://example.com/avatar.jpg", nil
+}
+
+func (m *MockCloudinaryService) MoveAvatar(avatarUrl string, fileName string) (string, error) {
+	return "https://example.com/avatar.jpg", nil
+}
+
+func (m *MockCloudinaryService) GenerateUploadSignature(folderName string, resourceType string, optionalPublicID ...string) (*cloudinaryinfra.UploadSignatureResponse, error) {
+	return &cloudinaryinfra.UploadSignatureResponse{}, nil
 }

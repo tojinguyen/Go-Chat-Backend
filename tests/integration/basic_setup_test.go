@@ -24,14 +24,13 @@ func TestBasicIntegrationSetup(t *testing.T) {
 		assert.NotNil(t, MySQLService)
 		assert.NotNil(t, MySQLService.DB)
 	})
-
 	t.Run("redis_connection_working", func(t *testing.T) {
 		assert.NotNil(t, TestRedis)
-		ctx := timeoutContext()
+		ctx, cancel := timeoutContext()
+		defer cancel()
 		err := TestRedis.Ping(ctx).Err()
 		assert.NoError(t, err)
 
 		assert.NotNil(t, RedisService)
-		assert.NotNil(t, RedisService.Client)
 	})
 }

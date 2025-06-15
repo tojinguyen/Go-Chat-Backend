@@ -25,7 +25,7 @@ var (
 	TestDB       *sql.DB
 	TestRedis    *redis.Client
 	MySQLService *mysqlinfra.Database
-	RedisService *redisinfra.RedisService
+	RedisService redisinfra.RedisService
 )
 
 func TestMain(m *testing.M) {
@@ -108,20 +108,20 @@ func setupTestRedis() error {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", TestEnv.RedisHost, TestEnv.RedisPort),
 		Password: TestEnv.RedisPassword,
-		DB:       TestEnv.RedisDB,
-	})
-
-	// Test connection
-	ctx := timeoutContext()
+		DB:       TestEnv.RedisDB}) // Test connection
+	ctx, cancel := timeoutContext()
+	defer cancel()
 	if err := rdb.Ping(ctx).Err(); err != nil {
 		return fmt.Errorf("failed to ping test Redis: %v", err)
 	}
 
 	TestRedis = rdb
 
-	// Create Redis service
-	RedisService = &redisinfra.RedisService{
-		Client: TestRedis,
+	// Create Redis service using the public constructor
+	var err error
+	RedisService, err = redisinfra.NewRedisService(TestEnv)
+	if err != nil {
+		return fmt.Errorf("failed to create Redis service: %v", err)
 	}
 
 	return nil
@@ -144,15 +144,14 @@ func cleanupTestData() {
 			log.Printf("Warning: Failed to cleanup table %s: %v", table, err)
 		}
 	}
-
 	// Clean up Redis
 	if TestRedis != nil {
-		ctx := timeoutContext()
+		ctx, cancel := timeoutContext()
+		defer cancel()
 		TestRedis.FlushDB(ctx)
 	}
 }
 
-func timeoutContext() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
-	return ctx
+func timeoutContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 10*time.Second)
 }
