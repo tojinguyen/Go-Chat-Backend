@@ -64,7 +64,7 @@ type Environment struct {
 	// Redis Config
 	RedisHost     string `env:"REDIS_HOST,required=true"`
 	RedisPort     int    `env:"REDIS_PORT,required=true"`
-	RedisPassword string `env:"REDIS_PASSWORD,required=true"`
+	RedisPassword string `env:"REDIS_PASSWORD"`
 	RedisDB       int    `env:"REDIS_DB,default=0"`
 
 	// Kafka Config

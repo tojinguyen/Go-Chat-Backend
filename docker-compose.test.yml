@@ -46,6 +46,64 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Test migration service for running migrations
+  migrate-test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: realtime_chat_app_migrate_test
+    environment:
+      # App Config
+      - RUN_MODE=test
+      - PORT=8080
+      
+      # MySQL Test Config
+      - MYSQL_HOST=mysql-test
+      - MYSQL_PORT=3306
+      - MYSQL_USER=testuser
+      - MYSQL_PASSWORD=testpassword
+      - MYSQL_DATABASE=gochat_test
+      - MYSQL_SSL_MODE=disable
+      - MYSQL_MIGRATE_MODE=auto
+      
+      # Required environment variables (can be dummy values for migration)
+      - ACCESS_TOKEN_SECRET_KEY=test_access_secret
+      - REFRESH_TOKEN_SECRET_KEY=test_refresh_secret
+      - FRONTEND_URI=http://localhost:3000
+      - FRONTEND_PORT=3000
+      - EMAIL_HOST=smtp.test.com
+      - EMAIL_PORT=587
+      - EMAIL_USER=test@test.com
+      - EMAIL_PASS=testpass
+      - EMAIL_FROM=test@test.com
+      - EMAIL_NAME=Test App
+      - CLOUDINARY_CLOUD_NAME=test
+      - CLOUDINARY_API_KEY=test
+      - CLOUDINARY_API_SECRET=test
+      - REDIS_HOST=redis-test
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+      - KAFKA_BROKERS=localhost:9092
+      - KAFKA_CHAT_TOPIC=test_topic
+      - KAFKA_CONSUMER_GROUP=test_group
+      
+      # Goose Migration
+      - GOOSE_DRIVER=mysql
+      - GOOSE_DBSTRING=testuser:testpassword@tcp(mysql-test:3306)/gochat_test?parseTime=true
+      - GOOSE_MIGRATION_DIR=migrations/mysql
+      
+    networks:
+      - chat_app_test_network
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+    profiles:
+      - migration  # Use profile to run this service only when needed
+    restart: "no"
+
 networks:
   chat_app_test_network:
     driver: bridge

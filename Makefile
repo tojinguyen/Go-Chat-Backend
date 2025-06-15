@@ -37,13 +37,43 @@ test-all:
 	$(MAKE) test-unit
 	$(MAKE) test-integration
 
-# Run migrations for testing
+# Run migrations for testing using Goose
 migrate-test:
-	go run ./cmd/migrate/main.go
+	@echo "Running test migrations with Goose..."
+	@powershell -Command "$$env:GOOSE_DRIVER='mysql'; $$env:GOOSE_DBSTRING='testuser:testpassword@tcp(localhost:3307)/gochat_test?parseTime=true'; goose -dir migrations/mysql up"
+
+# Run migrations for testing with environment from .env.test (if exists)
+migrate-test-env:
+ifneq (,$(wildcard ./.env.test))
+	set -a; source .env.test; set +a; go run ./cmd/migrate/main.go
+else
+	@echo "⚠️  .env.test file not found. Creating from example..."
+	@echo "📋 Copy .env.test.example to .env.test and update values as needed"
+	@echo "🔧 Or use: make migrate-test-docker to run migration in Docker"
+endif
+
+# Run test migration with PowerShell script (Windows)
+migrate-test-windows:
+	@echo "🪟 Running test migration with PowerShell..."
+	powershell -ExecutionPolicy Bypass -File "./scripts/run-test-migration.ps1"
+
+# Run test migration with bash script (Unix/Linux/macOS)
+migrate-test-unix:
+	@echo "🐧 Running test migration with bash..."
+	bash ./scripts/run-test-migration.sh
+
+# Run migrations using Docker with test environment
+migrate-test-docker:
+	@echo "🐳 Running test migration in Docker..."
+	docker-compose -f docker-compose.test.yml up -d mysql-test redis-test --wait
+	@echo "Running Goose migrations..."
+	@GOOSE_DRIVER=mysql GOOSE_DBSTRING="testuser:testpassword@tcp(localhost:3307)/gochat_test?parseTime=true" \
+	goose -dir migrations/mysql up
+	@echo "Migration completed, containers still running for testing"
 
 # Setup test database
 setup-test-db:
-	docker-compose -f docker-compose.test.yml up -d mysql redis --wait
+	docker-compose -f docker-compose.test.yml up -d mysql-test redis-test --wait
 	sleep 10
 	$(MAKE) migrate-test
 
