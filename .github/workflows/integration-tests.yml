@@ -1,0 +1,197 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [ "master", "main", "develop" ]
+  pull_request:
+    branches: [ "master", "main", "develop" ]
+
+env:
+  GO_VERSION: '1.24.2'
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0.41-debian
+        env:
+          MYSQL_ROOT_PASSWORD: testpassword
+          MYSQL_DATABASE: gochat_test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpassword
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -ptestpassword"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:8.0-rc1
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Cache Go modules
+      uses: actions/cache@v3
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Wait for MySQL to be ready
+      run: |
+        until mysqladmin ping -h"127.0.0.1" -P"3306" -u"root" -p"testpassword" --silent; do
+          echo 'Waiting for MySQL...'
+          sleep 2
+        done
+        echo 'MySQL is ready!'
+
+    - name: Wait for Redis to be ready
+      run: |
+        until redis-cli -h 127.0.0.1 -p 6379 ping; do
+          echo 'Waiting for Redis...'
+          sleep 2
+        done
+        echo 'Redis is ready!'
+
+    - name: Run database migrations
+      env:
+        MYSQL_HOST: 127.0.0.1
+        MYSQL_PORT: 3306
+        MYSQL_USER: root
+        MYSQL_PASSWORD: testpassword
+        MYSQL_DATABASE: gochat_test
+        MYSQL_SSL_MODE: disable
+        MYSQL_MIGRATE_MODE: up
+      run: |
+        go run ./cmd/migrate/main.go
+
+    - name: Run integration tests
+      env:
+        # Database config
+        MYSQL_HOST: 127.0.0.1
+        MYSQL_PORT: 3306
+        MYSQL_USER: root
+        MYSQL_PASSWORD: testpassword
+        MYSQL_DATABASE: gochat_test
+        MYSQL_SSL_MODE: disable
+        MYSQL_MIGRATE_MODE: auto
+        MYSQL_MAX_OPEN_CONNS: 10
+        MYSQL_MAX_IDLE_CONNS: 5
+        MYSQL_CONN_MAX_LIFETIME: 300
+        MYSQL_CONN_MAX_IDLE_TIME: 300
+        
+        # Redis config
+        REDIS_HOST: 127.0.0.1
+        REDIS_PORT: 6379
+        REDIS_PASSWORD: ""
+        REDIS_DB: 0
+        
+        # JWT config
+        ACCESS_TOKEN_SECRET_KEY: test-access-secret-key-for-testing-only
+        ACCESS_TOKEN_EXPIRE_MINUTES: 60
+        REFRESH_TOKEN_SECRET_KEY: test-refresh-secret-key-for-testing-only
+        REFRESH_TOKEN_EXPIRE_MINUTES: 1440
+        
+        # Email config (mock values for testing)
+        EMAIL_HOST: smtp.test.com
+        EMAIL_PORT: 587
+        EMAIL_USER: test@test.com
+        EMAIL_PASSWORD: testpassword
+        
+        # Frontend config
+        FRONTEND_URI: http://localhost:3000
+        FRONTEND_PORT: 3000
+        
+        # App config
+        RUN_MODE: test
+        PORT: 8080
+        CORS_ALLOW_ORIGIN: http://localhost:3000
+        
+        # Cloudinary config (mock values for testing)
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
+        
+        # Kafka config (mock values for testing)
+        KAFKA_BROKER_URLS: localhost:9092
+        KAFKA_CONSUMER_GROUP: test-consumer-group
+        
+        # Verification config
+        VERIFICATION_CODE_EXPIRE_MINUTES: 15
+      run: |
+        go test -v -tags=integration ./tests/integration/...
+
+    - name: Run integration tests with coverage
+      env:
+        # Same environment variables as above
+        MYSQL_HOST: 127.0.0.1
+        MYSQL_PORT: 3306
+        MYSQL_USER: root
+        MYSQL_PASSWORD: testpassword
+        MYSQL_DATABASE: gochat_test
+        MYSQL_SSL_MODE: disable
+        MYSQL_MIGRATE_MODE: auto
+        MYSQL_MAX_OPEN_CONNS: 10
+        MYSQL_MAX_IDLE_CONNS: 5
+        MYSQL_CONN_MAX_LIFETIME: 300
+        MYSQL_CONN_MAX_IDLE_TIME: 300
+        REDIS_HOST: 127.0.0.1
+        REDIS_PORT: 6379
+        REDIS_PASSWORD: ""
+        REDIS_DB: 0
+        ACCESS_TOKEN_SECRET_KEY: test-access-secret-key-for-testing-only
+        ACCESS_TOKEN_EXPIRE_MINUTES: 60
+        REFRESH_TOKEN_SECRET_KEY: test-refresh-secret-key-for-testing-only
+        REFRESH_TOKEN_EXPIRE_MINUTES: 1440
+        EMAIL_HOST: smtp.test.com
+        EMAIL_PORT: 587
+        EMAIL_USER: test@test.com
+        EMAIL_PASSWORD: testpassword
+        FRONTEND_URI: http://localhost:3000
+        FRONTEND_PORT: 3000
+        RUN_MODE: test
+        PORT: 8080
+        CORS_ALLOW_ORIGIN: http://localhost:3000
+        CLOUDINARY_CLOUD_NAME: test-cloud
+        CLOUDINARY_API_KEY: test-api-key
+        CLOUDINARY_API_SECRET: test-api-secret
+        KAFKA_BROKER_URLS: localhost:9092
+        KAFKA_CONSUMER_GROUP: test-consumer-group
+        VERIFICATION_CODE_EXPIRE_MINUTES: 15
+      run: |
+        go test -v -tags=integration -coverprofile=integration-coverage.out ./tests/integration/...
+
+    - name: Upload integration test coverage
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./integration-coverage.out
+        flags: integration-tests
+        name: codecov-integration
+        fail_ci_if_error: false
+
+    - name: Cleanup test database
+      if: always()
+      run: |
+        mysql -h127.0.0.1 -P3306 -uroot -ptestpassword -e "DROP DATABASE IF EXISTS gochat_test;"

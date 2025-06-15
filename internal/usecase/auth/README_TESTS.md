@@ -85,8 +85,78 @@ Tất cả các test cases đã PASS và cover:
 ## Tiếp Theo
 
 Có thể mở rộng với:
-1. **Integration tests** - Test với database thật
+1. **Integration tests** - Test với database thật ✅ **ĐÃ HOÀN THÀNH**
 2. **Performance tests** - Test hiệu năng
-3. **Repository layer tests** - Test cho repository layer
+3. **Repository layer tests** - Test cho repository layer ✅ **ĐÃ HOÀN THÀNH** 
 4. **Handler layer tests** - Test cho HTTP handlers
 5. **WebSocket tests** - Test cho socket communication
+
+## ✅ Integration Tests Đã Hoàn Thành
+
+### Cấu trúc Integration Tests
+```
+tests/integration/
+├── setup_test.go                    # Test setup và teardown
+├── auth_integration_test.go         # Auth use case integration tests  
+├── repository_integration_test.go   # Repository layer integration tests
+└── redis_integration_test.go        # Redis operations integration tests
+```
+
+### Tính năng Integration Tests
+- ✅ **Real Database Testing** - Test với MySQL thật
+- ✅ **Real Redis Testing** - Test với Redis thật
+- ✅ **GitHub Actions CI/CD** - Tự động chạy trên GitHub
+- ✅ **Docker Support** - Setup database với Docker
+- ✅ **Coverage Reports** - Báo cáo coverage riêng biệt
+- ✅ **Automatic Cleanup** - Tự động dọn dẹp test data
+
+### Chạy Integration Tests
+
+#### Sử dụng scripts (Khuyến nghị):
+```bash
+# Windows PowerShell
+.\scripts\run-integration-tests.ps1
+
+# Linux/macOS
+./scripts/run-integration-tests.sh
+```
+
+#### Sử dụng Makefile:
+```bash
+# Chạy integration tests với Docker
+make test-integration-docker
+
+# Chạy tất cả tests (unit + integration)
+make test-all
+```
+
+#### Thủ công:
+```bash
+# 1. Start test databases
+docker-compose -f docker-compose.test.yml up -d
+
+# 2. Run migrations  
+go run ./cmd/migrate/main.go
+
+# 3. Run integration tests
+go test -v -tags=integration ./tests/integration/...
+
+# 4. Stop test databases
+docker-compose -f docker-compose.test.yml down -v
+```
+
+### GitHub Actions Integration
+- Tự động chạy trên push/PR đến `main`, `master`, `develop`
+- Setup MySQL 8.0 và Redis services
+- Chạy migrations và integration tests
+- Upload coverage reports
+- Workflow file: `.github/workflows/integration-tests.yml`
+
+### Test Coverage Integration
+- **Auth Use Case**: Login, Register, Verify với real database
+- **Repository Layer**: Account, Verification CRUD operations 
+- **Redis Operations**: Set/Get, Expiration, Cleanup
+- **Database Constraints**: Foreign keys, unique constraints
+- **Transaction Handling**: Commit/rollback scenarios
+
+**Xem chi tiết**: [Integration Tests README](../../../tests/integration/README.md)

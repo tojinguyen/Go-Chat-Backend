@@ -17,6 +17,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.8.0
 	github.com/sirupsen/logrus v1.9.3
+	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
 	github.com/swaggo/swag v1.16.4
@@ -25,10 +26,8 @@ require (
 )
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 )
 
 require (
