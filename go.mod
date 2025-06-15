@@ -9,7 +9,7 @@ require (
 	github.com/cloudinary/cloudinary-go/v2 v2.10.0
 	github.com/dlclark/regexp2 v1.11.5
 	github.com/gin-contrib/cors v1.7.5
-	github.com/gin-gonic/gin v1.10.0
+	github.com/gin-gonic/gin v1.10.1
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/go-sql-driver/mysql v1.9.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -22,6 +22,13 @@ require (
 	github.com/swaggo/swag v1.16.4
 	golang.org/x/crypto v0.38.0
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
+)
+
+require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 )
 
 require (
