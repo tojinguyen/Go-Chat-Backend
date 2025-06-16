@@ -37,4 +37,9 @@ Thumbs.db
 # Env files (NEVER commit secrets!)
 # ====================================
 .env
-.env.*
+.env.local
+.env.production
+
+
+# Allow test environment file
+!.env.test
