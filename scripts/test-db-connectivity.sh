@@ -150,10 +150,10 @@ test_mysql_connection() {
 # Main function
 main() {
     local redis_host=${REDIS_HOST:-127.0.0.1}
-    local redis_port=${REDIS_PORT:-6379}
+    local redis_port=${REDIS_PORT:-6380}
     local mysql_host=${MYSQL_HOST:-127.0.0.1}
-    local mysql_port=${MYSQL_PORT:-3306}
-    local mysql_user=${MYSQL_USER:-root}
+    local mysql_port=${MYSQL_PORT:-3307}
+    local mysql_user=${MYSQL_USER:-test_user}
     local mysql_password=${MYSQL_PASSWORD:-test_password}
     
     print_status "Starting database connectivity tests..."

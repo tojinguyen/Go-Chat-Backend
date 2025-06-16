@@ -194,22 +194,25 @@ start_test_databases() {
         print_status "Waiting for containers to initialize..."
         sleep 5
         
-        # Get MySQL root password from docker-compose or environment
+        # Get MySQL credentials from docker-compose or environment
         local mysql_root_password="${MYSQL_PASSWORD:-test_password}"
+        local mysql_user="${MYSQL_USER:-test_user}"
         local mysql_host="127.0.0.1"
         local mysql_port="3307"  # Port mapped in docker-compose.test.yml
         local redis_host="127.0.0.1"
         local redis_port="6380"  # Port mapped in docker-compose.test.yml
         
-        print_status "Waiting for MySQL on $mysql_host:$mysql_port with password length: ${#mysql_root_password}"
+        print_status "Waiting for MySQL on $mysql_host:$mysql_port with user '$mysql_user' and password length: ${#mysql_root_password}"
         
         # Wait for databases to be ready using mapped ports
-        wait_for_mysql "$mysql_host" "$mysql_port" "root" "$mysql_root_password"
+        wait_for_mysql "$mysql_host" "$mysql_port" "$mysql_user" "$mysql_root_password"
         wait_for_redis "$redis_host" "$redis_port"
         
         # Update environment for test databases (use mapped ports)
         export MYSQL_HOST="$mysql_host"
         export MYSQL_PORT="$mysql_port"
+        export MYSQL_USER="$mysql_user"
+        export MYSQL_PASSWORD="$mysql_root_password"
         export REDIS_HOST="$redis_host"
         export REDIS_PORT="$redis_port"
         
@@ -333,9 +336,10 @@ main() {
     else
         print_status "Using existing databases (--no-docker specified)"
         
-        # Wait for existing databases
-        wait_for_mysql "$MYSQL_HOST" "$MYSQL_PORT" "$MYSQL_USER" "$MYSQL_PASSWORD"
-        wait_for_redis "$REDIS_HOST" "$REDIS_PORT"
+        # When using existing databases, use the environment variables as-is
+        # This supports both local development and CI environments
+        wait_for_mysql "${MYSQL_HOST:-127.0.0.1}" "${MYSQL_PORT:-3306}" "${MYSQL_USER:-root}" "${MYSQL_PASSWORD:-test_password}"
+        wait_for_redis "${REDIS_HOST:-127.0.0.1}" "${REDIS_PORT:-6379}"
     fi
     
     # Run migrations unless skipped
