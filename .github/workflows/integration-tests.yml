@@ -17,14 +17,14 @@ jobs:
       mysql:
         image: mysql:8.0.41-debian
         env:
-          MYSQL_ROOT_PASSWORD: testpassword
-          MYSQL_DATABASE: gochat_test
-          MYSQL_USER: testuser
-          MYSQL_PASSWORD: testpassword
+          MYSQL_ROOT_PASSWORD: test_password
+          MYSQL_DATABASE: chat_app_test_db
+          MYSQL_USER: test_user
+          MYSQL_PASSWORD: test_password
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -ptestpassword"
+          --health-cmd="mysqladmin ping -h localhost -ptest_password"
           --health-interval=5s
           --health-timeout=3s
           --health-retries=10
@@ -66,6 +66,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y mysql-client redis-tools
 
+    - name: Setup environment variables
+      run: |
+        cp .env.test .env
+        echo "Environment variables loaded from .env.test"
+
     - name: Test database connectivity
       run: |
         chmod +x ./scripts/test-db-connectivity.sh
@@ -75,7 +80,7 @@ jobs:
       run: |
         max_attempts=60
         attempt=1
-        until mysqladmin ping -h"127.0.0.1" -P"3306" -u"root" -p"testpassword" --silent 2>/dev/null; do
+        until mysqladmin ping -h"127.0.0.1" -P"3306" -u"root" -p"test_password" --silent 2>/dev/null; do
           if [ $attempt -gt $max_attempts ]; then
             echo "MySQL failed to start after $max_attempts attempts"
             exit 1
@@ -102,116 +107,14 @@ jobs:
         echo 'Redis is ready!'
 
     - name: Run database migrations
-      env:
-        RUN_MODE: test
-        MYSQL_HOST: 127.0.0.1
-        MYSQL_PORT: 3306
-        MYSQL_USER: root
-        MYSQL_PASSWORD: testpassword
-        MYSQL_DATABASE: gochat_test
-        MYSQL_SSL_MODE: disable
-        MYSQL_MIGRATE_MODE: up
-
-        ACCESS_TOKEN_SECRET_KEY: test-access-secret-key-for-testing-only
-        ACCESS_TOKEN_EXPIRE_MINUTES: 60
-        REFRESH_TOKEN_SECRET_KEY: test-refresh-secret-key-for-testing-only
-        REFRESH_TOKEN_EXPIRE_MINUTES: 1440
       run: |
         go run ./cmd/migrate/main.go
 
     - name: Run integration tests
-      env:
-        # Database config
-        MYSQL_HOST: 127.0.0.1
-        MYSQL_PORT: 3306
-        MYSQL_USER: root
-        MYSQL_PASSWORD: testpassword
-        MYSQL_DATABASE: gochat_test
-        MYSQL_SSL_MODE: disable
-        MYSQL_MIGRATE_MODE: auto
-        MYSQL_MAX_OPEN_CONNS: 10
-        MYSQL_MAX_IDLE_CONNS: 5
-        MYSQL_CONN_MAX_LIFETIME: 300
-        MYSQL_CONN_MAX_IDLE_TIME: 300
-        
-        # Redis config
-        REDIS_HOST: 127.0.0.1
-        REDIS_PORT: 6379
-        REDIS_PASSWORD: ""
-        REDIS_DB: 0
-        
-        # JWT config
-        ACCESS_TOKEN_SECRET_KEY: test-access-secret-key-for-testing-only
-        ACCESS_TOKEN_EXPIRE_MINUTES: 60
-        REFRESH_TOKEN_SECRET_KEY: test-refresh-secret-key-for-testing-only
-        REFRESH_TOKEN_EXPIRE_MINUTES: 1440
-        
-        # Email config (mock values for testing)
-        EMAIL_HOST: smtp.test.com
-        EMAIL_PORT: 587
-        EMAIL_USER: test@test.com
-        EMAIL_PASSWORD: testpassword
-        
-        # Frontend config
-        FRONTEND_URI: http://localhost:3000
-        FRONTEND_PORT: 3000
-        
-        # App config
-        RUN_MODE: test
-        PORT: 8080
-        CORS_ALLOW_ORIGIN: http://localhost:3000
-        
-        # Cloudinary config (mock values for testing)
-        CLOUDINARY_CLOUD_NAME: test-cloud
-        CLOUDINARY_API_KEY: test-api-key
-        CLOUDINARY_API_SECRET: test-api-secret
-        
-        # Kafka config (mock values for testing)
-        KAFKA_BROKER_URLS: localhost:9092
-        KAFKA_CONSUMER_GROUP: test-consumer-group
-        
-        # Verification config
-        VERIFICATION_CODE_EXPIRE_MINUTES: 15
       run: |
         go test -v -tags=integration ./tests/integration/...
 
     - name: Run integration tests with coverage
-      env:
-        # Same environment variables as above
-        MYSQL_HOST: 127.0.0.1
-        MYSQL_PORT: 3306
-        MYSQL_USER: root
-        MYSQL_PASSWORD: testpassword
-        MYSQL_DATABASE: gochat_test
-        MYSQL_SSL_MODE: disable
-        MYSQL_MIGRATE_MODE: auto
-        MYSQL_MAX_OPEN_CONNS: 10
-        MYSQL_MAX_IDLE_CONNS: 5
-        MYSQL_CONN_MAX_LIFETIME: 300
-        MYSQL_CONN_MAX_IDLE_TIME: 300
-        REDIS_HOST: 127.0.0.1
-        REDIS_PORT: 6379
-        REDIS_PASSWORD: ""
-        REDIS_DB: 0
-        ACCESS_TOKEN_SECRET_KEY: test-access-secret-key-for-testing-only
-        ACCESS_TOKEN_EXPIRE_MINUTES: 60
-        REFRESH_TOKEN_SECRET_KEY: test-refresh-secret-key-for-testing-only
-        REFRESH_TOKEN_EXPIRE_MINUTES: 1440
-        EMAIL_HOST: smtp.test.com
-        EMAIL_PORT: 587
-        EMAIL_USER: test@test.com
-        EMAIL_PASSWORD: testpassword
-        FRONTEND_URI: http://localhost:3000
-        FRONTEND_PORT: 3000
-        RUN_MODE: test
-        PORT: 8080
-        CORS_ALLOW_ORIGIN: http://localhost:3000
-        CLOUDINARY_CLOUD_NAME: test-cloud
-        CLOUDINARY_API_KEY: test-api-key
-        CLOUDINARY_API_SECRET: test-api-secret
-        KAFKA_BROKER_URLS: localhost:9092
-        KAFKA_CONSUMER_GROUP: test-consumer-group
-        VERIFICATION_CODE_EXPIRE_MINUTES: 15
       run: |
         go test -v -tags=integration -coverprofile=integration-coverage.out ./tests/integration/...
 
@@ -226,4 +129,4 @@ jobs:
     - name: Cleanup test database
       if: always()
       run: |
-        mysql -h127.0.0.1 -P3306 -uroot -ptestpassword -e "DROP DATABASE IF EXISTS gochat_test;"
+        mysql -h127.0.0.1 -P3306 -uroot -ptest_password -e "DROP DATABASE IF EXISTS chat_app_test_db;"
