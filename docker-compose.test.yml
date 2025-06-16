@@ -3,10 +3,10 @@ services:
     image: mysql:8.0.41-debian
     container_name: realtime_chat_app_mysql_test
     environment:
-      MYSQL_ROOT_PASSWORD: testpassword
-      MYSQL_DATABASE: gochat_test
-      MYSQL_USER: testuser
-      MYSQL_PASSWORD: testpassword
+      MYSQL_ROOT_PASSWORD: test_password
+      MYSQL_DATABASE: chat_app_test_db
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_password
     ports:
       - "3307:3306"  # Different port to avoid conflicts
     networks:
@@ -14,7 +14,7 @@ services:
     restart: "no"
     command: --default-authentication-plugin=mysql_native_password --innodb-buffer-pool-size=128M --innodb-log-file-size=64M
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ptestpassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ptest_password"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -56,13 +56,12 @@ services:
       # App Config
       - RUN_MODE=test
       - PORT=8080
-      
-      # MySQL Test Config
+        # MySQL Test Config
       - MYSQL_HOST=mysql-test
       - MYSQL_PORT=3306
-      - MYSQL_USER=testuser
-      - MYSQL_PASSWORD=testpassword
-      - MYSQL_DATABASE=gochat_test
+      - MYSQL_USER=test_user
+      - MYSQL_PASSWORD=test_password
+      - MYSQL_DATABASE=chat_app_test_db
       - MYSQL_SSL_MODE=disable
       - MYSQL_MIGRATE_MODE=auto
       
@@ -87,10 +86,9 @@ services:
       - KAFKA_BROKERS=localhost:9092
       - KAFKA_CHAT_TOPIC=test_topic
       - KAFKA_CONSUMER_GROUP=test_group
-      
-      # Goose Migration
+        # Goose Migration
       - GOOSE_DRIVER=mysql
-      - GOOSE_DBSTRING=testuser:testpassword@tcp(mysql-test:3306)/gochat_test?parseTime=true
+      - GOOSE_DBSTRING=test_user:test_password@tcp(mysql-test:3306)/chat_app_test_db?parseTime=true
       - GOOSE_MIGRATION_DIR=migrations/mysql
       
     networks:

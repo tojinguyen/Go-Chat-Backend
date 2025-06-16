@@ -39,7 +39,7 @@ wait_for_mysql() {
     local host=${1:-127.0.0.1}
     local port=${2:-3306}
     local user=${3:-root}
-    local password=${4:-testpassword}
+    local password=${4:-test_password}
     local max_attempts=60
     local attempt=1
 
@@ -98,8 +98,8 @@ setup_test_env() {
     
     # Load test environment variables
     if [ -f ".env.test" ]; then
-        export $(cat .env.test | grep -v '^#' | xargs)
-        print_success "Loaded test environment variables"
+        export $(grep -v '^#' .env.test | xargs)
+        print_success "Loaded test environment variables from .env.test"
     else
         print_warning ".env.test file not found, using default environment"
     fi
@@ -134,7 +134,7 @@ start_test_databases() {
         print_success "Test databases started"
         
         # Wait for databases to be ready
-        wait_for_mysql "127.0.0.1" "3307" "root" "testpassword"
+        wait_for_mysql "127.0.0.1" "3307" "root" "test_password"
         wait_for_redis "127.0.0.1" "6380"
         
         # Update environment for test databases

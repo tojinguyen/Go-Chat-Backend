@@ -154,7 +154,7 @@ main() {
     local mysql_host=${MYSQL_HOST:-127.0.0.1}
     local mysql_port=${MYSQL_PORT:-3306}
     local mysql_user=${MYSQL_USER:-root}
-    local mysql_password=${MYSQL_PASSWORD:-testpassword}
+    local mysql_password=${MYSQL_PASSWORD:-test_password}
     
     print_status "Starting database connectivity tests..."
     
