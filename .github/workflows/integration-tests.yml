@@ -103,7 +103,7 @@ jobs:
 
     - name: Run database migrations
       env:
-        RUN_MODE: debug
+        RUN_MODE: test
         MYSQL_HOST: 127.0.0.1
         MYSQL_PORT: 3306
         MYSQL_USER: root
@@ -111,6 +111,11 @@ jobs:
         MYSQL_DATABASE: gochat_test
         MYSQL_SSL_MODE: disable
         MYSQL_MIGRATE_MODE: up
+
+        ACCESS_TOKEN_SECRET_KEY: test-access-secret-key-for-testing-only
+        ACCESS_TOKEN_EXPIRE_MINUTES: 60
+        REFRESH_TOKEN_SECRET_KEY: test-refresh-secret-key-for-testing-only
+        REFRESH_TOKEN_EXPIRE_MINUTES: 1440
       run: |
         go run ./cmd/migrate/main.go
 
