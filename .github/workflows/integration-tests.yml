@@ -70,6 +70,8 @@ jobs:
       run: |
         cp .env.test .env
         echo "Environment variables loaded from .env.test"
+        echo "Contents of .env file:"
+        cat .env
 
     - name: Test database connectivity
       run: |
@@ -108,6 +110,12 @@ jobs:
 
     - name: Run database migrations
       run: |
+        echo "Current working directory: $(pwd)"
+        echo "Files in current directory:"
+        ls -la
+        echo "Contents of .env file:"
+        cat .env | head -20
+        echo "Running migrations..."
         go run ./cmd/migrate/main.go
 
     - name: Run integration tests

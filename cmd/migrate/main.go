@@ -13,9 +13,18 @@ import (
 	"gochat-backend/config"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env file if not in release mode
+	if os.Getenv("RUN_MODE") != "release" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Printf("Warning: Failed to load .env file: %v", err)
+		}
+	}
+
 	// Load environment configuration
 	env, err := config.Load()
 	if err != nil {
