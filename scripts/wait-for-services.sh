@@ -10,11 +10,18 @@ ENV_TEST_FILE="./.env.test" # Đường dẫn tương đối từ thư mục g�
 
 if [ -f "$ENV_TEST_FILE" ]; then
   echo "Loading environment variables from $ENV_TEST_FILE"
-  # Sử dụng 'export' để các biến có sẵn cho các lệnh con (như docker exec)
-  # Sử dụng 'grep -v '^#' để bỏ qua các dòng comment
-  # Sử dụng 'sed -e '/^$/d'' để bỏ qua các dòng trống
-  # Sử dụng 'xargs -0' để xử lý các giá trị có thể chứa khoảng trắng hoặc ký tự đặc biệt
-  export $(grep -v '^#' "$ENV_TEST_FILE" | sed -e '/^$/d' | xargs -0)
+  # Đọc file .env.test, loại bỏ comment đầu dòng, comment cuối dòng, và dòng trống
+  # Sau đó export các biến KEY=VALUE
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    # Loại bỏ comment cuối dòng (bất cứ thứ gì sau dấu #)
+    cleaned_line=$(echo "$line" | sed 's/#.*//')
+    # Loại bỏ khoảng trắng thừa ở đầu và cuối
+    trimmed_line=$(echo "$cleaned_line" | sed 's/^[ \t]*//;s/[ \t]*$//')
+    # Nếu dòng không rỗng và không phải là comment đầu dòng và chứa dấu =
+    if [[ -n "$trimmed_line" && ! "$trimmed_line" =~ ^# && "$trimmed_line" == *"="* ]]; then
+      export "$trimmed_line"
+    fi
+  done < "$ENV_TEST_FILE"
 else
   echo "Error: $ENV_TEST_FILE not found."
   exit 1
