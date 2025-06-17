@@ -1,0 +1,51 @@
+name: Go Chat Integration Test 
+
+on:
+    push:
+      branches: [ main, develop ]
+    pull_request:
+      branches: [ main, develop ]
+
+jobs:
+    test:
+      name: Integration Test
+      runs-on: ubuntu-latest
+
+      steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+            go-version: '1.24'
+            check-latest: true
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Install Goose
+        run: go install github.com/pressly/goose/v3/cmd/goose@latest
+
+      - name: Start services with Docker Compose
+        run: docker-compose -f docker-compose.test.yml up -d
+
+      - name: Wait for services
+        run: |
+          chmod +x ./scripts/wait-for-services.sh # Giả sử script nằm ở ./scripts/
+          ./scripts/wait-for-services.sh
+
+      - name: Run database migrations
+        run: |
+          goose -dir ./migrations/mysql up
+
+      - name: Run integration tests
+        run: |
+          go test -v -tags=integration ./internal/...
+    
+      - name: Run unit tests
+        run: |
+          go test -v -tags=unit ./internal/...
+
+      - name: Stop services
+        if: always()
+        run: docker-compose -f docker-compose.test.yml down
