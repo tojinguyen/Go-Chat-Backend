@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mysql_test:
+    image: mysql:8.0.41-debian
+    container_name: realtime_chat_app_mysql_test
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: chat_app_db_test # <-- Tên database dành riêng cho test
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306" # <-- Cổng truy cập từ máy bạn là 3307, tránh xung đột với cổng 3306 của dev
+    volumes:
+      - mysql_realtime-chat-test-data:/var/lib/mysql # <-- Volume riêng để lưu dữ liệu test
+    networks:
+      - chat_app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis_test:
+    image: redis:8.0-rc1
+    container_name: realtime_chat_app_redis_test
+    ports:
+      - "6380:6379" # <-- Cổng truy cập Redis là 6380, tránh xung đột với cổng 6379 của dev
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    networks:
+      - chat_app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql_realtime-chat-test-data:
+
+networks:
+  chat_app_network:
+    name: chat_app_network
+    driver: bridge
