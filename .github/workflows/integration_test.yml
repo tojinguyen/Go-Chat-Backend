@@ -37,6 +37,8 @@ jobs:
       run: |
         chmod +x ./scripts/wait-for-services.sh
         ./scripts/wait-for-services.sh
+        echo "Waiting additional 10 seconds for MySQL to fully initialize..."
+        sleep 10
 
     - name: Run database migrations
       env:
