@@ -64,7 +64,7 @@ attempt_num=1
 REDIS_CONTAINER_NAME_FROM_ENV=${REDIS_CONTAINER_NAME:-realtime_chat_app_redis_test}
 # Sử dụng REDIS_PASSWORD từ .env.test
 
-until docker exec "$REDIS_CONTAINER_NAME_FROM_ENV" redis-cli ${REDIS_HOST:+-h "$REDIS_HOST"} ${REDIS_PORT:+-p "$REDIS_PORT"} -a "${REDIS_PASSWORD}" ping || [ $attempt_num -eq $max_attempts ]; do
+until docker exec "$REDIS_CONTAINER_NAME_FROM_ENV" redis-cli -a "${REDIS_PASSWORD}" ping || [ $attempt_num -eq $max_attempts ]; do
   >&2 echo "Redis is unavailable (attempt $attempt_num/$max_attempts) on container '$REDIS_CONTAINER_NAME_FROM_ENV' - sleeping 5s"
   sleep "${WAIT_SLEEP_INTERVAL:-5}"
   attempt_num=$((attempt_num+1))
