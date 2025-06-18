@@ -43,8 +43,7 @@ MYSQL_PING_USER=${MYSQL_ROOT_USER:-root}
 # Nếu .env.test có MYSQL_ROOT_PASSWORD thì dùng, không thì dùng MYSQL_PASSWORD
 MYSQL_PING_PASSWORD=${MYSQL_ROOT_PASSWORD:-$MYSQL_PASSWORD}
 
-
-until docker exec "$MYSQL_CONTAINER_NAME_FROM_ENV" mysqladmin ping -h localhost -u "$MYSQL_PING_USER" -p"${MYSQL_PING_PASSWORD}" || [ $attempt_num -eq $max_attempts ]; do
+until docker exec "$MYSQL_CONTAINER_NAME_FROM_ENV" mysql -h localhost -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" -e "SELECT 1;" "$MYSQL_DATABASE" || [ $attempt_num -eq $max_attempts ]; do
   >&2 echo "MySQL is unavailable (attempt $attempt_num/$max_attempts) on container '$MYSQL_CONTAINER_NAME_FROM_ENV' - sleeping 5s"
   sleep "${WAIT_SLEEP_INTERVAL:-5}" # Sử dụng biến từ .env.test hoặc mặc định là 5
   attempt_num=$((attempt_num+1))
