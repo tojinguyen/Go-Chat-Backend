@@ -52,7 +52,7 @@ done
 
 if [ $attempt_num -eq $max_attempts ]; then
   >&2 echo "MySQL did not become healthy after $max_attempts attempts on container '$MYSQL_CONTAINER_NAME_FROM_ENV'."
-  docker-compose -f docker-compose.test.yml logs "$MYSQL_CONTAINER_NAME_FROM_ENV"
+  docker compose -f docker-compose.test.yml logs "$MYSQL_CONTAINER_NAME_FROM_ENV"
   exit 1
 fi
 >&2 echo "MySQL on container '$MYSQL_CONTAINER_NAME_FROM_ENV' is up."
@@ -72,7 +72,7 @@ done
 
 if [ $attempt_num -eq $max_attempts ]; then
   >&2 echo "Redis did not become healthy after $max_attempts attempts on container '$REDIS_CONTAINER_NAME_FROM_ENV'."
-  docker-compose -f docker-compose.test.yml logs "$REDIS_CONTAINER_NAME_FROM_ENV"
+  docker compose -f docker-compose.test.yml logs "$REDIS_CONTAINER_NAME_FROM_ENV"
   exit 1
 fi
 >&2 echo "Redis on container '$REDIS_CONTAINER_NAME_FROM_ENV' is up."
