@@ -33,6 +33,7 @@ import (
 
 	emailMocks "gochat-backend/pkg/email/mocks"
 
+	_ "github.com/go-sql-driver/mysql" // MySQL driver
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
